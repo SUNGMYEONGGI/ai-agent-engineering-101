@@ -1,0 +1,350 @@
+<title>싸다싸 하네스 지도</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: one reading column; three source harnesses as parallel lanes, then our harness as a stacked layer diagram tagged by origin. */
+:root {
+  --bg: #F4F6F9; --panel: #FFFFFF; --ink: #15181D; --mute: #5F6672; --line: #DDE2E9; --soft: #EBEEF3;
+  --hermes: #6D4FD8; --hermes-bg: #EEEAFD;
+  --claude: #C2562B; --claude-bg: #FBEDE6;
+  --codex: #0E8A73; --codex-bg: #E2F4EF;
+  --pi: #A86A00; --pi-bg: #FAF0DA;
+  --kit: #4B5563; --kit-bg: #E9ECF1;
+  --off: #9AA1AC;
+  --sans: "IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0F1115; --panel: #181B21; --ink: #EDEFF3; --mute: #9CA3AF; --line: #2A2F38; --soft: #20242B;
+  --hermes: #A99BFF; --hermes-bg: #2A2547; --claude: #F0936A; --claude-bg: #3A2419;
+  --codex: #4FD1B3; --codex-bg: #133229; --pi: #E7B04A; --pi-bg: #36290F; --kit: #B7BEC9; --kit-bg: #262B33; --off: #6B7280;
+  color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #0F1115; --panel: #181B21; --ink: #EDEFF3; --mute: #9CA3AF; --line: #2A2F38; --soft: #20242B;
+  --hermes: #A99BFF; --hermes-bg: #2A2547; --claude: #F0936A; --claude-bg: #3A2419;
+  --codex: #4FD1B3; --codex-bg: #133229; --pi: #E7B04A; --pi-bg: #36290F; --kit: #B7BEC9; --kit-bg: #262B33; --off: #6B7280;
+  color-scheme: dark }
+
+* { box-sizing: border-box }
+body { background: var(--bg); color: var(--ink); font-family: var(--sans); font-size: 15px; line-height: 1.65; }
+.wrap { max-width: 1080px; margin: 0 auto; padding-block: 40px 72px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: flex; flex-direction: column; gap: 56px; }
+h1, h2, h3 { text-wrap: balance; margin: 0; line-height: 1.3 }
+h1 { font-size: clamp(28px, 4.4vw, 40px); font-weight: 700; letter-spacing: -0.02em }
+h2 { font-size: 22px; font-weight: 700; letter-spacing: -0.01em }
+h3 { font-size: 16px; font-weight: 700 }
+p { margin: 0; max-width: 68ch }
+code, .mono { font-family: var(--mono); font-size: 0.88em }
+.eyebrow { font-family: var(--mono); font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--mute) }
+.lead { font-size: 17px; color: var(--mute) }
+section { display: flex; flex-direction: column; gap: 18px }
+
+/* origin tags */
+.tag { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; padding: 2px 9px; border-radius: 999px; white-space: nowrap }
+.tag::before { content: ""; width: 7px; height: 7px; border-radius: 50% ; background: currentColor }
+.t-hermes { color: var(--hermes); background: var(--hermes-bg) }
+.t-claude { color: var(--claude); background: var(--claude-bg) }
+.t-codex { color: var(--codex); background: var(--codex-bg) }
+.t-pi { color: var(--pi); background: var(--pi-bg) }
+.t-kit { color: var(--kit); background: var(--kit-bg) }
+.t-off { color: var(--off); background: var(--soft) }
+.legend { display: flex; flex-wrap: wrap; gap: 8px }
+
+/* summary */
+.summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px }
+.sum { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px; display: flex; flex-direction: column; gap: 8px; min-width: 0 }
+.sum p { font-size: 14px; color: var(--mute) }
+.sum strong { color: var(--ink) }
+
+/* source harness lanes */
+.lanes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px }
+@media (max-width: 860px) { .lanes { grid-template-columns: 1fr } }
+.lane { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 18px; display: flex; flex-direction: column; gap: 12px; min-width: 0 }
+.lane header { display: flex; flex-direction: column; gap: 4px }
+.lane .idea { font-size: 13.5px; color: var(--mute) }
+.flow { display: flex; flex-direction: column; align-items: stretch; gap: 0 }
+.node { border: 1px solid var(--line); background: var(--bg); border-radius: 10px; padding: 8px 11px; font-size: 13px; line-height: 1.45 }
+.node b { display: block; font-size: 13.5px }
+.node small { color: var(--mute) }
+.node.key { border-width: 1.5px }
+.lane.hermes .node.key { border-color: var(--hermes); background: var(--hermes-bg) }
+.lane.claude .node.key { border-color: var(--claude); background: var(--claude-bg) }
+.lane.codex .node.key { border-color: var(--codex); background: var(--codex-bg) }
+.arrow { height: 20px; display: flex; justify-content: center; position: relative; color: var(--mute) }
+.arrow::before { content: ""; width: 1.5px; background: currentColor; height: 100% }
+.arrow::after { content: ""; position: absolute; bottom: 0; border: 5px solid transparent; border-top-color: currentColor; transform: translateY(5px) }
+.arrow span { position: absolute; left: calc(50% + 10px); top: 1px; font-size: 11.5px; white-space: nowrap }
+.side { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 6px }
+.loopnote { font-size: 12.5px; color: var(--mute); border-top: 1px dashed var(--line); padding-top: 10px }
+
+/* our architecture */
+.arch { display: flex; flex-direction: column; gap: 10px }
+.layer { border-radius: 16px; border: 1px solid var(--line); background: var(--panel); padding: 16px; display: flex; flex-direction: column; gap: 12px; min-width: 0 }
+.layer > .head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px }
+.layer > .head p { font-size: 13px; color: var(--mute) }
+.layer.kitlayer { border: 1.5px solid var(--kit); }
+.chips { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 8px }
+.chip { border-radius: 10px; padding: 10px 12px; background: var(--bg); border: 1px solid var(--line); display: flex; flex-direction: column; gap: 4px; min-width: 0 }
+.chip .name { font-family: var(--mono); font-weight: 600; font-size: 13.5px }
+.chip p { font-size: 13px; color: var(--mute) }
+.chip.hermes { border-left: 4px solid var(--hermes) }
+.chip.codex { border-left: 4px solid var(--codex) }
+.chip.pi { border-left: 4px solid var(--pi) }
+.chip.kit { border-left: 4px solid var(--kit) }
+.chip.claude { border-left: 4px solid var(--claude) }
+.down { text-align: center; color: var(--mute); font-size: 13px; font-family: var(--mono) }
+.outer { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px }
+@media (max-width: 760px) { .outer { grid-template-columns: 1fr 1fr } }
+.outer .chip { background: var(--soft) }
+
+/* mapping table */
+.tablebox { overflow-x: auto; border: 1px solid var(--line); border-radius: 14px; background: var(--panel) }
+table { border-collapse: collapse; width: 100%; min-width: 720px; font-size: 13.5px }
+th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--line); vertical-align: top }
+th { font-size: 12px; color: var(--mute); font-weight: 600; background: var(--soft) }
+tr:last-child td { border-bottom: 0 }
+td.grp { white-space: nowrap }
+.guard { font-size: 12px; font-weight: 600; white-space: nowrap }
+.g-code { color: var(--codex) } .g-goal { color: var(--pi) } .g-none { color: var(--off) }
+
+/* notes */
+.two { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px }
+.box { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 18px; display: flex; flex-direction: column; gap: 10px; min-width: 0 }
+.box ul { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 6px; font-size: 14px }
+.box li::marker { color: var(--mute) }
+.cast { display: flex; flex-wrap: wrap; gap: 8px }
+.cast span { border: 1px solid var(--line); border-radius: 999px; padding: 4px 12px; font-size: 13px; background: var(--bg) }
+.cast span b { margin-right: 4px }
+footer { font-size: 12.5px; color: var(--mute); border-top: 1px solid var(--line); padding-top: 16px; display: flex; flex-direction: column; gap: 4px }
+</style>
+
+<div class="wrap">
+
+<header style="display:flex;flex-direction:column;gap:12px">
+  <div class="eyebrow">Round 4 / 싸다싸 가게 에이전트</div>
+  <h1>싸다싸 하네스 지도</h1>
+  <p class="lead">세 에이전트 하네스(Hermes Agent, Claude Code, Codex)가 각각 어떻게 생겼는지, 그중 무엇을 가져와 Agent Market용 하네스를 만들었는지 한 장에 정리했습니다.</p>
+  <div class="legend" aria-label="색 범례">
+    <span class="tag t-hermes">Hermes에서</span>
+    <span class="tag t-codex">Codex에서</span>
+    <span class="tag t-pi">Pi에서</span>
+    <span class="tag t-claude">Claude Code에서</span>
+    <span class="tag t-kit">kit 기본 제공</span>
+    <span class="tag t-off">아직 없음</span>
+  </div>
+</header>
+
+<section>
+  <div class="eyebrow">먼저 알아둘 것</div>
+  <div class="summary">
+    <div class="sum"><h3>하네스는 goal 텍스트로 들어가 있다</h3>
+      <p>kit(<code>agent_kit.py</code>)은 고칠 수 없고 도구도 에이전트가 직접 만듭니다. 사람이 손댈 수 있는 곳은 <code>agent.json</code>의 goal뿐이라, 가져온 전략은 <strong>모델이 따라야 하는 규칙</strong>으로 적혀 있습니다.</p></div>
+    <div class="sum"><h3>실제로 가져온 것은 Hermes, Codex, Pi</h3>
+      <p>커밋 <code>21e37a52</code>에 들어간 건 이 셋입니다. <strong>Claude Code를 이름 걸고 넣은 규칙은 없습니다.</strong> Claude Code와 닮은 장치 몇 개는 kit이 원래 갖고 있던 것입니다.</p></div>
+    <div class="sum"><h3>에이전트는 하나, orchestrator는 kit 루프</h3>
+      <p>kit의 <code>Mind</code> 루프가 매 step 다음 도구를 고릅니다. 일을 나눠 줄 두 번째 에이전트가 생기기 전까지 별도 orchestrator는 빈 층입니다.</p></div>
+  </div>
+</section>
+
+<section>
+  <div style="display:flex;flex-direction:column;gap:6px">
+    <div class="eyebrow">1. 원래 하네스 세 개</div>
+    <h2>각 하네스의 뼈대와 핵심 아이디어</h2>
+    <p class="lead" style="font-size:15px">색이 칠해진 칸이 우리가 주목한 부분입니다.</p>
+  </div>
+  <div class="lanes">
+
+    <article class="lane hermes">
+      <header><span class="tag t-hermes">Hermes Agent</span><h3>쓸수록 쌓이는 학습 루프</h3>
+        <p class="idea">기억에 글자 상한을 두고 에이전트가 직접 정리합니다. 어려운 일을 끝내면 절차를 skill로 남깁니다.</p></header>
+      <div class="flow">
+        <div class="node"><b>Gateway</b><small>CLI, 메신저 등 어디서든 같은 에이전트</small></div>
+        <div class="arrow"></div>
+        <div class="node key"><b>세션 시작: 기억을 불러옴</b><small>MEMORY.md(사실), USER.md(사용자 선호), skill 목록을 시스템 프롬프트에</small></div>
+        <div class="arrow"></div>
+        <div class="node"><b>에이전트 루프</b><small>도구 호출, 하위 에이전트 위임, 예약 작업</small></div>
+        <div class="arrow"><span>배운 것을 씀</span></div>
+        <div class="node key"><b>기억 정리</b><small>memory 도구로 추가, 교체, 삭제. 상한을 넘으면 합치거나 버림</small></div>
+        <div class="side">
+          <div class="node key"><b>skill</b><small>해낸 절차를 문서로 남기고 실패하면 고침</small></div>
+          <div class="node key"><b>세션 검색</b><small>지난 대화를 전문 검색</small></div>
+        </div>
+      </div>
+      <p class="loopnote">다음 세션은 정리된 기억과 skill을 들고 시작합니다. 그래서 쓸수록 나아집니다.</p>
+    </article>
+
+    <article class="lane claude">
+      <header><span class="tag t-claude">Claude Code</span><h3>컨텍스트 관리와 결정적 통제</h3>
+        <p class="idea">모델 판단 밖에서 hook과 권한이 막고, 컨텍스트를 나누고 줄여서 깨끗하게 유지합니다.</p></header>
+      <div class="flow">
+        <div class="node"><b>CLAUDE.md 계층</b><small>사용자, 프로젝트, 하위 폴더 순으로 매 세션 자동 로드</small></div>
+        <div class="arrow"></div>
+        <div class="node"><b>에이전트 루프</b><small>TodoWrite로 할 일 목록을 유지</small></div>
+        <div class="arrow"><span>도구 호출</span></div>
+        <div class="node key"><b>PreToolUse hook</b><small>코드가 결정적으로 허용 또는 차단</small></div>
+        <div class="arrow"></div>
+        <div class="node"><b>권한 모드</b><small>물어보기, 자동, 계획만</small></div>
+        <div class="arrow"></div>
+        <div class="node"><b>실행 → PostToolUse hook</b></div>
+        <div class="side">
+          <div class="node key"><b>Subagent</b><small>독립 컨텍스트로 탐색, 요약만 반환</small></div>
+          <div class="node"><b>auto-compact</b><small>컨텍스트가 차면 요약하고 이어감</small></div>
+        </div>
+      </div>
+      <p class="loopnote">규칙은 CLAUDE.md에, 막아야 할 것은 hook에. 모델이 잊어도 hook은 잊지 않습니다.</p>
+    </article>
+
+    <article class="lane codex">
+      <header><span class="tag t-codex">Codex</span><h3>샌드박스와 승인 정책</h3>
+        <p class="idea">위험한 행동은 한 관문을 지나야 하고, 정해진 범위를 넘으면 사람이 승인합니다.</p></header>
+      <div class="flow">
+        <div class="node"><b>AGENTS.md</b><small>저장소 규칙을 매 세션 로드</small></div>
+        <div class="arrow"></div>
+        <div class="node"><b>에이전트 루프</b><small>shell 명령, apply_patch 요청</small></div>
+        <div class="arrow"></div>
+        <div class="node key"><b>승인 정책</b><small>untrusted, on-request, never 중 사용자가 고름</small></div>
+        <div class="arrow"></div>
+        <div class="node key"><b>OS 샌드박스</b><small>작업 폴더만 쓰기, 네트워크 차단</small></div>
+        <div class="arrow"><span>범위 밖이면</span></div>
+        <div class="node key"><b>사람에게 승인 요청</b></div>
+        <div class="arrow"></div>
+        <div class="node"><b>세션 기록</b><small>rollout 파일로 나중에 이어서 실행</small></div>
+      </div>
+      <p class="loopnote">에이전트가 아무리 확신해도 범위는 사용자가 정합니다.</p>
+    </article>
+
+  </div>
+  <p style="font-size:13px;color:var(--mute)">Pi는 도구를 몇 개만 두고 그걸 고쳐 쓰는 최소 구성 코딩 에이전트입니다. 구조가 단순해서 그림 대신 아래 우리 하네스에 바로 표시했습니다. 각 하네스 설명은 공개 문서를 바탕으로 한 요약이라 버전에 따라 다를 수 있습니다.</p>
+</section>
+
+<section>
+  <div style="display:flex;flex-direction:column;gap:6px">
+    <div class="eyebrow">2. 우리 하네스</div>
+    <h2>싸다싸 에이전트는 이렇게 조립되어 있습니다</h2>
+    <p class="lead" style="font-size:15px">위에서 아래로 갈수록 실행에 가깝습니다. 왼쪽 색 띠가 출처입니다.</p>
+  </div>
+
+  <div class="arch">
+    <div class="layer">
+      <div class="head"><h3>사람이 정하는 것</h3><p>run마다 프롬프트에 그대로 들어감</p></div>
+      <div class="chips">
+        <div class="chip claude"><span class="name">agent.json goal</span><p>매 run 자동으로 읽히는 규칙 문서. CLAUDE.md, AGENTS.md와 같은 자리. 아래 규칙이 모두 여기 적혀 있음</p><span class="tag t-kit" style="align-self:flex-start">자리는 kit 제공</span></div>
+        <div class="chip kit"><span class="name">app/, iOS 앱</span><p>주인 화면. 한도, 질문, 동의를 받음</p></div>
+        <div class="chip kit"><span class="name">meshkit.json</span><p>연결할 외부 MeshKit 앱 목록</p></div>
+      </div>
+    </div>
+
+    <div class="down">▼ goal + 도구 목록 + notes.md 마지막 3000자 + 새 메시지</div>
+
+    <div class="layer kitlayer">
+      <div class="head"><h3>kit Mind 루프 (orchestrator 역할)</h3><p>고정 동작 5개: forge_tool, read_tool, reply, write_note, sleep</p></div>
+      <div class="chips">
+        <div class="chip kit"><span class="name">forge_tool</span><p>에이전트가 도구를 코드로 만들고 테스트를 통과하면 다음 run에도 남음. Hermes의 skill과 같은 역할</p></div>
+        <div class="chip kit"><span class="name">permission.yml</span><p>도구마다 권한 선언. Claude Code의 도구 권한과 비슷</p></div>
+        <div class="chip kit"><span class="name">오래된 step 정리</span><p>컨텍스트가 길어지면 오래된 step을 빼고 기록은 logs/react.jsonl에 남김. compaction과 비슷</p></div>
+      </div>
+
+      <div class="head" style="margin-top:6px"><h3>goal이 만들게 하는 핵심 도구</h3><p>약 7개, 새로 만들기보다 같은 이름으로 고쳐 쓰기 <span class="tag t-pi">Pi</span></p></div>
+      <div class="chips">
+        <div class="chip hermes"><span class="name">memory</span><p>notes.md를 RULES(수수료, 엔드포인트), NOW(진행 중인 거래), FAILED(실패와 원인)로 2,500자 안에 다시 씀. 새 사실을 넣으려면 오래된 걸 합치거나 버림</p></div>
+        <div class="chip hermes"><span class="name">recall</span><p>logs/react.jsonl, agent-kit.log에서 단어를 찾아 과거 실패를 확인. 세션 검색에 해당</p></div>
+        <div class="chip codex"><span class="name">pay_guard</span><p>kit.pay를 부르는 유일한 도구. /api/chain 수수료, 1회와 하루 한도, 주인 한도를 확인하고 넘으면 거절</p></div>
+        <div class="chip pi"><span class="name">a2a_handler</span><p>손님과 다른 에이전트 메시지에 코드로 몇 초 안에 답함. 예약 번호가 있으면 그 가격으로 판매</p></div>
+        <div class="chip pi"><span class="name">market_call</span><p>entity card의 http 정보로 시장을 부르는 범용 호출기</p></div>
+        <div class="chip pi"><span class="name">stock_and_price</span><p>지난 24시간 판매로 매입과 가격 결정, public/catalog.json 갱신</p></div>
+        <div class="chip pi"><span class="name">card_writer</span><p>가게 소개 card.json을 정직하게 작성</p></div>
+      </div>
+
+      <div class="head" style="margin-top:6px"><h3>매 run 루틴</h3><p>goal에 고정</p></div>
+      <div class="chips">
+        <div class="chip pi"><span class="name">1. 대기 메시지 먼저</span><p>손님 응답이 늦으면 거래를 잃음</p></div>
+        <div class="chip claude"><span class="name">2. 행동</span><p>NOW 섹션이 할 일 목록 역할. TodoWrite와 비슷</p></div>
+        <div class="chip hermes"><span class="name">3. 자기 전에 memory</span><p>배운 것을 notes.md에 접어 넣음. 학습 루프</p></div>
+      </div>
+    </div>
+
+    <div class="down">▼ 밖으로 나가는 호출</div>
+
+    <div class="layer">
+      <div class="head"><h3>바깥 세계</h3><p>돈이나 외부 앱이 움직이는 곳은 모두 사람 확인을 거침</p></div>
+      <div class="outer">
+        <div class="chip kit"><span class="name">llm_shim</span><p>127.0.0.1:18790. 모델 요청 형식을 맞춰 OpenAI로 전달</p></div>
+        <div class="chip codex"><span class="name">주인 앱</span><p>app_owner_limits(한도), app_ask_owner(위험한 선택은 주인 답변 전까지 안전한 쪽). on-request 승인에 해당</p></div>
+        <div class="chip codex"><span class="name">MeshKit</span><p>외부 앱 결제는 동의 시트에서 주인이 허락. 서명된 영수증으로 확인</p></div>
+        <div class="chip kit"><span class="name">시장</span><p>a2a 메시지, entity card, Maroo 체인 송금</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div style="display:flex;flex-direction:column;gap:6px">
+    <div class="eyebrow">3. 대응표</div>
+    <h2>무엇을 가져왔고, 누가 보장하나</h2>
+    <p class="lead" style="font-size:15px"><span class="guard g-code">코드로 보장</span>은 모델이 잊어도 지켜집니다. <span class="guard g-goal">goal 지시</span>는 모델이 따라야 지켜집니다.</p>
+  </div>
+  <div class="tablebox">
+    <table>
+      <thead><tr><th>출처</th><th>원래 장치</th><th>우리 쪽 구현</th><th>보장</th></tr></thead>
+      <tbody>
+        <tr><td class="grp"><span class="tag t-hermes">Hermes</span></td><td>상한 있는 MEMORY.md를 에이전트가 정리</td><td><code>memory</code> 도구, notes.md 2,500자 세 섹션</td><td><span class="guard g-goal">goal 지시</span></td></tr>
+        <tr><td class="grp"><span class="tag t-hermes">Hermes</span></td><td>세션 검색</td><td><code>recall</code> 도구로 로그 검색 (로그 자체는 kit이 항상 남김)</td><td><span class="guard g-goal">goal 지시</span></td></tr>
+        <tr><td class="grp"><span class="tag t-hermes">Hermes</span></td><td>skill로 절차 기억</td><td>forge_tool 도구가 다음 run에도 남음</td><td><span class="guard g-code">코드로 보장 (kit)</span></td></tr>
+        <tr><td class="grp"><span class="tag t-hermes">Hermes</span></td><td>세션 끝 학습 루프</td><td>매 run 자기 전에 memory 호출</td><td><span class="guard g-goal">goal 지시</span></td></tr>
+        <tr><td class="grp"><span class="tag t-codex">Codex</span></td><td>승인 정책 + 샌드박스</td><td><code>pay_guard</code> 하나만 송금, 수수료와 한도 확인</td><td><span class="guard g-goal">goal 지시</span></td></tr>
+        <tr><td class="grp"><span class="tag t-codex">Codex</span></td><td>범위 밖이면 사람 승인</td><td><code>app_ask_owner</code>, [주인 답변] 전까지 안전한 선택</td><td><span class="guard g-goal">goal 지시</span></td></tr>
+        <tr><td class="grp"><span class="tag t-codex">Codex</span></td><td>사람 승인</td><td>MeshKit 동의 시트와 서명 영수증</td><td><span class="guard g-code">코드로 보장 (MeshKit, 앱)</span></td></tr>
+        <tr><td class="grp"><span class="tag t-pi">Pi</span></td><td>작은 도구 세트를 고쳐 쓰기</td><td>핵심 도구 약 7개, 같은 이름으로 다시 forge</td><td><span class="guard g-goal">goal 지시</span></td></tr>
+        <tr><td class="grp"><span class="tag t-claude">Claude Code</span></td><td>CLAUDE.md 자동 로드</td><td>goal이 매 run 프롬프트에 들어감</td><td><span class="guard g-code">코드로 보장 (kit)</span></td></tr>
+        <tr><td class="grp"><span class="tag t-claude">Claude Code</span></td><td>auto-compact</td><td>오래된 step을 빼고 기록은 로그에</td><td><span class="guard g-code">코드로 보장 (kit)</span></td></tr>
+        <tr><td class="grp"><span class="tag t-claude">Claude Code</span></td><td>도구 권한</td><td>도구별 permission.yml</td><td><span class="guard g-code">코드로 보장 (kit)</span></td></tr>
+        <tr><td class="grp"><span class="tag t-claude">Claude Code</span></td><td>TodoWrite</td><td>notes.md의 NOW 섹션</td><td><span class="guard g-goal">goal 지시</span></td></tr>
+        <tr><td class="grp"><span class="tag t-off">Claude Code</span></td><td>PreToolUse hook</td><td>없음. kit을 고칠 수 없어서 결정적 차단을 못 붙임</td><td><span class="guard g-none">미적용</span></td></tr>
+        <tr><td class="grp"><span class="tag t-off">Claude Code</span></td><td>Subagent</td><td>없음. 루프가 하나뿐</td><td><span class="guard g-none">미적용</span></td></tr>
+        <tr><td class="grp"><span class="tag t-off">Hermes</span></td><td>USER.md (사람별 기억)</td><td>없음. 단골 손님과 주인 선호를 따로 기억하지 않음</td><td><span class="guard g-none">미적용</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <div class="eyebrow">4. 다음에 할 수 있는 것과 약점</div>
+  <div class="two">
+    <div class="box">
+      <h3>더 가져올 만한 것</h3>
+      <ul>
+        <li><b>USER.md 방식의 CUSTOMERS 섹션</b> <span class="tag t-hermes">Hermes</span><br><span style="color:var(--mute)">손님은 기억이 있고 포럼을 읽습니다. 단골의 선호와 지난 거래를 memory에 따로 남기면 재방문에 유리합니다.</span></li>
+        <li><b>hook 대신 테스트로 막기</b> <span class="tag t-claude">Claude Code</span><br><span style="color:var(--mute)">pay_guard 말고 다른 도구 코드에 <code>kit.pay</code>가 있으면 forge 테스트가 실패하게 하라고 goal에 적습니다. 진짜 hook은 아니지만 실수를 한 번 더 걸러 줍니다.</span></li>
+      </ul>
+    </div>
+    <div class="box">
+      <h3>지금 구조의 약점</h3>
+      <ul>
+        <li>memory 정리를 강제하는 코드가 없습니다. 모델이 memory를 만들지 않거나 부르지 않으면 notes.md가 길어지고, 프롬프트에는 마지막 3000자만 들어가서 오래된 RULES가 잘립니다.</li>
+        <li>pay_guard만 송금한다는 것도 약속입니다. Round 4가 열리면 <code>logs/forge.jsonl</code>에서 memory, pay_guard가 만들어졌는지, notes.md가 2,500자 안인지 사람이 확인해야 합니다.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="eyebrow">5. 앱의 캐릭터</div>
+  <div class="box">
+    <h3>에이전트 하나, 캐릭터 셋</h3>
+    <p style="font-size:14px;color:var(--mute)">캐릭터는 iOS 앱에서 누가 말하고 있는지 보여 주는 표시입니다. 12개가 협업하는 구조가 아닙니다. 지금은 실제로 쓰는 3개만 앱에 있고, 나머지 9개 디자인은 <code>asset/</code>에 두었다가 에이전트가 늘 때 하나씩 추가합니다.</p>
+    <div class="cast">
+      <span><b>호가</b>가게 운영 에이전트 (대화, 카드, 시장 움직임)</span>
+      <span><b>엇갈림</b>주인에게 묻기</span>
+      <span><b>받침</b>외부 앱 허락 대기</span>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <span>근거 파일: <code>round-4/agent.json</code>, <code>round-4/PLAYBOOK.md</code>, <code>scripts/round4/agent_kit.py</code>(Mind.context, Mind.notes), 커밋 21e37a52</span>
+  <span>2026-11-18 기준. Round 4 시작(11-24) 전이라 핵심 도구는 아직 만들어지지 않았습니다.</span>
+</footer>
+
+</div>
