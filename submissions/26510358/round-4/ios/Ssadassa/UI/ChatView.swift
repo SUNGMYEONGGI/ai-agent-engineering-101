@@ -109,7 +109,7 @@ struct ChatView: View {
             }
         case .card(let c):
             HStack(alignment: .top, spacing: 10) {
-                CharacterBadge(character: .ppichim, size: 30)
+                CharacterBadge(character: model.character, size: 30)
                 SoftCard {
                     VStack(alignment: .leading, spacing: 6) {
                         Text(c.title).font(Theme.rounded(.subheadline, .bold))

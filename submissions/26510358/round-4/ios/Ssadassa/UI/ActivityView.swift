@@ -14,7 +14,7 @@ struct ActivityView: View {
                 VStack(spacing: 10) {
                     SectionTitle(text: "최근 움직임")
                     if model.state.moves.isEmpty {
-                        empty(.teum, "아직 움직임이 없어요", "에이전트가 시장에서 움직이면 여기 나타나요.")
+                        empty(model.character, "아직 움직임이 없어요", "에이전트가 시장에서 움직이면 여기 나타나요.")
                     }
                     ForEach(Array(model.state.moves.enumerated()), id: \.offset) { i, m in
                         MoveRow(move: m, first: i == 0)
@@ -23,7 +23,7 @@ struct ActivityView: View {
                 VStack(spacing: 10) {
                     SectionTitle(text: "에이전트가 만든 도구")
                     if model.state.forged.isEmpty {
-                        empty(.cheungcheung, "아직 만든 도구가 없어요", "forge_tool로 만든 도구가 여기 쌓여요.")
+                        empty(model.character, "아직 만든 도구가 없어요", "forge_tool로 만든 도구가 여기 쌓여요.")
                     }
                     ForEach(model.state.forged.keys.sorted(), id: \.self) { k in
                         toolRow(CharacterBadge(character: AgentCharacter.forMove(k), size: 34), k, model.state.forged[k] ?? "")
@@ -34,7 +34,7 @@ struct ActivityView: View {
                     let apps = model.state.appTools.keys.sorted()
                     if apps.isEmpty { empty(.batchim, "연결된 앱이 없어요", "meshkit.json에 앱을 넣으면 생겨요.") }
                     ForEach(apps, id: \.self) { k in
-                        toolRow(CharacterBadge(character: k.hasPrefix("mesh_") ? .kkwemi : .batchim, size: 34),
+                        toolRow(CharacterBadge(character: k.hasPrefix("mesh_") ? .batchim : model.character, size: 34),
                                 k, model.state.appTools[k] ?? "")
                     }
                 }
@@ -46,8 +46,8 @@ struct ActivityView: View {
 
     private var tiles: some View {
         HStack(spacing: 10) {
-            tile(.cheungcheung, "\(model.state.forged.count)", "만든 도구")
-            tile(.kkwemi, "\(model.state.appTools.keys.filter { $0.hasPrefix("mesh_") }.count)", "MeshKit")
+            tile(model.character, "\(model.state.forged.count)", "만든 도구")
+            tile(.batchim, "\(model.state.appTools.keys.filter { $0.hasPrefix("mesh_") }.count)", "MeshKit")
             tile(.batchim, "\(model.consent == nil ? 0 : 1)", "허락 대기")
         }
     }

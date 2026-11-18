@@ -1,65 +1,44 @@
 import Foundation
 
-/// The 12 assistant characters (asset/AI_Assistant_Character_Design_12.md). Images live in
-/// Assets.xcassets/Characters/<rawValue> as template images: black body, transparent eyes, so they invert in dark mode.
+/// The characters the app actually uses, one per job. The 12 designs live in asset/AI_Assistant_Character_Design_12.md
+/// (images in asset/AI_Assistant_Character_Images_12/); a design joins this enum, and its image joins
+/// Assets.xcassets/Characters/, only when an agent or screen starts to use it. Images are template images: black body,
+/// transparent eyes, so they invert in dark mode.
 public enum AgentCharacter: String, CaseIterable, Identifiable, Sendable {
-    case teum, kkwemi, cheungcheung, ppichim, galqui, doegam, batchim, eotgallim, hoga, deulchang, matpyo, gyeonbon
+    /// 호가: the agent itself (chat, cards, every market move).
+    case hoga
+    /// 엇갈림: a question the agent asks the owner (app_ask_owner).
+    case eotgallim
+    /// 받침: an outside app waiting for the owner's consent (MeshKit, app_ tools).
+    case batchim
 
     public var id: String { rawValue }
     public var asset: String { "Characters/\(rawValue)" }
 
     public var name: String {
         switch self {
-        case .teum: return "틈"
-        case .kkwemi: return "꿰미"
-        case .cheungcheung: return "층층"
-        case .ppichim: return "삐침"
-        case .galqui: return "갈퀴"
-        case .doegam: return "되감"
-        case .batchim: return "받침"
-        case .eotgallim: return "엇갈림"
         case .hoga: return "호가"
-        case .deulchang: return "들창"
-        case .matpyo: return "맞표"
-        case .gyeonbon: return "견본"
+        case .eotgallim: return "엇갈림"
+        case .batchim: return "받침"
         }
     }
 
     public var role: String {
         switch self {
-        case .teum: return "빈 시간 찾기"
-        case .kkwemi: return "자료 연결"
-        case .cheungcheung: return "우선순위 정리"
-        case .ppichim: return "알림"
-        case .galqui: return "자료 분류"
-        case .doegam: return "이전 작업 이어가기"
+        case .hoga: return "가게 운영 에이전트"
+        case .eotgallim: return "주인에게 묻기"
         case .batchim: return "확인 대기"
-        case .eotgallim: return "두 선택지 비교"
-        case .hoga: return "가격 협상"
-        case .deulchang: return "재고와 매입 창"
-        case .matpyo: return "정산 확인"
-        case .gyeonbon: return "구매 후보 비교"
         }
     }
 
-    /// The four made for the OuroLabs Market app come first in the picker.
-    public static let marketFirst: [AgentCharacter] =
-        [.hoga, .deulchang, .matpyo, .gyeonbon, .teum, .kkwemi, .cheungcheung, .ppichim, .galqui, .doegam, .batchim, .eotgallim]
+    /// The agents the owner can pick for the chat. One agent today; the next agent adds its character here.
+    public static let agents: [AgentCharacter] = [.hoga]
 
-    /// Which character stands for an agent move in the activity feed (the spec's role of each character).
+    /// Which character stands for an agent move in the activity feed.
     public static func forMove(_ action: String) -> AgentCharacter {
         let a = action.lowercased()
         if a.hasPrefix("mesh_") || a.hasPrefix("app_") { return .batchim }
-        if a == "reply" || a.contains("a2a") || a.contains("haggle") || a.contains("quote") { return .hoga }
-        if a == "forge_tool" { return .cheungcheung }
-        if a == "read_tool" { return .kkwemi }
-        if a == "write_note" || a.contains("memory") || a.contains("recall") { return .doegam }
-        if a == "sleep" { return .teum }
-        if a.contains("pay") || a.contains("settle") || a.contains("ledger") { return .matpyo }
-        if a.contains("stock") || a.contains("restock") || a.contains("wholesale") || a.contains("price") { return .deulchang }
-        if a.contains("catalog") || a.contains("compare") || a.contains("market") || a.contains("board") { return .gyeonbon }
-        if a.contains("card") { return .galqui }
-        return .ppichim
+        return .hoga
     }
 }
 

@@ -56,15 +56,8 @@ struct CharacterView: View {
         }
     }
 
-    /// A small lean in the direction each shape "moves" in the spec (opening, pulling, sliding, rising).
-    private var motionTilt: Double {
-        switch character {
-        case .teum, .eotgallim, .hoga, .matpyo: return 0
-        case .ppichim, .deulchang: return -6
-        case .gyeonbon, .kkwemi: return 6
-        default: return -3
-        }
-    }
+    /// A small lean in the direction the shape "moves" in the spec.
+    private var motionTilt: Double { character == .batchim ? 6 : 0 }
 }
 
 /// The character on a soft round stage, used as the hero of a screen.

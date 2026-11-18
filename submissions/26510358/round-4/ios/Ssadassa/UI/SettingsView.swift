@@ -38,25 +38,27 @@ struct SettingsView: View {
                     }
                 }
             }
-            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 10), count: 4), spacing: 10) {
-                ForEach(AgentCharacter.marketFirst) { c in
-                    Button {
-                        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) { model.character = c }
-                        UISelectionFeedbackGenerator().selectionChanged()
-                    } label: {
-                        VStack(spacing: 6) {
-                            CharacterView(character: c, size: 34, trigger: model.character == c ? model.beat : 0)
-                                .frame(height: 40)
-                            Text(c.name).font(Theme.rounded(.caption2, .semibold))
+            if AgentCharacter.agents.count > 1 {   // a picker only once there is a second agent
+                LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 10), count: 4), spacing: 10) {
+                    ForEach(AgentCharacter.agents) { c in
+                        Button {
+                            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) { model.character = c }
+                            UISelectionFeedbackGenerator().selectionChanged()
+                        } label: {
+                            VStack(spacing: 6) {
+                                CharacterView(character: c, size: 34, trigger: model.character == c ? model.beat : 0)
+                                    .frame(height: 40)
+                                Text(c.name).font(Theme.rounded(.caption2, .semibold))
+                            }
+                            .frame(maxWidth: .infinity).padding(.vertical, 12)
+                            .background(model.character == c ? Theme.surface : Theme.soft,
+                                        in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                            .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                .stroke(model.character == c ? Theme.ink : Color.clear, lineWidth: 1.5))
                         }
-                        .frame(maxWidth: .infinity).padding(.vertical, 12)
-                        .background(model.character == c ? Theme.surface : Theme.soft,
-                                    in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-                        .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous)
-                            .stroke(model.character == c ? Theme.ink : Color.clear, lineWidth: 1.5))
+                        .buttonStyle(.plain)
+                        .accessibilityLabel("\(c.name), \(c.role)")
                     }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel("\(c.name), \(c.role)")
                 }
             }
         }

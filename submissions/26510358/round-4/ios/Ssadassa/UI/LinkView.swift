@@ -2,7 +2,7 @@ import Combine
 import SwiftUI
 import UIKit
 
-/// First screen: the four market characters greet, then the owner pastes the link the kit prints
+/// First screen: the characters greet, then the owner pastes the link the kit prints
 /// ("[app] open https://...?k=..."), or looks around in demo mode.
 struct LinkView: View {
     let connect: (AppLink) -> Void
@@ -11,7 +11,7 @@ struct LinkView: View {
     @State private var checking = false
     @State private var problem: String?
     @State private var beat = 0
-    private let cast: [AgentCharacter] = [.hoga, .deulchang, .matpyo, .gyeonbon]
+    private let cast: [AgentCharacter] = AgentCharacter.allCases
 
     var body: some View {
         ScrollView {
@@ -63,7 +63,7 @@ struct LinkView: View {
                 }
                 Button(action: demo) {
                     HStack {
-                        CharacterView(character: .teum, size: 26)
+                        CharacterView(character: .hoga, size: 26)
                         VStack(alignment: .leading, spacing: 1) {
                             Text("데모로 둘러보기").font(Theme.rounded(.subheadline, .semibold))
                             Text("에이전트 없이 화면만 볼 수 있어요").font(Theme.rounded(.caption)).foregroundStyle(Theme.mute)
