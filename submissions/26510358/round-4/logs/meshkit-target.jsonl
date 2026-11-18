@@ -13,3 +13,9 @@
 {"event": "refused", "code": "signature_required", "ts": 1794967261}
 {"event": "served", "capability": "shop.catalog", "caller": "app.hermes-chat", "status": "completed", "receipt": "rcpt-63eca3a5", "ts": 1794967280}
 {"event": "served", "capability": "shop.reserve", "caller": "app.hermes-chat", "status": "completed", "receipt": "rcpt-a311a177", "ts": 1794967282}
+{"event": "served", "capability": "shop.catalog", "caller": "app.hermes-chat", "status": "completed", "receipt": "rcpt-88df6b56", "ts": 1794967889}
+{"event": "served", "capability": "shop.catalog", "caller": "app.hermes-chat", "status": "completed", "receipt": "rcpt-5aa3f76b", "ts": 1794968105}
+{"event": "served", "capability": "shop.catalog", "caller": "app.hermes-chat", "status": "completed", "receipt": "rcpt-269f90ad", "ts": 1794973681}
+{"event": "served", "capability": "shop.catalog", "caller": "app.hermes-chat", "status": "completed", "receipt": "rcpt-8da492b7", "ts": 1794973699}
+{"event": "served", "capability": "shop.catalog", "caller": "app.hermes-chat", "status": "completed", "receipt": "rcpt-a876cd91", "ts": 1794973703}
+{"event": "served", "capability": "shop.catalog", "caller": "app.hermes-chat", "status": "completed", "receipt": "rcpt-a6e52c55", "ts": 1794973721}
