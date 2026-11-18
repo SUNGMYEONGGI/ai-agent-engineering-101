@@ -17,7 +17,11 @@ UDID=$(xcrun simctl list devices available | grep -F "    $DEVICE (" | head -1 |
 [ -n "$UDID" ] || { echo "시뮬레이터 '$DEVICE'를 찾지 못했습니다: xcrun simctl list devices available"; exit 1; }
 echo "[sim] $DEVICE ($UDID)"
 xcrun simctl boot "$UDID" 2>/dev/null || true
-open -a Simulator
+DEV_DIR="$(xcode-select -p)"
+case "$DEV_DIR" in
+  */CommandLineTools*) echo "xcode-select가 Command Line Tools를 가리킵니다. 실행: sudo xcode-select -s /Applications/Xcode.app/Contents/Developer"; exit 1;;
+esac
+open "$DEV_DIR/Applications/Simulator.app" 2>/dev/null || open -a Simulator
 xcodebuild -project Ssadassa.xcodeproj -target Ssadassa -configuration Debug -sdk iphonesimulator \
   -arch "$(uname -m)" SYMROOT="$PWD/build" CODE_SIGNING_ALLOWED=NO \
   -quiet build
