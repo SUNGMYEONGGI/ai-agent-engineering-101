@@ -18,6 +18,16 @@ guard CommandLine.arguments.count > 1, let link = AppLink(CommandLine.arguments[
 check("AppLink parses the kit's line", AppLink("[app] open https://a-b.trycloudflare.com/?k=XYZ")?.accessCode == "XYZ"
       && AppLink("[app] open https://a-b.trycloudflare.com/?k=XYZ")?.base.absoluteString == "https://a-b.trycloudflare.com")
 
+let demo = DemoData.state()
+check("demo data", demo.chat.count == 4 && demo.moves.count == 6 && DemoData.consent().argPairs.count == 2
+      && DemoData.question.options.count == 3)
+check("12 characters, moves map to the spec's roles", AgentCharacter.allCases.count == 12
+      && AgentCharacter.marketFirst.count == 12 && Set(AgentCharacter.marketFirst).count == 12
+      && AgentCharacter.forMove("reply") == .hoga && AgentCharacter.forMove("forge_tool") == .cheungcheung
+      && AgentCharacter.forMove("pay_guard") == .matpyo && AgentCharacter.forMove("restock") == .deulchang
+      && AgentCharacter.forMove("write_note") == .doegam && AgentCharacter.forMove("sleep") == .teum
+      && AgentCharacter.forMove("market_call") == .gyeonbon && AgentCharacter.forMove("mesh_shop_catalog") == .batchim)
+
 final class Box: @unchecked Sendable { var questions: [OwnerQuestion] = []; var cards: [OwnerCard] = []; var state: MiniAppState?; var error: String? }
 let box = Box()
 let client = MiniAppClient(link: link)

@@ -8,18 +8,20 @@
 
 /* Begin PBXBuildFile section */
 		67AD8B4FFD1ED43852CFC2CA /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 32BB636196F91ED59D7A4919 /* Assets.xcassets */; };
+		098E3A9375514A84D49FB38F /* Characters.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAA753FCE54A46FCFC6E5631 /* Characters.swift */; };
 		E6D1C7C1A73C1EC13D508321 /* JSONValue.swift in Sources */ = {isa = PBXBuildFile; fileRef = 40A0E08851F762595253F587 /* JSONValue.swift */; };
 		A78EA34DA592A59CC6441AB5 /* MiniAppClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB93177FD6494BB41611177F /* MiniAppClient.swift */; };
 		82DEC5E9644FAA76666715F2 /* MiniAppSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA18C443DD32F8485869B55E /* MiniAppSession.swift */; };
 		F899FB5ACA696388802E2911 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = A8FB73185B2B3982EFB201FB /* Models.swift */; };
 		3E462130185E12F6A8228A9B /* OwnerTools.swift in Sources */ = {isa = PBXBuildFile; fileRef = 773BEB19B9CB0EA7182BCA6A /* OwnerTools.swift */; };
 		019A0A18AF3A07A8F5A1C71D /* SsadassaApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A30AD75495C006203167428 /* SsadassaApp.swift */; };
+		FCCA7296D29300B1C3C70919 /* ActivityView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4CCFAEB19613816CB052D6E /* ActivityView.swift */; };
 		7D016D59740B5B99307163D5 /* AppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2ED373513B87D0D22739EAC6 /* AppModel.swift */; };
+		4C8355A7B265BBD079EBB325 /* CharacterView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFE5FB199AFD1F2291D962C1 /* CharacterView.swift */; };
 		76CDA472500DF1A184253EB2 /* ChatView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F206C5EED8CC1083E984BF7E /* ChatView.swift */; };
 		553BA3AD932F7D88BFA2E0B3 /* ConsentSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6C7B0EC2FA3D9DCF45A7E09D /* ConsentSheet.swift */; };
 		2BD1AF1CB360ADD95FD4B70D /* LinkView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 21B77FA23CE6F7C87995464C /* LinkView.swift */; };
 		130E809912297DA2FC9408B8 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E99778F48DC42861ACA5E18B /* SettingsView.swift */; };
-		235D6201877C366D44938E4F /* ShopView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4582549D70271F541BBBA078 /* ShopView.swift */; };
 		F0AD747FBCE10D59321A87F7 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE658541AB1E0319B37AA9A4 /* Theme.swift */; };
 /* End PBXBuildFile section */
 
@@ -27,18 +29,20 @@
 		F5BF48AA40CAD7891EB709FC /* Ssadassa.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Ssadassa.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		32BB636196F91ED59D7A4919 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		707A1B8AA6F495C9BF6658C2 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		BAA753FCE54A46FCFC6E5631 /* Characters.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Core/Characters.swift; sourceTree = "<group>"; };
 		40A0E08851F762595253F587 /* JSONValue.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Core/JSONValue.swift; sourceTree = "<group>"; };
 		BB93177FD6494BB41611177F /* MiniAppClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Core/MiniAppClient.swift; sourceTree = "<group>"; };
 		AA18C443DD32F8485869B55E /* MiniAppSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Core/MiniAppSession.swift; sourceTree = "<group>"; };
 		A8FB73185B2B3982EFB201FB /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Core/Models.swift; sourceTree = "<group>"; };
 		773BEB19B9CB0EA7182BCA6A /* OwnerTools.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Core/OwnerTools.swift; sourceTree = "<group>"; };
 		4A30AD75495C006203167428 /* SsadassaApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SsadassaApp.swift; sourceTree = "<group>"; };
+		F4CCFAEB19613816CB052D6E /* ActivityView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UI/ActivityView.swift; sourceTree = "<group>"; };
 		2ED373513B87D0D22739EAC6 /* AppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UI/AppModel.swift; sourceTree = "<group>"; };
+		CFE5FB199AFD1F2291D962C1 /* CharacterView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UI/CharacterView.swift; sourceTree = "<group>"; };
 		F206C5EED8CC1083E984BF7E /* ChatView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UI/ChatView.swift; sourceTree = "<group>"; };
 		6C7B0EC2FA3D9DCF45A7E09D /* ConsentSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UI/ConsentSheet.swift; sourceTree = "<group>"; };
 		21B77FA23CE6F7C87995464C /* LinkView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UI/LinkView.swift; sourceTree = "<group>"; };
 		E99778F48DC42861ACA5E18B /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UI/SettingsView.swift; sourceTree = "<group>"; };
-		4582549D70271F541BBBA078 /* ShopView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UI/ShopView.swift; sourceTree = "<group>"; };
 		CE658541AB1E0319B37AA9A4 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UI/Theme.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -72,18 +76,20 @@
 		42006AB264CF2AB66A8087C0 /* Ssadassa */ = {
 			isa = PBXGroup;
 			children = (
+				BAA753FCE54A46FCFC6E5631 /* Characters.swift */,
 				40A0E08851F762595253F587 /* JSONValue.swift */,
 				BB93177FD6494BB41611177F /* MiniAppClient.swift */,
 				AA18C443DD32F8485869B55E /* MiniAppSession.swift */,
 				A8FB73185B2B3982EFB201FB /* Models.swift */,
 				773BEB19B9CB0EA7182BCA6A /* OwnerTools.swift */,
 				4A30AD75495C006203167428 /* SsadassaApp.swift */,
+				F4CCFAEB19613816CB052D6E /* ActivityView.swift */,
 				2ED373513B87D0D22739EAC6 /* AppModel.swift */,
+				CFE5FB199AFD1F2291D962C1 /* CharacterView.swift */,
 				F206C5EED8CC1083E984BF7E /* ChatView.swift */,
 				6C7B0EC2FA3D9DCF45A7E09D /* ConsentSheet.swift */,
 				21B77FA23CE6F7C87995464C /* LinkView.swift */,
 				E99778F48DC42861ACA5E18B /* SettingsView.swift */,
-				4582549D70271F541BBBA078 /* ShopView.swift */,
 				CE658541AB1E0319B37AA9A4 /* Theme.swift */,
 				32BB636196F91ED59D7A4919 /* Assets.xcassets */,
 				707A1B8AA6F495C9BF6658C2 /* Info.plist */,
@@ -161,18 +167,20 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				098E3A9375514A84D49FB38F /* Characters.swift in Sources */,
 				E6D1C7C1A73C1EC13D508321 /* JSONValue.swift in Sources */,
 				A78EA34DA592A59CC6441AB5 /* MiniAppClient.swift in Sources */,
 				82DEC5E9644FAA76666715F2 /* MiniAppSession.swift in Sources */,
 				F899FB5ACA696388802E2911 /* Models.swift in Sources */,
 				3E462130185E12F6A8228A9B /* OwnerTools.swift in Sources */,
 				019A0A18AF3A07A8F5A1C71D /* SsadassaApp.swift in Sources */,
+				FCCA7296D29300B1C3C70919 /* ActivityView.swift in Sources */,
 				7D016D59740B5B99307163D5 /* AppModel.swift in Sources */,
+				4C8355A7B265BBD079EBB325 /* CharacterView.swift in Sources */,
 				76CDA472500DF1A184253EB2 /* ChatView.swift in Sources */,
 				553BA3AD932F7D88BFA2E0B3 /* ConsentSheet.swift in Sources */,
 				2BD1AF1CB360ADD95FD4B70D /* LinkView.swift in Sources */,
 				130E809912297DA2FC9408B8 /* SettingsView.swift in Sources */,
-				235D6201877C366D44938E4F /* ShopView.swift in Sources */,
 				F0AD747FBCE10D59321A87F7 /* Theme.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

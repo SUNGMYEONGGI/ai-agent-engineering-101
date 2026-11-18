@@ -4,6 +4,8 @@ import SwiftUI
 /// 싸다싸 가게: the native iOS app of the Round 4 agent. The agent and its mini app server run on the computer
 /// (agent_kit.py run ... --app 8800); this app talks to the same API the kit's web page uses (Core/), and answers
 /// the owner tools (app_show_card, app_owner_limits, app_ask_owner) and MeshKit consents natively.
+///
+/// Launch arguments (ios/run-simulator.sh uses them): `-demo` opens demo mode, `-link <url>` connects at once.
 @main
 struct SsadassaApp: App {
     var body: some Scene {
@@ -14,21 +16,36 @@ struct SsadassaApp: App {
 }
 
 struct RootView: View {
-    @State private var link: AppLink? = LinkKeychain.load().flatMap(AppLink.init)
+    enum Mode: Equatable { case link, demo, live(AppLink) }
+    @State private var mode: Mode = RootView.initialMode()
 
     var body: some View {
-        if let link {
+        switch mode {
+        case .link:
+            LinkView(connect: { new in
+                LinkKeychain.save(new.base.absoluteString + (new.accessCode.map { "/?k=\($0)" } ?? ""))
+                mode = .live(new)
+            }, demo: { mode = .demo })
+        case .demo:
+            MainView(link: nil) { mode = .link }
+        case .live(let link):
             MainView(link: link) {
                 LinkKeychain.save(nil)
-                self.link = nil
+                mode = .link
             }
             .id(link)
-        } else {
-            LinkView { new in
-                LinkKeychain.save(new.base.absoluteString + (new.accessCode.map { "/?k=\($0)" } ?? ""))
-                link = new
-            }
         }
+    }
+
+    private static func initialMode() -> Mode {
+        let args = ProcessInfo.processInfo.arguments
+        if args.contains("-demo") { return .demo }
+        if let i = args.firstIndex(of: "-link"), i + 1 < args.count, let link = AppLink(args[i + 1]) {
+            LinkKeychain.save(link.base.absoluteString + (link.accessCode.map { "/?k=\($0)" } ?? ""))
+            return .live(link)
+        }
+        if let saved = LinkKeychain.load().flatMap(AppLink.init) { return .live(saved) }
+        return .link
     }
 }
 
@@ -37,30 +54,26 @@ struct MainView: View {
     @Environment(\.scenePhase) private var phase
     let disconnect: () -> Void
 
-    init(link: AppLink, disconnect: @escaping () -> Void) {
+    init(link: AppLink?, disconnect: @escaping () -> Void) {
         _model = StateObject(wrappedValue: AppModel(link: link, user: OwnerID.value))
         self.disconnect = disconnect
     }
 
     var body: some View {
         TabView {
-            NavigationStack {
-                ChatView()
-                    .navigationBarTitleDisplayMode(.inline)
-                    .toolbar { header }
-            }
-            .tabItem { Label("대화", systemImage: "bubble.left.and.bubble.right") }
-            .badge(model.questions.count)
-
-            NavigationStack {
-                ShopView().navigationTitle("가게")
-            }
-            .tabItem { Label("가게", systemImage: "storefront") }
-
-            NavigationStack {
-                SettingsView(disconnect: disconnect).navigationTitle("설정")
-            }
-            .tabItem { Label("설정", systemImage: "slider.horizontal.3") }
+            ChatView()
+                .tabItem { Label("대화", systemImage: "bubble.left.and.bubble.right") }
+                .badge(model.questions.count)
+                .toolbarBackground(Theme.paper, for: .tabBar)
+                .toolbarBackground(.visible, for: .tabBar)
+            ActivityView()
+                .tabItem { Label("활동", systemImage: "sparkles") }
+                .toolbarBackground(Theme.paper, for: .tabBar)
+                .toolbarBackground(.visible, for: .tabBar)
+            SettingsView(disconnect: disconnect)
+                .tabItem { Label("나", systemImage: "person.crop.circle") }
+                .toolbarBackground(Theme.paper, for: .tabBar)
+                .toolbarBackground(.visible, for: .tabBar)
         }
         .tint(Theme.ink)
         .environmentObject(model)
@@ -71,19 +84,6 @@ struct MainView: View {
         .onDisappear { model.stop() }
         .onChange(of: phase) { p in
             if p == .active { model.start() } else if p == .background { model.stop() }
-        }
-    }
-
-    @ToolbarContentBuilder
-    private var header: some ToolbarContent {
-        ToolbarItem(placement: .principal) {
-            HStack(spacing: 10) {
-                ShopMark(size: 30)
-                VStack(alignment: .leading, spacing: 1) {
-                    Text(model.agentName).font(.subheadline.weight(.semibold))
-                    StatusDot(status: model.status)
-                }
-            }
         }
     }
 }

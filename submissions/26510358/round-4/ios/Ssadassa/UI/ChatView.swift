@@ -1,159 +1,209 @@
 import SwiftUI
 import UIKit
 
-/// The owner's conversation with the agent, with the agent's cards and questions in line.
+/// The owner's conversation with the agent. The character leads: a large hero when the chat is empty, a small
+/// avatar beside each thing it says, and its question pinned as a card. The input floats above the tab bar.
 struct ChatView: View {
     @EnvironmentObject var model: AppModel
     @State private var draft = ""
     @FocusState private var focused: Bool
 
-    private let starters = ["지금 잔고와 순위는?", "오늘 판 것 요약해줘", "최근에 실패한 것은?", "만든 도구 보여줘"]
+    private struct Starter: Hashable { let icon: String; let text: String }
+    private let starters = [Starter(icon: "chart.line.uptrend.xyaxis", text: "오늘 장사 어때?"),
+                            Starter(icon: "creditcard", text: "잔고와 순위 알려줘"),
+                            Starter(icon: "exclamationmark.triangle", text: "최근에 실패한 건?"),
+                            Starter(icon: "hammer", text: "만든 도구 보여줘")]
 
     var body: some View {
         VStack(spacing: 0) {
-            if let q = model.questions.first { QuestionCard(question: q, more: model.questions.count - 1) }
+            header
             ScrollViewReader { proxy in
                 ScrollView {
-                    LazyVStack(alignment: .leading, spacing: 6) {
-                        if model.timeline.isEmpty { empty }
+                    LazyVStack(alignment: .leading, spacing: 14) {
+                        if model.timeline.isEmpty { hero }
+                        if let q = model.questions.first { QuestionCard(question: q, more: model.questions.count - 1) }
                         ForEach(model.timeline) { item in row(item).id(item.id) }
-                        if !model.sending.isEmpty { TypingBubble().id("typing") }
+                        if !model.sending.isEmpty { thinking.id("thinking") }
+                        Color.clear.frame(height: 8).id("end")
                     }
-                    .padding(.horizontal, 16).padding(.vertical, 12)
+                    .padding(.horizontal, 18).padding(.top, 8)
                 }
                 .scrollDismissesKeyboard(.interactively)
                 .onChange(of: model.timeline.count) { _ in
-                    withAnimation(.easeOut(duration: 0.2)) { proxy.scrollTo(model.timeline.last?.id, anchor: .bottom) }
+                    withAnimation(.easeOut(duration: 0.25)) { proxy.scrollTo("end", anchor: .bottom) }
                 }
+                .onAppear { proxy.scrollTo("end", anchor: .bottom) }
             }
-            inputBar
+            composer
         }
+        .background(Theme.paper.ignoresSafeArea())
     }
 
-    private var empty: some View {
-        VStack(spacing: 10) {
-            ShopMark(size: 60).padding(.top, 60)
-            Text(model.agentName).font(.title3.weight(.semibold))
-            Text("싸다싸 가게의 에이전트입니다.\n대화하는 동안에도 시장에서 사고팝니다.")
-                .font(.footnote).foregroundStyle(Theme.mute).multilineTextAlignment(.center)
-            FlowChips(items: starters) { model.send($0) }.padding(.top, 8)
+    // MARK: header
+
+    private var header: some View {
+        HStack(spacing: 12) {
+            CharacterBadge(character: model.character, size: 40, trigger: model.beat)
+            VStack(alignment: .leading, spacing: 3) {
+                Text(model.agentName).font(Theme.rounded(.headline, .bold))
+                StatusPill(status: model.status)
+            }
+            Spacer()
+            if !model.questions.isEmpty {
+                Label("\(model.questions.count)", systemImage: "questionmark.bubble.fill")
+                    .font(Theme.rounded(.caption, .bold)).foregroundStyle(Theme.warn)
+                    .padding(.horizontal, 10).padding(.vertical, 6).background(Theme.warn.opacity(0.14), in: Capsule())
+            }
+        }
+        .padding(.horizontal, 18).padding(.vertical, 10)
+    }
+
+    // MARK: empty state
+
+    private var hero: some View {
+        VStack(spacing: 18) {
+            CharacterStage(character: model.character, size: 120, trigger: model.beat).padding(.top, 36)
+            VStack(spacing: 6) {
+                Text("안녕하세요, \(model.character.name)예요").font(Theme.rounded(.title2, .bold))
+                Text("싸다싸 가게를 대신 운영하고 있어요.\n궁금한 걸 물어보거나 아래에서 골라 주세요.")
+                    .font(Theme.rounded(.subheadline)).foregroundStyle(Theme.mute).multilineTextAlignment(.center)
+            }
+            LazyVGrid(columns: [GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10)], spacing: 10) {
+                ForEach(starters, id: \.self) { s in
+                    Button { model.send(s.text) } label: {
+                        VStack(alignment: .leading, spacing: 10) {
+                            Image(systemName: s.icon).font(.system(size: 16, weight: .semibold))
+                            Text(s.text).font(Theme.rounded(.subheadline, .medium)).multilineTextAlignment(.leading)
+                        }
+                        .foregroundStyle(Theme.ink)
+                        .padding(14)
+                        .frame(maxWidth: .infinity, minHeight: 92, alignment: .topLeading)
+                        .background(Theme.surface, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+                        .overlay(RoundedRectangle(cornerRadius: 20, style: .continuous).stroke(Theme.line, lineWidth: 0.5))
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            .padding(.top, 6)
         }
         .frame(maxWidth: .infinity)
     }
+
+    // MARK: rows
 
     @ViewBuilder
     private func row(_ item: TimelineItem) -> some View {
         switch item {
         case .message(let m) where m.who == "kit":
-            Text(m.text).font(.caption).foregroundStyle(Theme.mute).frame(maxWidth: .infinity).padding(.vertical, 6)
+            Text(m.text).font(Theme.rounded(.caption)).foregroundStyle(Theme.mute).frame(maxWidth: .infinity)
         case .message(let m) where m.who == model.user:
-            Bubble(text: m.text, mine: true)
+            mine(m.text)
+        case .message(let m) where m.who == "agent":
+            agent(m.text)
         case .message(let m):
-            VStack(alignment: .leading, spacing: 3) {
-                if m.who != "agent" { Text(m.who).font(.caption).foregroundStyle(Theme.mute).padding(.leading, 4) }
-                Bubble(text: m.text, mine: false)
+            VStack(alignment: .leading, spacing: 4) {
+                Text(m.who).font(Theme.rounded(.caption, .semibold)).foregroundStyle(Theme.mute)
+                Text(m.text).font(Theme.rounded(.body)).padding(12)
+                    .background(Theme.soft, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
             }
         case .card(let c):
-            VStack(alignment: .leading, spacing: 4) {
-                Text(model.agentName.uppercased()).font(.caption2.weight(.semibold)).foregroundStyle(Theme.mute)
-                Text(c.title).font(.subheadline.weight(.semibold))
-                Text(c.body).font(.subheadline).foregroundStyle(.secondary)
+            HStack(alignment: .top, spacing: 10) {
+                CharacterBadge(character: .ppichim, size: 30)
+                SoftCard {
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text(c.title).font(Theme.rounded(.subheadline, .bold))
+                        Text(c.body).font(Theme.rounded(.subheadline)).foregroundStyle(Theme.mute)
+                    }
+                }
             }
-            .padding(14)
-            .frame(maxWidth: 300, alignment: .leading)
-            .background(Color(uiColor: .systemBackground), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).stroke(Theme.line))
-            .shadow(color: .black.opacity(0.08), radius: 8, y: 4)
-            .padding(.vertical, 4)
         case .sending(let t):
-            Bubble(text: t, mine: true).opacity(0.5)
+            mine(t).opacity(0.45)
         }
     }
 
-    private var inputBar: some View {
+    private func mine(_ text: String) -> some View {
+        HStack {
+            Spacer(minLength: 56)
+            Text(text)
+                .font(Theme.rounded(.body))
+                .foregroundStyle(Theme.inkOn)
+                .padding(.horizontal, 16).padding(.vertical, 11)
+                .background(Theme.ink, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+                .textSelection(.enabled)
+        }
+    }
+
+    /// The agent speaks as plain text beside its character, not in a bubble.
+    private func agent(_ text: String) -> some View {
+        HStack(alignment: .top, spacing: 10) {
+            CharacterBadge(character: model.character, size: 30)
+            Text(text)
+                .font(Theme.rounded(.body))
+                .foregroundStyle(Theme.ink)
+                .lineSpacing(3)
+                .textSelection(.enabled)
+                .padding(.top, 4)
+            Spacer(minLength: 24)
+        }
+    }
+
+    private var thinking: some View {
+        HStack(spacing: 10) {
+            CharacterBadge(character: model.character, size: 30, trigger: model.sending.count)
+            ThinkingDots()
+            Text("생각하는 중").font(Theme.rounded(.footnote)).foregroundStyle(Theme.mute)
+        }
+    }
+
+    // MARK: composer
+
+    private var composer: some View {
         HStack(alignment: .bottom, spacing: 8) {
-            TextField("메시지 보내기", text: $draft, axis: .vertical)
+            TextField("\(model.character.name)에게 말하기", text: $draft, axis: .vertical)
+                .font(Theme.rounded(.body))
                 .lineLimit(1...5)
                 .focused($focused)
-                .padding(.vertical, 9).padding(.leading, 16)
+                .padding(.vertical, 12).padding(.leading, 18)
             Button {
                 model.send(draft)
                 draft = ""
             } label: {
-                Image(systemName: "arrow.up").font(.system(size: 15, weight: .bold))
-                    .foregroundStyle(Color(uiColor: .systemBackground))
-                    .frame(width: 34, height: 34)
+                Image(systemName: "arrow.up")
+                    .font(.system(size: 16, weight: .bold))
+                    .foregroundStyle(Theme.inkOn)
+                    .frame(width: 38, height: 38)
                     .background(Theme.ink, in: Circle())
             }
-            .disabled(draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-            .opacity(draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? 0.25 : 1)
-            .padding(4)
+            .disabled(blank)
+            .opacity(blank ? 0.25 : 1)
+            .padding(5)
             .accessibilityLabel("보내기")
         }
-        .background(Theme.card, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
-        .padding(.horizontal, 12).padding(.vertical, 8)
+        .background(Theme.surface, in: RoundedRectangle(cornerRadius: 26, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 26, style: .continuous).stroke(Theme.line, lineWidth: 0.5))
+        .shadow(color: .black.opacity(0.06), radius: 16, y: 6)
+        .padding(.horizontal, 14).padding(.top, 6).padding(.bottom, 10)
     }
+
+    private var blank: Bool { draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
 }
 
-struct Bubble: View {
-    let text: String
-    let mine: Bool
-
-    var body: some View {
-        HStack {
-            if mine { Spacer(minLength: 48) }
-            Text(text)
-                .font(.body)
-                .textSelection(.enabled)
-                .padding(.horizontal, 14).padding(.vertical, 9)
-                .foregroundStyle(mine ? Color(uiColor: .systemBackground) : Theme.ink)
-                .background(mine ? Theme.ink : Theme.card,
-                            in: UnevenBubble(mine: mine))
-            if !mine { Spacer(minLength: 48) }
-        }
-    }
-}
-
-/// Rounded bubble with a tighter corner on the speaker's side.
-struct UnevenBubble: Shape {
-    let mine: Bool
-
-    func path(in r: CGRect) -> Path {
-        let big: CGFloat = 18, small: CGFloat = 6
-        let tl = big, tr = big, bl = mine ? big : small, br = mine ? small : big
-        var p = Path()
-        p.move(to: CGPoint(x: r.minX + tl, y: r.minY))
-        p.addLine(to: CGPoint(x: r.maxX - tr, y: r.minY))
-        p.addArc(center: CGPoint(x: r.maxX - tr, y: r.minY + tr), radius: tr, startAngle: .degrees(-90), endAngle: .degrees(0), clockwise: false)
-        p.addLine(to: CGPoint(x: r.maxX, y: r.maxY - br))
-        p.addArc(center: CGPoint(x: r.maxX - br, y: r.maxY - br), radius: br, startAngle: .degrees(0), endAngle: .degrees(90), clockwise: false)
-        p.addLine(to: CGPoint(x: r.minX + bl, y: r.maxY))
-        p.addArc(center: CGPoint(x: r.minX + bl, y: r.maxY - bl), radius: bl, startAngle: .degrees(90), endAngle: .degrees(180), clockwise: false)
-        p.addLine(to: CGPoint(x: r.minX, y: r.minY + tl))
-        p.addArc(center: CGPoint(x: r.minX + tl, y: r.minY + tl), radius: tl, startAngle: .degrees(180), endAngle: .degrees(270), clockwise: false)
-        p.closeSubpath()
-        return p
-    }
-}
-
-struct TypingBubble: View {
+struct ThinkingDots: View {
     @State private var on = false
 
     var body: some View {
         HStack(spacing: 4) {
             ForEach(0..<3) { i in
-                Circle().fill(Theme.mute).frame(width: 6, height: 6)
-                    .opacity(on ? 1 : 0.3)
-                    .animation(.easeInOut(duration: 0.6).repeatForever().delay(Double(i) * 0.15), value: on)
+                Circle().fill(Theme.ink).frame(width: 5, height: 5)
+                    .opacity(on ? 0.9 : 0.2)
+                    .animation(.easeInOut(duration: 0.55).repeatForever().delay(Double(i) * 0.15), value: on)
             }
         }
-        .padding(14)
-        .background(Theme.card, in: UnevenBubble(mine: false))
         .onAppear { on = true }
     }
 }
 
-/// The agent's question to the owner (app_ask_owner), pinned above the chat until answered.
+/// The agent's question to the owner (app_ask_owner). 엇갈림 (two options) stands for it, per the character spec.
 struct QuestionCard: View {
     @EnvironmentObject var model: AppModel
     let question: OwnerQuestion
@@ -161,77 +211,48 @@ struct QuestionCard: View {
     @State private var text = ""
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack {
-                Label("에이전트의 질문", systemImage: "questionmark.bubble.fill")
-                    .font(.footnote.weight(.semibold)).foregroundStyle(Theme.warn)
-                Spacer()
-                if more > 0 { Text("+\(more)").font(.caption.weight(.bold)).foregroundStyle(Theme.mute) }
-            }
-            Text(question.question).font(.subheadline.weight(.medium))
-            if !question.options.isEmpty {
-                FlowChips(items: question.options) { model.answer(question: question, with: $0) }
-            }
-            HStack {
-                TextField("직접 답하기", text: $text)
-                    .textFieldStyle(.roundedBorder)
-                Button("보내기") { model.answer(question: question, with: text); text = "" }
-                    .buttonStyle(.borderedProminent).tint(Theme.ink)
-                    .disabled(text.trimmingCharacters(in: .whitespaces).isEmpty)
-            }
-        }
-        .padding(14)
-        .background(Theme.warn.opacity(0.1))
-        .overlay(alignment: .bottom) { Divider() }
-    }
-}
-
-/// Wrapping row of capsule buttons.
-struct FlowChips: View {
-    let items: [String]
-    let tap: (String) -> Void
-
-    var body: some View {
-        FlowLayout(spacing: 8) {
-            ForEach(items, id: \.self) { s in
-                Button(s) { tap(s) }
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
-                    .padding(.horizontal, 14).padding(.vertical, 7)
-                    .overlay(Capsule().stroke(Theme.line))
+        SoftCard(padding: 18) {
+            VStack(alignment: .leading, spacing: 14) {
+                HStack(spacing: 10) {
+                    CharacterBadge(character: .eotgallim, size: 34, trigger: model.beat)
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text("결정이 필요해요").font(Theme.rounded(.subheadline, .bold))
+                        Text(more > 0 ? "질문 \(more + 1)개 대기" : "주인에게 묻는 질문")
+                            .font(Theme.rounded(.caption)).foregroundStyle(Theme.mute)
+                    }
+                }
+                Text(question.question).font(Theme.rounded(.body, .medium))
+                if !question.options.isEmpty {
+                    VStack(spacing: 8) {
+                        ForEach(question.options, id: \.self) { o in
+                            Button { model.answer(question: question, with: o) } label: {
+                                HStack { Text(o); Spacer(); Image(systemName: "chevron.right").font(.caption.weight(.bold)) }
+                            }
+                            .buttonStyle(OptionButtonStyle())
+                        }
+                    }
+                }
+                HStack(spacing: 8) {
+                    TextField("직접 답하기", text: $text)
+                        .font(Theme.rounded(.subheadline))
+                        .padding(.horizontal, 14).padding(.vertical, 11)
+                        .background(Theme.soft, in: Capsule())
+                    Button("보내기") { model.answer(question: question, with: text); text = "" }
+                        .buttonStyle(PillButtonStyle())
+                        .disabled(text.trimmingCharacters(in: .whitespaces).isEmpty)
+                }
             }
         }
     }
 }
 
-struct FlowLayout: Layout {
-    var spacing: CGFloat = 8
-
-    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
-        let rows = arrange(proposal.width ?? .infinity, subviews)
-        return CGSize(width: proposal.width ?? rows.width, height: rows.height)
-    }
-
-    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
-        var x = bounds.minX, y = bounds.minY, rowH: CGFloat = 0
-        for v in subviews {
-            let s = v.sizeThatFits(.unspecified)
-            if x + s.width > bounds.maxX && x > bounds.minX { x = bounds.minX; y += rowH + spacing; rowH = 0 }
-            v.place(at: CGPoint(x: x, y: y), proposal: ProposedViewSize(s))
-            x += s.width + spacing
-            rowH = max(rowH, s.height)
-        }
-    }
-
-    private func arrange(_ maxW: CGFloat, _ subviews: Subviews) -> (width: CGFloat, height: CGFloat) {
-        var x: CGFloat = 0, y: CGFloat = 0, rowH: CGFloat = 0, width: CGFloat = 0
-        for v in subviews {
-            let s = v.sizeThatFits(.unspecified)
-            if x + s.width > maxW && x > 0 { x = 0; y += rowH + spacing; rowH = 0 }
-            x += s.width + spacing
-            width = max(width, x - spacing)
-            rowH = max(rowH, s.height)
-        }
-        return (width, y + rowH)
+struct OptionButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(Theme.rounded(.subheadline, .semibold))
+            .foregroundStyle(Theme.ink)
+            .padding(.horizontal, 16).padding(.vertical, 13)
+            .background(configuration.isPressed ? Theme.line : Theme.soft,
+                        in: RoundedRectangle(cornerRadius: 14, style: .continuous))
     }
 }
