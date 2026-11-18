@@ -10,6 +10,7 @@ consent sheet) with a stub agent in place of the ReAct loop:
     mesh_* tools wait for the consent sheet, then return the verified receipt).
 
     ~/.venvs/round4/bin/python submissions/26510358/round-4/ops/preview_app.py --port 18800
+    ... --tunnel        a public https link for a phone, gated by the same access code as the kit (.kit/app.key)
 
 Development only: the real agent runs with `agent_kit.py run ... --app 8800`.
 """
@@ -23,6 +24,7 @@ ROOT = Path(__file__).resolve().parent.parent                      # submissions
 KIT = ROOT.parents[2] / "scripts" / "round4"
 sys.path.insert(0, str(KIT))
 
+import market_kit as mk  # noqa: E402
 import miniapp  # noqa: E402  (the kit's module, unchanged)
 from agent_kit import Event, serve  # noqa: E402
 
@@ -62,10 +64,15 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--port", type=int, default=18800)
     ap.add_argument("--name", default="myeonggi")
+    ap.add_argument("--tunnel", action="store_true", help="also a public https link (needs the access code)")
     a = ap.parse_args()
-    web = miniapp.app(ROOT, StubMind(), StubToolbox(), Event, name=a.name)
+    key = miniapp.access_key(ROOT) if a.tunnel else None
+    web = miniapp.app(ROOT, StubMind(), StubToolbox(), Event, name=a.name, key=key)
     serve(web, a.port)
-    print(f"[preview] http://127.0.0.1:{a.port}/  (Ctrl-C to stop)", flush=True)
+    print(f"[preview] http://127.0.0.1:{a.port}/" + (f"?k={key}" if key else "") + "  (Ctrl-C to stop)", flush=True)
+    if a.tunnel:
+        _proc, url = mk.open_tunnel(a.port)
+        print(f"[preview] open {url}/?k={key}", flush=True)
     threading.Event().wait()
 
 

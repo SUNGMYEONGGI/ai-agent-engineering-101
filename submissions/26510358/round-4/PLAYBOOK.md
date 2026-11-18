@@ -67,3 +67,30 @@ starter 페이지에 세 가지를 더했다. 페이지 도구는 kit이 polling
 Round 4 전 미리보기: `$PY submissions/26510358/round-4/ops/preview_app.py --port 18800` 후 http://127.0.0.1:18800/ 을 연다.
 가짜 에이전트가 답하고, `/tool <이름> {json}`으로 도구를 직접 불러 볼 수 있다.
 11-18 headless Chrome에서 확인한 것: 도구 4개 등록, 한도 읽기·저장, 질문과 답, DailyMart 허용(검증된 영수증)·거절, 페이지 오류 0.
+
+## 우리 가게를 MeshKit 앱으로 (`ops/meshkit_target.py`)
+
+[MeshKit](https://github.com/Q00/meshkit)의 DailyMart 예제와 같은 구조로, 다른 학생의 에이전트가 자기 `meshkit.json`에 우리를 넣으면
+`mesh_shop_catalog`, `mesh_shop_reserve` 도구가 생긴다. 앱이 직접 검증하고 실행하고 영수증에 서명한다(app sovereignty).
+
+| 기능 | 위험 등급 | 하는 일 |
+|---|---|---|
+| `shop.catalog` | read:catalog, 동의 없음 | 에이전트가 쓴 `public/catalog.json`에서 상품을 찾아 줌 |
+| `shop.reserve` | spend:money, 건당 예산 | 상대 예산 안의 가격일 때만 30분 예약. `public/reservations.jsonl`에 쌓이고, 결제는 시장에서 에이전트가 한다 |
+
+- 신뢰 검사는 MeshKit 라이브러리의 `validate_and_accept`(fail-closed)를 그대로 쓰고, 기능마다 정책을 따로 둔다.
+- `meshkit_target.json`(git 제외)에 영수증 서명 키, 신뢰하는 caller 목록, 건당 예산 상한(기본 1,000,000)이 있다.
+  다른 학생과 연결하려면 그쪽 caller의 app_id, bundle_id, key_id, 공개키를 `trusted_callers`에 넣고, 우리 `public/meshkit-manifest.json`을 건넨다.
+- `ops/test_meshkit_target.py`: MeshKit grader가 하는 공격을 HTTP로 재현한다. 11-18 결과는 13/13 통과
+  (정상 카탈로그·예약 영수증 검증, 예산 아래·재고 초과·없는 SKU 거절, budget_exceeded, replay_detected,
+  payload_hash_mismatch, signature_mismatch, caller_not_allowed, stale_timestamp, signature_required).
+- 우리 미니앱의 kit 경로로도 확인했다: `mesh_shop_catalog`, `mesh_shop_reserve` → 허락 시트 → 검증된 영수증.
+
+```bash
+$PY submissions/26510358/round-4/ops/meshkit_target.py --init        # 한 번만
+$PY submissions/26510358/round-4/ops/meshkit_target.py --tunnel      # 다른 학생용 공개 URL, manifest 갱신
+```
+
+미리보기를 휴대폰에서 보려면 `ops/preview_app.py --tunnel`을 쓴다(접근 코드 필요). 그 전에 같은 포트에서 돌고 있는
+미리보기가 없는지 꼭 확인한다. 11-18에 코드 없는 이전 미리보기가 남아 있었고, 터널이 그쪽을 약 10분 동안 공개했다
+(가짜 에이전트와 데모 데이터뿐, 키 없음).

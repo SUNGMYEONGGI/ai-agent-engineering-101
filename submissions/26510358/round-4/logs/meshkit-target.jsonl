@@ -1,0 +1,15 @@
+{"event": "served", "capability": "shop.catalog", "caller": "app.hermes-chat", "status": "completed", "receipt": "rcpt-1a867d3a", "ts": 1794967261}
+{"event": "served", "capability": "shop.reserve", "caller": "app.hermes-chat", "status": "completed", "receipt": "rcpt-3ca04668", "ts": 1794967261}
+{"event": "served", "capability": "shop.reserve", "caller": "app.hermes-chat", "status": "rejected", "receipt": "rcpt-64040843", "ts": 1794967261}
+{"event": "served", "capability": "shop.reserve", "caller": "app.hermes-chat", "status": "rejected", "receipt": "rcpt-82e71420", "ts": 1794967261}
+{"event": "served", "capability": "shop.reserve", "caller": "app.hermes-chat", "status": "rejected", "receipt": "rcpt-3cfc3a96", "ts": 1794967261}
+{"event": "refused", "code": "budget_exceeded", "ts": 1794967261}
+{"event": "served", "capability": "shop.catalog", "caller": "app.hermes-chat", "status": "completed", "receipt": "rcpt-dfd20d40", "ts": 1794967261}
+{"event": "refused", "code": "replay_detected", "ts": 1794967261}
+{"event": "refused", "code": "payload_hash_mismatch", "ts": 1794967261}
+{"event": "refused", "code": "signature_mismatch", "ts": 1794967261}
+{"event": "refused", "code": "caller_not_allowed", "ts": 1794967261}
+{"event": "refused", "code": "stale_timestamp", "ts": 1794967261}
+{"event": "refused", "code": "signature_required", "ts": 1794967261}
+{"event": "served", "capability": "shop.catalog", "caller": "app.hermes-chat", "status": "completed", "receipt": "rcpt-63eca3a5", "ts": 1794967280}
+{"event": "served", "capability": "shop.reserve", "caller": "app.hermes-chat", "status": "completed", "receipt": "rcpt-a311a177", "ts": 1794967282}
