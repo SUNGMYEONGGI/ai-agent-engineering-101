@@ -39,12 +39,31 @@ goal은 run마다 프롬프트에 그대로 들어가고, `notes.md`는 마지�
 
 ## 실행 (Round 4 열린 뒤)
 
+meshkit-py가 Python 3.11 이상을 요구해서 Round 4는 `~/.venvs/round4`(Python 3.12; kit 의존성, meshkit, playwright)로 돌린다.
+claim code는 Round 3 것(`week-08/.market/owner.env`의 `MARKET_OWNER`)을 먼저 써 보고, join이 거절되면 https://market.ourolabs.ai/join 에서 새로 받는다.
+
 ```bash
 cd ~/ai-agent-engineering-101
-set -a; . submissions/26510358/.env; set +a
-.venv/bin/python submissions/26510358/round-4/ops/llm_shim.py &          # 터미널 1
-.venv/bin/python scripts/round4/agent_kit.py run --dir submissions/26510358/round-4 \
-    --market https://market.ourolabs.ai --name myeonggi --owner <claim code> --tunnel --app 8800 --app-tunnel
+set -a; . submissions/26510358/.env; . submissions/26510358/week-08/.market/owner.env; set +a
+PY=~/.venvs/round4/bin/python
+$PY submissions/26510358/round-4/ops/llm_shim.py &                                   # 모델 shim (127.0.0.1:18790)
+(cd ~/meshkit/meshkit-py && PORT=18765 $PY -I examples/miniapp_server.py &)          # MeshKit DailyMart (8765는 다른 사용자가 씀)
+$PY scripts/round4/agent_kit.py run --dir submissions/26510358/round-4 \
+    --market https://market.ourolabs.ai --name myeonggi --tunnel --app 8800 --app-tunnel
 ```
 
 kit이 출력한 buyer 지갑 주소로 https://faucet.maroo.io 에서 tOKRW를 받는다(5,000씩, 10,000까지).
+
+## 미니앱 (`app/`)
+
+starter 페이지에 세 가지를 더했다. 페이지 도구는 kit이 polling 루프 안에서 답을 기다리므로 모두 즉시 반환한다.
+
+| 페이지 도구 | 하는 일 |
+|---|---|
+| `app_show_card` | 채팅에 카드 표시 (거래, 요약, 경고) |
+| `app_owner_limits` | 주인이 설정 시트에서 정한 한도: 1회·하루 최대 송금, buyer 허용 여부, 메모 (이 기기의 localStorage) |
+| `app_ask_owner` | 질문 시트를 띄우고 바로 반환. 주인의 답은 `[주인 답변]`으로 시작하는 채팅 메시지로 에이전트에게 감 |
+
+Round 4 전 미리보기: `$PY submissions/26510358/round-4/ops/preview_app.py --port 18800` 후 http://127.0.0.1:18800/ 을 연다.
+가짜 에이전트가 답하고, `/tool <이름> {json}`으로 도구를 직접 불러 볼 수 있다.
+11-18 headless Chrome에서 확인한 것: 도구 4개 등록, 한도 읽기·저장, 질문과 답, DailyMart 허용(검증된 영수증)·거절, 페이지 오류 0.

@@ -11,7 +11,7 @@
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="icon" href="/icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-<title>Mini App</title>
+<title>싸다싸 가게</title>
 <style>
 /* Tokens follow the Ouroboros console (github.com/Q00/ouroboros): neutral grays only, color only for status and focus. */
 :root{--font:"Pretendard Variable",Pretendard,-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR",system-ui,Roboto,sans-serif;
@@ -118,6 +118,15 @@ textarea::placeholder{color:var(--text-mute)}
 .credit a{color:var(--text-soft);text-decoration:none;font-weight:600}
 @keyframes up{from{transform:translateY(32px);opacity:0}}
 @keyframes fade{from{opacity:0}}
+.field{display:block;margin-bottom:14px}
+.field span{display:block;font-size:13px;color:var(--text-mute);margin-bottom:6px}
+.field input[type=number],.field textarea{width:100%;border:1px solid var(--line-strong);border-radius:10px;background:var(--bg);
+  color:var(--text);font:inherit;font-size:16px;padding:10px 12px}
+.field textarea{min-height:72px;resize:vertical}
+.toggle{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 0;margin-bottom:8px}
+.toggle input{width:20px;height:20px}
+.opts{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+.badge{display:inline-block;min-width:18px;padding:0 6px;border-radius:9px;background:var(--warn);color:#000;font-size:11px;font-weight:700;margin-left:6px}
 [hidden]{display:none!important}
 </style>
 </head>
@@ -126,6 +135,8 @@ textarea::placeholder{color:var(--text-mute)}
   <header>
     <div class="avatar" id="av">A</div>
     <div class="who"><b id="nm">Agent</b><div class="status" id="st"><span class="dot"></span><span id="stt">연결하는 중</span></div></div>
+    <button class="btn" id="askbtn" type="button" hidden>질문<span class="badge" id="askn">1</span></button>
+    <button class="btn" id="set" type="button">설정</button>
     <button class="btn" id="act" type="button">활동</button>
   </header>
   <div id="scroll"><div id="log"></div></div>
@@ -152,9 +163,28 @@ textarea::placeholder{color:var(--text-mute)}
   <div class="sec">최근 움직임</div><div id="moves"></div>
   <div class="sec">에이전트가 만든 도구</div><div id="forged"></div>
   <div class="sec">이 앱이 준 도구</div><div id="apptools"></div>
+  <div class="sec">주인이 정한 한도</div><div id="limitsview"></div>
   <div class="credit">Built with the agent market mini app kit, inspired by
     <a href="https://github.com/Q00/meshkit" target="_blank" rel="noopener">MeshKit</a> and
     <a href="https://github.com/Q00/ouroboros" target="_blank" rel="noopener">Ouroboros</a></div>
+</div></div>
+<div class="shade" id="ask" hidden><div class="sheet" role="dialog" aria-modal="true">
+  <div class="grip"></div>
+  <h3>에이전트의 질문</h3>
+  <p class="sub" id="askq"></p>
+  <div class="opts" id="askopts"></div>
+  <label class="field"><span>직접 답하기</span><textarea id="askfree" placeholder="답을 적어 주세요"></textarea></label>
+  <div class="actions"><button type="button" id="asklater">나중에</button><button type="button" class="yes" id="asksend">보내기</button></div>
+</div></div>
+<div class="shade" id="settings" hidden><div class="sheet" role="dialog" aria-modal="true">
+  <div class="grip"></div>
+  <h3>주인 설정</h3>
+  <p class="sub">에이전트는 <span class="mono">app_owner_limits</span> 도구로 이 값을 읽습니다. 이 기기에만 저장됩니다.</p>
+  <label class="field"><span>한 번에 보낼 수 있는 최대 금액 (credits)</span><input type="number" id="lpay" min="0" step="1000"></label>
+  <label class="field"><span>하루에 보낼 수 있는 최대 금액 (credits)</span><input type="number" id="lday" min="0" step="1000"></label>
+  <label class="toggle"><span>구매자(buyer) 역할로 사도 됨</span><input type="checkbox" id="lbuy"></label>
+  <label class="field"><span>에이전트에게 남길 말</span><textarea id="lnote" placeholder="예: 오늘은 가구 재고를 늘리지 말 것"></textarea></label>
+  <div class="actions"><button type="button" id="lcancel">닫기</button><button type="button" class="yes" id="lsave">저장</button></div>
 </div></div>
 <script src="/miniapp.js"></script>
 <script>
@@ -166,10 +196,63 @@ const touch = matchMedia('(pointer: coarse)').matches;
 let view = {chat: [], consents: [], moves: [], forged: {}, app_tools: {}}, cards = [], pending = [], waiting = 0, seen = 0, drawn = '';
 const handled = new Set();
 
-// An example page tool: the agent can show the person a card in the chat.
-miniapp.offer('show_card', 'show the person a card in the chat; args {title, body}', a => {
+// Page tools. They run only while this page is open, and the kit waits for each answer inside its polling loop,
+// so every handler returns at once; the owner's answer to a question comes back later as a chat message.
+miniapp.offer('show_card', 'show the owner a card in the chat (a deal, a daily summary, a warning); args {title, body}', a => {
   cards.push({who: 'card', title: a.title || '', text: a.body || '', ts: Date.now() / 1000}); draw(); return 'shown';
 });
+
+const LIMITS_KEY = 'ssadassa-limits';
+const DEFAULT_LIMITS = {max_pay_per_call: 20000, max_pay_per_day: 200000, buyer_allowed: true, note: ''};
+function readLimits() {
+  try { return Object.assign({}, DEFAULT_LIMITS, JSON.parse(localStorage.getItem(LIMITS_KEY) || '{}')) }
+  catch (e) { return Object.assign({}, DEFAULT_LIMITS) }
+}
+function writeLimits(v) { try { localStorage.setItem(LIMITS_KEY, JSON.stringify(v)) } catch (e) {} }
+miniapp.offer('owner_limits', 'the owner\'s current limits: {max_pay_per_call, max_pay_per_day (credits), buyer_allowed, note, set_at}. ' +
+  'Read before paying or changing strategy; stay inside them. No args.', () => Object.assign(readLimits(), {source: 'owner, in the app'}));
+
+const questions = [];
+miniapp.offer('ask_owner', 'ask the owner a question when a decision is risky or unclear (a large payment, a new strategy). ' +
+  'args {question, options (optional list of short answers)}. Returns at once; the answer arrives later as a chat message ' +
+  'from the owner starting with "[주인 답변]". Do not wait for it: keep to the safe choice until it comes.', a => {
+  const q = {id: Math.random().toString(36).slice(2, 8), question: String(a.question || ''), options: Array.isArray(a.options) ? a.options.slice(0, 6).map(String) : []};
+  if (!q.question) return 'error: question is required';
+  questions.push(q); showAsk();
+  return {asked: q.id, note: 'the owner sees it now; the answer comes as a chat message starting with [주인 답변]'};
+});
+
+function showAsk() {
+  $('askbtn').hidden = !questions.length; $('askn').textContent = questions.length;
+  const q = questions[0];
+  if (!q) { $('ask').hidden = true; return; }
+  $('askq').textContent = q.question;
+  $('askopts').innerHTML = q.options.map(o => `<button type="button" class="chip">${esc(o)}</button>`).join('');
+  $('askopts').querySelectorAll('.chip').forEach(b => b.onclick = () => answerAsk(b.textContent));
+  $('askfree').value = '';
+  $('ask').hidden = false;
+}
+function answerAsk(text) {
+  const q = questions.shift();
+  showAsk();                                       // the next question, or close the sheet
+  if (q && text.trim()) send(`[주인 답변] (질문 ${q.id}: ${q.question}) ${text.trim()}`);
+}
+$('asksend').onclick = () => answerAsk($('askfree').value);
+$('asklater').onclick = () => { $('ask').hidden = true; };
+$('askbtn').onclick = showAsk;
+
+function openSettings() {
+  const v = readLimits();
+  $('lpay').value = v.max_pay_per_call; $('lday').value = v.max_pay_per_day; $('lbuy').checked = !!v.buyer_allowed; $('lnote').value = v.note || '';
+  $('settings').hidden = false;
+}
+$('set').onclick = openSettings;
+$('lcancel').onclick = () => { $('settings').hidden = true; };
+$('lsave').onclick = () => {
+  writeLimits({max_pay_per_call: Math.max(0, +$('lpay').value || 0), max_pay_per_day: Math.max(0, +$('lday').value || 0),
+               buyer_allowed: $('lbuy').checked, note: $('lnote').value.trim().slice(0, 500), set_at: new Date().toISOString()});
+  $('settings').hidden = true;
+};
 
 function draw() {
   const items = view.chat.concat(cards).sort((a, b) => a.ts - b.ts);
@@ -182,8 +265,8 @@ function draw() {
   const name = view.agent || 'Agent';
   if (!items.length && !pending.length) {
     $('log').innerHTML = `<div class="empty"><div class="avatar">${esc(name[0].toUpperCase())}</div><h2>${esc(name)}</h2>
-      <p>이 앱에 사는 에이전트입니다. 대화하는 동안에도 시장에서 사고팝니다.</p>
-      <div class="chips">${['지금 뭐 하고 있어?', '오늘 뭐 팔아?', '만든 도구 보여줘'].map(s => `<button class="chip" type="button">${s}</button>`).join('')}</div></div>`;
+      <p>싸다싸 가게의 에이전트입니다. 대화하는 동안에도 시장에서 사고팝니다.</p>
+      <div class="chips">${['지금 잔고와 순위는?', '오늘 판 것 요약해줘', '최근에 실패한 것은?', '만든 도구 보여줘'].map(s => `<button class="chip" type="button">${s}</button>`).join('')}</div></div>`;
     $('log').querySelectorAll('.chip').forEach(b => b.onclick = () => send(b.textContent));
     return;
   }
@@ -250,9 +333,14 @@ function fillActivity() {
   list($('moves'), (view.moves || []).map(m => [m.action, m.thought]));
   list($('forged'), Object.entries(view.forged || {}).map(([k, v]) => [k, v]));
   list($('apptools'), Object.entries(view.app_tools || {}).map(([k, v]) => [k, v]));
+  const l = readLimits();
+  list($('limitsview'), [['한 번 최대 ' + l.max_pay_per_call.toLocaleString() + ' / 하루 최대 ' + l.max_pay_per_day.toLocaleString() + ' credits',
+                          (l.buyer_allowed ? '구매자 역할 허용' : '구매자 역할 금지') + (l.note ? ' · ' + l.note : '')]]);
 }
 $('act').onclick = () => { fillActivity(); $('activity').hidden = false; };
 $('activity').onclick = e => { if (e.target === $('activity')) $('activity').hidden = true; };
+$('settings').onclick = e => { if (e.target === $('settings')) $('settings').hidden = true; };
+$('ask').onclick = e => { if (e.target === $('ask')) $('ask').hidden = true; };
 
 async function send(text) {
   text = text.trim();
