@@ -1,16 +1,17 @@
 import SwiftUI
 import UIKit
 
-/// Character-led companion style: ivory paper, soft black ink, rounded type, one status color at a time.
-/// Colors follow the character spec (#171717 body on #F8F7F3); dark mode inverts them.
+/// Character-led companion style: cool neutral paper, soft black ink, rounded type, one status color at a time.
+/// The ink is the character spec's #171717; the paper was ivory (#F8F7F3) and read as yellowish, so the grays are
+/// now neutral with a slight cool tint. Dark mode inverts them.
 enum Theme {
-    static let paper = dynamic(light: 0xF8F7F3, dark: 0x0E0E0D)
-    static let surface = dynamic(light: 0xFFFFFF, dark: 0x1A1A19)
-    static let soft = dynamic(light: 0xEFEDE6, dark: 0x252523)
-    static let ink = dynamic(light: 0x171717, dark: 0xF2F1EC)
-    static let inkOn = dynamic(light: 0xF8F7F3, dark: 0x0E0E0D)      // text on an ink fill
-    static let mute = dynamic(light: 0x77756E, dark: 0x9C9A93)
-    static let line = dynamic(light: 0xE4E1D8, dark: 0x2E2E2B)
+    static let paper = dynamic(light: 0xF5F6F8, dark: 0x0C0D0F)
+    static let surface = dynamic(light: 0xFFFFFF, dark: 0x18191C)
+    static let soft = dynamic(light: 0xECEEF1, dark: 0x24262A)
+    static let ink = dynamic(light: 0x171717, dark: 0xF2F3F5)
+    static let inkOn = dynamic(light: 0xFFFFFF, dark: 0x0C0D0F)      // text on an ink fill
+    static let mute = dynamic(light: 0x6B7079, dark: 0x9BA0A8)
+    static let line = dynamic(light: 0xE2E5EA, dark: 0x2D3035)
     static let ok = dynamic(light: 0x12A27A, dark: 0x34D399)
     static let warn = dynamic(light: 0xC98A00, dark: 0xFBBF24)
     static let fail = dynamic(light: 0xD93636, dark: 0xF87171)
@@ -53,19 +54,23 @@ struct StatusPill: View {
 
     var body: some View {
         HStack(spacing: 6) {
-            Circle().fill(color).frame(width: 7, height: 7)
+            Circle().fill(status.color).frame(width: 7, height: 7)
             Text(label).font(Theme.rounded(.caption, .medium)).foregroundStyle(Theme.mute)
         }
         .padding(.horizontal, 10).padding(.vertical, 5)
         .background(Theme.soft, in: Capsule())
     }
 
-    private var color: Color {
-        switch status { case .live: return Theme.ok; case .busy: return Theme.warn; case .offline: return Theme.fail; case .demo: return Theme.mute }
+    private var label: String { status.label }
+}
+
+extension AppModel.Status {
+    var color: Color {
+        switch self { case .live: return Theme.ok; case .busy: return Theme.warn; case .offline: return Theme.fail; case .demo: return Theme.mute }
     }
 
-    private var label: String {
-        switch status {
+    var label: String {
+        switch self {
         case .live: return "시장에서 거래 중"
         case .busy: return "생각하는 중"
         case .offline: return "연결 끊김"

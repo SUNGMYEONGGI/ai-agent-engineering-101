@@ -42,27 +42,27 @@ struct ChatView: View {
     // MARK: header
 
     private var header: some View {
-        HStack(spacing: 12) {
-            CharacterBadge(character: model.character, size: 40, trigger: model.beat)
-            VStack(alignment: .leading, spacing: 3) {
-                Text(model.agentName).font(Theme.rounded(.headline, .bold))
-                StatusPill(status: model.status)
+        ZStack(alignment: .top) {
+            TopCharacter(character: model.character, name: model.agentName, status: model.status,
+                         trigger: model.beat, busy: !model.sending.isEmpty, listening: focused && !blank)
+            HStack {
+                Spacer()
+                if !model.questions.isEmpty {
+                    Label("\(model.questions.count)", systemImage: "questionmark.bubble.fill")
+                        .font(Theme.rounded(.caption, .bold)).foregroundStyle(Theme.warn)
+                        .padding(.horizontal, 10).padding(.vertical, 6).background(Theme.warn.opacity(0.14), in: Capsule())
+                }
             }
-            Spacer()
-            if !model.questions.isEmpty {
-                Label("\(model.questions.count)", systemImage: "questionmark.bubble.fill")
-                    .font(Theme.rounded(.caption, .bold)).foregroundStyle(Theme.warn)
-                    .padding(.horizontal, 10).padding(.vertical, 6).background(Theme.warn.opacity(0.14), in: Capsule())
-            }
+            .padding(.top, 16)
         }
-        .padding(.horizontal, 18).padding(.vertical, 10)
+        .frame(maxWidth: .infinity)
+        .padding(.horizontal, 18).padding(.top, 6).padding(.bottom, 4)
     }
 
     // MARK: empty state
 
     private var hero: some View {
         VStack(spacing: 18) {
-            CharacterStage(character: model.character, size: 120, trigger: model.beat).padding(.top, 36)
             VStack(spacing: 6) {
                 Text("안녕하세요, \(model.character.name)예요").font(Theme.rounded(.title2, .bold))
                 Text("싸다싸 가게를 대신 운영하고 있어요.\n궁금한 걸 물어보거나 아래에서 골라 주세요.")
@@ -86,6 +86,7 @@ struct ChatView: View {
             }
             .padding(.top, 6)
         }
+        .padding(.top, 28)
         .frame(maxWidth: .infinity)
     }
 
