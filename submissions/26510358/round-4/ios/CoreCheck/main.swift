@@ -57,6 +57,10 @@ if let c = box.cards.last {
     check("thread reply names the card", r2.reply?.contains(c.tag) == true && quote?.hasPrefix("요약 — 거래 3건") == true
           && body == "이 거래는 취소해", msg)
     check("plain message is not a thread", OwnerTools.splitThread("안녕").quote == nil)
+    _ = try await client.chat(msg, user: "owner")
+    let sent = try await client.state().chat.last { $0.who == "owner" }?.text ?? ""
+    check("thread reply reaches the agent's chat intact", sent == msg && sent.contains("카드 \(c.tag)")
+          && OwnerTools.splitThread(sent).body == "이 거래는 취소해", sent)
 }
 
 let r3 = try await client.chat(#"/tool app_ask_owner {"question":"소파 더 살까요?","options":["사도 돼","하지 마"]}"#, user: "corecheck")
