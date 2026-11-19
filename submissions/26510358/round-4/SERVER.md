@@ -27,7 +27,19 @@ ls submissions/26510358/.env \
    submissions/26510358/round-4/*_wallet.key  # git에 없는 파일: 지갑 키, 모델 키, claim code
 ```
 
-- `tmux`가 없으면 `screen`으로 대신할 수 있지만, 이 스크립트는 tmux 기준이다. 설치는 관리자에게 부탁한다.
+둘 다 없으면 root 없이 설치한다(11-19 SMC 서버에 둘 다 없었음). `cloudflared`는 kit이 PATH에서 직접 찾아 실행하므로
+tmux를 안 써도 필요하다. `run_server.sh`는 `~/.local/bin`을 PATH 앞에 넣는다.
+
+```bash
+uname -m                                     # x86_64 → amd64, aarch64 → arm64
+mkdir -p ~/.local/bin
+curl -L https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 \
+  -o ~/.local/bin/cloudflared && chmod +x ~/.local/bin/cloudflared
+sudo apt install -y tmux || conda install -y -c conda-forge tmux   # 되는 쪽 하나
+fish_add_path ~/.local/bin                   # fish. bash면 ~/.bashrc에 export PATH=$HOME/.local/bin:$PATH
+```
+
+conda로 설치한 tmux는 conda 환경의 bin에 있으므로 `ln -s "$(which tmux)" ~/.local/bin/tmux`로 cron에서도 보이게 한다.
 - 지갑 키(`shop_wallet.key`, `buyer_wallet.key`)가 바뀌면 다른 가게가 된다. 지우지 말 것.
 
 ## 1. 최신 코드 받기

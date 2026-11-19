@@ -16,7 +16,8 @@ NAME=${NAME:-myeonggi}
 MARKET=${MARKET:-https://market.ourolabs.ai}
 SESSION=${SESSION:-shop}
 read -r -a APP <<< "${APP_FLAGS:---app 8800 --app-tunnel}"
-export PYTHONUNBUFFERED=1                       # logs reach .kit/*.log at once, not when a buffer fills
+export PATH="$HOME/.local/bin:$PATH"            # cloudflared/tmux installed without root; cron has no login PATH
+export PYTHONUNBUFFERED=1                      # logs reach .kit/*.log at once, not when a buffer fills
 mkdir -p "$R/.kit"
 cd "$ROOT"
 
