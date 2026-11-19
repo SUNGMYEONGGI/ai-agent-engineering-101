@@ -50,7 +50,7 @@ public enum DemoData {
         var s = MiniAppState(agent: "싸다싸")
         s.chat = [
             ChatMessage(who: owner, text: "오늘 장사 어때?", ts: now - 900),
-            ChatMessage(who: "agent", text: "오늘 23건 팔았어요. 순이익은 +412,300 credits이고, 소파가 제일 잘 나가요.", ts: now - 880),
+            ChatMessage(who: "agent", text: "오늘 장사를 카드로 정리했어요.", ts: now - 880),
             ChatMessage(who: owner, text: "수수료 계산은 맞게 하고 있지?", ts: now - 600),
             ChatMessage(who: "agent", text: "네. /api/chain에서 읽은 대로 1% + 210으로 계산해요. 첫 정산이 통과해서 pay_limit도 올렸어요.", ts: now - 585),
         ]
@@ -76,10 +76,10 @@ public enum DemoData {
     }
 
     public static let question = OwnerQuestion(id: "demo01", question: "소파 재고를 10개 더 살까요? 약 7M credits가 듭니다.",
-                                               options: ["사도 돼", "5개만", "하지 마"])
+                                               options: ["소파 10개 매입 승인", "5개까지만 매입", "이번 요청 거절"])
 
     public static let card = OwnerCard(title: "오늘 요약", body: "거래 23건 · 순이익 +412,300 credits\n가장 많이 팔린 것: 소파 A등급",
-                                       ts: Date().timeIntervalSince1970 - 300)
+                                       ts: Date().timeIntervalSince1970 - 879)
 
     public static let replies = [
         "확인했어요. 지금 시장 상황을 보고 바로 알려드릴게요.",

@@ -19,7 +19,7 @@
 		7D016D59740B5B99307163D5 /* AppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2ED373513B87D0D22739EAC6 /* AppModel.swift */; };
 		4C8355A7B265BBD079EBB325 /* CharacterView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFE5FB199AFD1F2291D962C1 /* CharacterView.swift */; };
 		76CDA472500DF1A184253EB2 /* ChatView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F206C5EED8CC1083E984BF7E /* ChatView.swift */; };
-		553BA3AD932F7D88BFA2E0B3 /* ConsentSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6C7B0EC2FA3D9DCF45A7E09D /* ConsentSheet.swift */; };
+		D75DC7AF93DF920B323B276F /* ConsentCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 683E019A50D949DBB1718DC5 /* ConsentCard.swift */; };
 		2BD1AF1CB360ADD95FD4B70D /* LinkView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 21B77FA23CE6F7C87995464C /* LinkView.swift */; };
 		130E809912297DA2FC9408B8 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E99778F48DC42861ACA5E18B /* SettingsView.swift */; };
 		F0AD747FBCE10D59321A87F7 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE658541AB1E0319B37AA9A4 /* Theme.swift */; };
@@ -40,7 +40,7 @@
 		2ED373513B87D0D22739EAC6 /* AppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UI/AppModel.swift; sourceTree = "<group>"; };
 		CFE5FB199AFD1F2291D962C1 /* CharacterView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UI/CharacterView.swift; sourceTree = "<group>"; };
 		F206C5EED8CC1083E984BF7E /* ChatView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UI/ChatView.swift; sourceTree = "<group>"; };
-		6C7B0EC2FA3D9DCF45A7E09D /* ConsentSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UI/ConsentSheet.swift; sourceTree = "<group>"; };
+		683E019A50D949DBB1718DC5 /* ConsentCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UI/ConsentCard.swift; sourceTree = "<group>"; };
 		21B77FA23CE6F7C87995464C /* LinkView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UI/LinkView.swift; sourceTree = "<group>"; };
 		E99778F48DC42861ACA5E18B /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UI/SettingsView.swift; sourceTree = "<group>"; };
 		CE658541AB1E0319B37AA9A4 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UI/Theme.swift; sourceTree = "<group>"; };
@@ -87,7 +87,7 @@
 				2ED373513B87D0D22739EAC6 /* AppModel.swift */,
 				CFE5FB199AFD1F2291D962C1 /* CharacterView.swift */,
 				F206C5EED8CC1083E984BF7E /* ChatView.swift */,
-				6C7B0EC2FA3D9DCF45A7E09D /* ConsentSheet.swift */,
+				683E019A50D949DBB1718DC5 /* ConsentCard.swift */,
 				21B77FA23CE6F7C87995464C /* LinkView.swift */,
 				E99778F48DC42861ACA5E18B /* SettingsView.swift */,
 				CE658541AB1E0319B37AA9A4 /* Theme.swift */,
@@ -178,7 +178,7 @@
 				7D016D59740B5B99307163D5 /* AppModel.swift in Sources */,
 				4C8355A7B265BBD079EBB325 /* CharacterView.swift in Sources */,
 				76CDA472500DF1A184253EB2 /* ChatView.swift in Sources */,
-				553BA3AD932F7D88BFA2E0B3 /* ConsentSheet.swift in Sources */,
+				D75DC7AF93DF920B323B276F /* ConsentCard.swift in Sources */,
 				2BD1AF1CB360ADD95FD4B70D /* LinkView.swift in Sources */,
 				130E809912297DA2FC9408B8 /* SettingsView.swift in Sources */,
 				F0AD747FBCE10D59321A87F7 /* Theme.swift in Sources */,

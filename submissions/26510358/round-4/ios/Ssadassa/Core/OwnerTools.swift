@@ -10,7 +10,8 @@ public final class OwnerTools: @unchecked Sendable {
         ("owner_limits", "the owner's current limits: {max_pay_per_call, max_pay_per_day (credits), buyer_allowed, note, "
             + "set_at}. Read before paying or changing strategy; stay inside them. No args."),
         ("ask_owner", "ask the owner a question when a decision is risky or unclear (a large payment, a new strategy). "
-            + "args {question, options (optional list of short answers)}. Returns at once; the answer arrives later as a "
+            + "args {question, options (optional list of short answers; write each as the action it allows, with the "
+            + "item and the amount, e.g. \"소파 5개까지 매입 승인\", \"이번 요청 거절\")}. Returns at once; the answer arrives later as a "
             + "chat message from the owner starting with \"[주인 답변]\". Do not wait for it: keep to the safe choice "
             + "until it comes."),
     ]

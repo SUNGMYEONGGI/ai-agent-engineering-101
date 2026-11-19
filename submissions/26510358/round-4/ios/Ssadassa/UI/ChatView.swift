@@ -14,49 +14,89 @@ struct ChatView: View {
                             Starter(icon: "exclamationmark.triangle", text: "최근에 실패한 건?"),
                             Starter(icon: "hammer", text: "만든 도구 보여줘")]
 
+    @State private var collapsed = false
+
     var body: some View {
-        VStack(spacing: 0) {
-            header
-            ScrollViewReader { proxy in
+        ScrollViewReader { proxy in
+            VStack(spacing: 0) {
+                header(proxy)
                 ScrollView {
                     LazyVStack(alignment: .leading, spacing: 14) {
-                        if model.timeline.isEmpty { hero }
-                        if let q = model.questions.first { QuestionCard(question: q, more: model.questions.count - 1) }
-                        ForEach(model.timeline) { item in row(item).id(item.id) }
-                        if !model.sending.isEmpty { thinking.id("thinking") }
-                        Color.clear.frame(height: 8).id("end")
-                    }
-                    .padding(.horizontal, 18).padding(.top, 8)
+                            if model.timeline.isEmpty { hero }
+                            ForEach(model.timeline) { item in row(item).id(item.id) }
+                            if !model.sending.isEmpty { thinking.id("thinking") }
+                            // Requests wait at the bottom, next to the input, until the owner answers them.
+                            if let c = model.consent { ConsentCard(call: c).id("consent-\(c.id)") }
+                            ForEach(model.questions) { q in QuestionCard(question: q).id("q-\(q.id)") }
+                            Color.clear.frame(height: 8).id("end")
+                        }
+                        .padding(.horizontal, 18).padding(.top, 8)
                 }
+                .modifier(ScrolledDown { c in
+                    if c != collapsed { withAnimation(.easeOut(duration: 0.2)) { collapsed = c } }
+                })
                 .scrollDismissesKeyboard(.interactively)
                 .onChange(of: model.timeline.count) { _ in
                     withAnimation(.easeOut(duration: 0.25)) { proxy.scrollTo("end", anchor: .bottom) }
                 }
-                .onAppear { proxy.scrollTo("end", anchor: .bottom) }
+                .onChange(of: model.pendingCount) { _ in
+                    withAnimation(.easeOut(duration: 0.25)) { proxy.scrollTo("end", anchor: .bottom) }
+                }
+                .onChange(of: model.focus) { id in jump(proxy, id) }
+                .onAppear {
+                    proxy.scrollTo("end", anchor: .bottom)
+                    jump(proxy, model.focus)
+                }
+                composer
             }
-            composer
         }
         .background(Theme.paper.ignoresSafeArea())
     }
 
+    private func jump(_ proxy: ScrollViewProxy, _ id: String?) {
+        guard let id else { return }
+        DispatchQueue.main.async {
+            withAnimation(.easeOut(duration: 0.3)) { proxy.scrollTo(id, anchor: .top) }
+            model.focus = nil
+        }
+    }
+
     // MARK: header
 
-    private var header: some View {
-        ZStack(alignment: .top) {
-            TopCharacter(character: model.character, name: model.agentName, status: model.status,
-                         trigger: model.beat, busy: !model.sending.isEmpty, listening: focused && !blank)
+    /// A large character on top; once the chat scrolls it folds into one line (small icon, name, status).
+    private func header(_ proxy: ScrollViewProxy) -> some View {
+        ZStack(alignment: collapsed ? .leading : .top) {
+            if collapsed {
+                HStack(spacing: 8) {
+                    CharacterBadge(character: model.character, size: 28, trigger: model.beat)
+                    Text(model.character.name).font(Theme.rounded(.subheadline, .bold))
+                    Circle().fill(model.status.color).frame(width: 6, height: 6)
+                    Text(model.status.label).font(Theme.rounded(.caption)).foregroundStyle(Theme.mute)
+                }
+                .transition(.opacity)
+            } else {
+                TopCharacter(character: model.character, name: model.character.name, status: model.status,
+                             trigger: model.beat, busy: !model.sending.isEmpty, listening: focused && !blank)
+                    .frame(maxWidth: .infinity)
+                    .transition(.opacity.combined(with: .scale(scale: 0.9, anchor: .top)))
+            }
             HStack {
                 Spacer()
-                if !model.questions.isEmpty {
-                    Label("\(model.questions.count)", systemImage: "questionmark.bubble.fill")
-                        .font(Theme.rounded(.caption, .bold)).foregroundStyle(Theme.warn)
-                        .padding(.horizontal, 10).padding(.vertical, 6).background(Theme.warn.opacity(0.14), in: Capsule())
+                if model.pendingCount > 0 {
+                    Button { model.show(model.firstPendingID) } label: {
+                        Text("확인 \(model.pendingCount)건")
+                            .font(Theme.rounded(.caption, .bold)).foregroundStyle(Theme.inkOn)
+                            .padding(.horizontal, 12).padding(.vertical, 7)
+                            .background(Theme.ink, in: Capsule())
+                    }
+                    .accessibilityHint("확인이 필요한 요청 카드로 이동")
                 }
             }
-            .padding(.top, 16)
+            .padding(.top, collapsed ? 0 : 16)
         }
         .frame(maxWidth: .infinity)
-        .padding(.horizontal, 18).padding(.top, 6).padding(.bottom, 4)
+        .padding(.horizontal, 18).padding(.top, 6).padding(.bottom, collapsed ? 8 : 4)
+        .overlay(alignment: .bottom) { if collapsed { Divider() } }
     }
 
     // MARK: empty state
@@ -217,6 +257,22 @@ struct ChatView: View {
     private var blank: Bool { draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
 }
 
+/// Reports whether the chat is scrolled away from its top, to fold the header. iOS 18+ only; on iOS 16–17 the
+/// header just stays large.
+private struct ScrolledDown: ViewModifier {
+    let changed: (Bool) -> Void
+
+    func body(content: Content) -> some View {
+        if #available(iOS 18, *) {
+            content.onScrollGeometryChange(for: Bool.self) { g in
+                g.contentOffset.y + g.contentInsets.top > 24 && g.contentSize.height > g.containerSize.height
+            } action: { _, down in changed(down) }
+        } else {
+            content
+        }
+    }
+}
+
 struct ThinkingDots: View {
     @State private var on = false
 
@@ -236,7 +292,6 @@ struct ThinkingDots: View {
 struct QuestionCard: View {
     @EnvironmentObject var model: AppModel
     let question: OwnerQuestion
-    let more: Int
     @State private var text = ""
 
     var body: some View {
@@ -246,7 +301,7 @@ struct QuestionCard: View {
                     CharacterBadge(character: .eotgallim, size: 34, trigger: model.beat)
                     VStack(alignment: .leading, spacing: 1) {
                         Text("결정이 필요해요").font(Theme.rounded(.subheadline, .bold))
-                        Text(more > 0 ? "질문 \(more + 1)개 대기" : "주인에게 묻는 질문")
+                        Text("\(model.character.name)가 묻고 있어요")
                             .font(Theme.rounded(.caption)).foregroundStyle(Theme.mute)
                     }
                 }

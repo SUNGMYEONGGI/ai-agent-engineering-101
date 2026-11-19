@@ -53,7 +53,6 @@ struct RootView: View {
 struct MainView: View {
     @StateObject private var model: AppModel
     @Environment(\.scenePhase) private var phase
-    @State private var tab = UserDefaults.standard.integer(forKey: "tab")  // `-tab N` lands in UserDefaults
     let disconnect: () -> Void
 
     init(link: AppLink?, disconnect: @escaping () -> Void) {
@@ -62,10 +61,10 @@ struct MainView: View {
     }
 
     var body: some View {
-        TabView(selection: $tab) {
+        TabView(selection: $model.tab) {
             ChatView()
                 .tabItem { Label("대화", systemImage: "bubble.left.and.bubble.right") }
-                .badge(model.questions.count)
+                .badge(model.pendingCount)
                 .tag(0)
                 .toolbarBackground(Theme.paper, for: .tabBar)
                 .toolbarBackground(.visible, for: .tabBar)
@@ -82,9 +81,6 @@ struct MainView: View {
         }
         .tint(Theme.ink)
         .environmentObject(model)
-        .sheet(item: Binding(get: { model.consent }, set: { _ in })) { call in
-            ConsentSheet(call: call) { model.answer(consent: call, approved: $0) }
-        }
         .onAppear { model.start() }
         .onDisappear { model.stop() }
         .onChange(of: phase) { p in

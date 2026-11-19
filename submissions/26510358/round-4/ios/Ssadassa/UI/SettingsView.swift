@@ -16,7 +16,7 @@ struct SettingsView: View {
                 limitsSection
                 connectionSection
             }
-            .padding(.horizontal, 18).padding(.bottom, 28)
+            .padding(.horizontal, 18).padding(.bottom, 110)   // the last button clears the floating tab bar
         }
         .background(Theme.paper.ignoresSafeArea())
         .onAppear { draft = model.limits; saved = false }
@@ -119,7 +119,9 @@ struct SettingsView: View {
             SectionTitle(text: "연결")
             SoftCard {
                 VStack(alignment: .leading, spacing: 10) {
-                    infoRow("에이전트", model.agentName)
+                    infoRow("가게", "싸다싸 가게")
+                    infoRow("에이전트", model.character.name)
+                    infoRow("마켓 ID", model.agentName)
                     infoRow("주소", model.isDemo ? "데모 모드" : (model.link?.base.host ?? "-"))
                     infoRow("접근 코드", model.isDemo ? "-" : (model.link?.accessCode == nil ? "없음" : "Keychain에 저장됨"))
                     if let e = model.error { Text(e).font(Theme.rounded(.caption)).foregroundStyle(Theme.fail) }

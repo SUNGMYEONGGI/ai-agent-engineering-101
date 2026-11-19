@@ -11,6 +11,23 @@ struct ActivityView: View {
             VStack(alignment: .leading, spacing: 22) {
                 Text("활동").font(Theme.rounded(.largeTitle, .bold)).padding(.top, 8)
                 tiles
+                if model.pendingCount > 0 {
+                    VStack(spacing: 10) {
+                        SectionTitle(text: "확인 필요")
+                        if let c = model.consent {
+                            PendingRow(title: c.name, detail: "다른 앱 기능 실행 허락") { model.show("consent-\(c.id)") }
+                        }
+                        ForEach(model.questions) { q in
+                            PendingRow(title: q.question, detail: "\(model.character.name)의 질문") { model.show("q-\(q.id)") }
+                        }
+                    }
+                }
+                if !model.log.isEmpty {
+                    VStack(spacing: 10) {
+                        SectionTitle(text: "내 결정과 변경")
+                        ForEach(model.log) { DecisionRow(decision: $0) }
+                    }
+                }
                 VStack(spacing: 10) {
                     SectionTitle(text: "최근 움직임")
                     if model.state.moves.isEmpty {
@@ -39,16 +56,16 @@ struct ActivityView: View {
                     }
                 }
             }
-            .padding(.horizontal, 18).padding(.bottom, 24)
+            .padding(.horizontal, 18).padding(.bottom, 110)   // clear of the floating tab bar
         }
         .background(Theme.paper.ignoresSafeArea())
     }
 
     private var tiles: some View {
         HStack(spacing: 10) {
-            tile(model.character, "\(model.state.forged.count)", "만든 도구")
-            tile(.batchim, "\(model.state.appTools.keys.filter { $0.hasPrefix("mesh_") }.count)", "MeshKit")
-            tile(.batchim, "\(model.consent == nil ? 0 : 1)", "허락 대기")
+            tile(.batchim, "\(model.pendingCount)", "확인 필요")
+            tile(model.character, "\(model.log.filter { $0.status == .running }.count)", "진행 중")
+            tile(model.character, "\(model.log.filter { $0.status == .done }.count)", "완료")
         }
     }
 
@@ -95,6 +112,7 @@ struct ActivityView: View {
 struct MoveRow: View {
     let move: Move
     let first: Bool
+    @State private var open = false
 
     var body: some View {
         let c = AgentCharacter.forMove(move.action)
@@ -108,11 +126,104 @@ struct MoveRow: View {
                     Text(c.name).font(Theme.rounded(.caption, .bold))
                     Text(move.action).font(Theme.mono).foregroundStyle(Theme.mute)
                 }
-                Text(move.thought).font(Theme.rounded(.subheadline)).foregroundStyle(Theme.ink).lineLimit(3)
+                Text(move.thought).font(Theme.rounded(.subheadline)).foregroundStyle(Theme.ink).lineLimit(open ? nil : 2)
             }
             .padding(.bottom, 14)
             Spacer(minLength: 0)
         }
         .fixedSize(horizontal: false, vertical: true)
+        .contentShape(Rectangle())
+        .onTapGesture { withAnimation(.easeOut(duration: 0.2)) { open.toggle() } }
+    }
+}
+
+/// A request waiting for the owner; tapping opens its card in the chat.
+struct PendingRow: View {
+    let title: String
+    let detail: String
+    let open: () -> Void
+
+    var body: some View {
+        Button(action: open) {
+            HStack(spacing: 12) {
+                StatusChip(text: "확인 필요", color: Theme.warn)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(title).font(Theme.rounded(.subheadline, .semibold)).lineLimit(2)
+                    Text(detail).font(Theme.rounded(.caption)).foregroundStyle(Theme.mute)
+                }
+                Spacer(minLength: 0)
+                Image(systemName: "chevron.right").font(.caption.weight(.bold)).foregroundStyle(Theme.mute)
+            }
+            .padding(14)
+            .background(Theme.surface, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).stroke(Theme.line, lineWidth: 0.5))
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+/// One decision or change, with its live status; tap to see the details (before → after, who, the agent's report).
+struct DecisionRow: View {
+    let decision: Decision
+    @State private var open = false
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 12) {
+                StatusChip(text: label, color: color)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(decision.title).font(Theme.rounded(.subheadline, .semibold)).lineLimit(open ? nil : 1)
+                    Text("\(decision.choice) · \(decision.at.formatted(date: .omitted, time: .shortened))")
+                        .font(Theme.rounded(.caption)).foregroundStyle(Theme.mute)
+                }
+                Spacer(minLength: 0)
+                Image(systemName: open ? "chevron.up" : "chevron.down").font(.caption.weight(.bold)).foregroundStyle(Theme.mute)
+            }
+            if open {
+                VStack(alignment: .leading, spacing: 6) {
+                    ForEach(Array(decision.details.enumerated()), id: \.offset) { _, kv in
+                        HStack(alignment: .top) {
+                            Text(kv.0).foregroundStyle(Theme.mute)
+                            Spacer()
+                            Text(kv.1).multilineTextAlignment(.trailing)
+                        }
+                    }
+                    if let r = decision.result {
+                        Divider()
+                        Text("\(AgentCharacter.hoga.name)의 보고").foregroundStyle(Theme.mute)
+                        Text(r)
+                    } else if decision.status == .running {
+                        Text("\(AgentCharacter.hoga.name)가 결과를 알려 주면 여기 표시돼요.").foregroundStyle(Theme.mute)
+                    }
+                }
+                .font(Theme.rounded(.footnote))
+                .transition(.opacity)
+            }
+        }
+        .padding(14)
+        .background(Theme.surface, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).stroke(Theme.line, lineWidth: 0.5))
+        .contentShape(Rectangle())
+        .onTapGesture { withAnimation(.easeOut(duration: 0.2)) { open.toggle() } }
+    }
+
+    private var label: String {
+        switch decision.status { case .running: return "진행 중"; case .done: return "완료"; case .failed: return "실패"; case .declined: return "거절함" }
+    }
+
+    private var color: Color {
+        switch decision.status { case .running: return Theme.ink; case .done: return Theme.ok; case .failed: return Theme.fail; case .declined: return Theme.mute }
+    }
+}
+
+struct StatusChip: View {
+    let text: String
+    let color: Color
+
+    var body: some View {
+        Text(text).font(Theme.rounded(.caption2, .bold)).foregroundStyle(color)
+            .padding(.horizontal, 8).padding(.vertical, 4)
+            .overlay(Capsule().stroke(color.opacity(0.5), lineWidth: 1))
+            .fixedSize()
     }
 }

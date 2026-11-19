@@ -26,61 +26,72 @@ struct LinkView: View {
                 .padding(.top, 52)
                 VStack(alignment: .leading, spacing: 8) {
                     Text("싸다싸 가게").font(Theme.rounded(.largeTitle, .bold))
-                    Text("시장에서 대신 사고파는 에이전트와 연결해요. kit이 터미널에 출력한 `[app] open ...` 줄을 그대로 붙여 넣으세요.")
+                    Text("가게 운영 에이전트 호가가 시장에서 대신 사고팔아요.")
                         .font(Theme.rounded(.subheadline)).foregroundStyle(Theme.mute)
-                }
-                SoftCard(padding: 6) {
-                    VStack(spacing: 6) {
-                        TextField("https://....trycloudflare.com/?k=...", text: $text, axis: .vertical)
-                            .lineLimit(2...4)
-                            .font(Theme.mono)
-                            .textInputAutocapitalization(.never)
-                            .autocorrectionDisabled()
-                            .padding(12)
-                        HStack(spacing: 8) {
-                            Button {
-                                text = UIPasteboard.general.string ?? text
-                            } label: { Label("붙여넣기", systemImage: "doc.on.clipboard") }
-                                .buttonStyle(PillButtonStyle(filled: false))
-                            Button {
-                                Task { await check() }
-                            } label: {
-                                HStack {
-                                    if checking { ProgressView().tint(Theme.inkOn) }
-                                    Text("연결")
-                                }
-                                .frame(maxWidth: .infinity)
-                            }
-                            .buttonStyle(PillButtonStyle())
-                            .disabled(AppLink(text) == nil || checking)
-                            .opacity(AppLink(text) == nil ? 0.4 : 1)
-                        }
-                        .padding(6)
-                    }
-                }
-                if let problem {
-                    Label(problem, systemImage: "exclamationmark.circle").font(Theme.rounded(.footnote)).foregroundStyle(Theme.fail)
                 }
                 Button(action: demo) {
                     HStack {
-                        CharacterView(character: .hoga, size: 26)
+                        CharacterView(character: .hoga, size: 26, tint: Theme.inkOn)
                         VStack(alignment: .leading, spacing: 1) {
-                            Text("데모로 둘러보기").font(Theme.rounded(.subheadline, .semibold))
-                            Text("에이전트 없이 화면만 볼 수 있어요").font(Theme.rounded(.caption)).foregroundStyle(Theme.mute)
+                            Text("데모로 시작").font(Theme.rounded(.headline, .bold))
+                            Text("에이전트 없이 화면을 둘러봐요").font(Theme.rounded(.caption)).opacity(0.7)
                         }
                         Spacer()
-                        Image(systemName: "chevron.right").font(.caption.weight(.bold)).foregroundStyle(Theme.mute)
+                        Image(systemName: "arrow.right").font(.subheadline.weight(.bold))
                     }
-                    .padding(16)
-                    .background(Theme.soft, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+                    .foregroundStyle(Theme.inkOn)
+                    .padding(18)
+                    .background(Theme.ink, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
                 }
                 .buttonStyle(.plain)
-                VStack(alignment: .leading, spacing: 12) {
-                    tip("iphone", "시뮬레이터", "에이전트가 다른 컴퓨터에 있으면 https:// 터널 링크를 써요. 같은 Mac이면 http://127.0.0.1:8800 도 돼요.")
-                    tip("antenna.radiowaves.left.and.right", "내 아이폰, 어디서나", "kit을 --app-tunnel로 실행하고 https:// 링크를 붙여 넣어요.")
-                    tip("wifi", "내 아이폰, 같은 와이파이", "--app-host 0.0.0.0으로 실행하고 http://192.168.x.x:8800/?k=... 링크를 써요.")
+                VStack(alignment: .leading, spacing: 10) {
+                    SectionTitle(text: "내 에이전트에 연결")
+                    SoftCard(padding: 6) {
+                        VStack(spacing: 6) {
+                            TextField("https://....trycloudflare.com/?k=...", text: $text, axis: .vertical)
+                                .lineLimit(1...4)
+                                .font(Theme.mono)
+                                .textInputAutocapitalization(.never)
+                                .autocorrectionDisabled()
+                                .padding(12)
+                            HStack(spacing: 8) {
+                                Button {
+                                    text = UIPasteboard.general.string ?? text
+                                } label: { Label("링크 붙여넣기", systemImage: "doc.on.clipboard") }
+                                    .buttonStyle(PillButtonStyle(filled: false))
+                                Button {
+                                    Task { await check() }
+                                } label: {
+                                    HStack {
+                                        if checking { ProgressView().tint(Theme.inkOn) }
+                                        Text("연결")
+                                    }
+                                    .frame(maxWidth: .infinity)
+                                }
+                                .buttonStyle(PillButtonStyle())
+                                .disabled(AppLink(text) == nil || checking)
+                                .opacity(AppLink(text) == nil ? 0.4 : 1)
+                            }
+                            .padding(6)
+                        }
+                    }
+                    if let problem {
+                        Label(problem, systemImage: "exclamationmark.circle").font(Theme.rounded(.footnote)).foregroundStyle(Theme.fail)
+                    }
                 }
-                .padding(.top, 4)
+                DisclosureGroup {
+                    VStack(alignment: .leading, spacing: 12) {
+                        tip("terminal", "링크는 어디서?", "kit이 터미널에 출력한 `[app] open ...` 줄을 그대로 붙여 넣어요.")
+                        tip("iphone", "시뮬레이터", "에이전트가 다른 컴퓨터에 있으면 https:// 터널 링크를 써요. 같은 Mac이면 http://127.0.0.1:8800 도 돼요.")
+                        tip("antenna.radiowaves.left.and.right", "내 아이폰, 어디서나", "kit을 --app-tunnel로 실행하고 https:// 링크를 붙여 넣어요.")
+                        tip("wifi", "내 아이폰, 같은 와이파이", "--app-host 0.0.0.0으로 실행하고 http://192.168.x.x:8800/?k=... 링크를 써요.")
+                    }
+                    .padding(.top, 12)
+                } label: {
+                    Text("연결 도움말").font(Theme.rounded(.subheadline, .semibold)).foregroundStyle(Theme.ink)
+                }
+                .tint(Theme.mute)
+                .padding(.horizontal, 4)
             }
             .padding(.horizontal, 22).padding(.bottom, 30)
         }
