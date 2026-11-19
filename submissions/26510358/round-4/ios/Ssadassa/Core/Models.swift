@@ -69,6 +69,8 @@ public struct OwnerCard: Hashable, Identifiable, Sendable {
     public let title: String
     public let body: String
     public let ts: Double
+    /// The short id the agent gets back from app_show_card and sees in thread replies.
+    public var tag: String { String(id.uuidString.prefix(6)).lowercased() }
 }
 
 /// A question the agent asked the owner (app_ask_owner). The answer goes back as a chat message.

@@ -13,6 +13,8 @@ final class AppModel: ObservableObject {
     @Published private(set) var error: String?
     @Published private(set) var lastSeen: Date?
     @Published private(set) var sending: [String] = []
+    /// The card the owner is replying to in a thread, if any.
+    @Published var replyTo: OwnerCard?
     @Published private(set) var limits: OwnerLimits
     @Published private(set) var now = Date()
     /// Bumped on each real state change the characters react to (new reply, card, question, consent).
@@ -128,6 +130,14 @@ final class AppModel: ObservableObject {
             }
             if let i = sending.firstIndex(of: text) { sending.remove(at: i) }
         }
+    }
+
+    /// Sends what the owner typed, as a thread reply when a card is selected.
+    func sendDraft(_ raw: String) {
+        let text = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !text.isEmpty else { return }
+        send(replyTo.map { OwnerTools.threadReply($0, text) } ?? text)
+        replyTo = nil
     }
 
     func answer(consent call: PendingCall, approved: Bool) {

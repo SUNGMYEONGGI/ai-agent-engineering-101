@@ -4,7 +4,9 @@ import Foundation
 /// The kit waits for each answer inside its polling loop, so every handler returns at once.
 public final class OwnerTools: @unchecked Sendable {
     public static let offers: [(name: String, description: String)] = [
-        ("show_card", "show the owner a card in the chat (a deal, a daily summary, a warning); args {title, body}"),
+        ("show_card", "show the owner a card in the chat (a deal, a daily summary, a warning); args {title, body}. "
+            + "Returns the card id. The owner may reply to a card: that chat message starts with "
+            + "\"[스레드 답장 · 카드 <id>: ...]\"."),
         ("owner_limits", "the owner's current limits: {max_pay_per_call, max_pay_per_day (credits), buyer_allowed, note, "
             + "set_at}. Read before paying or changing strategy; stay inside them. No args."),
         ("ask_owner", "ask the owner a question when a decision is risky or unclear (a large payment, a new strategy). "
@@ -28,7 +30,8 @@ public final class OwnerTools: @unchecked Sendable {
             let card = OwnerCard(title: call.args["title"]?.display ?? "", body: call.args["body"]?.display ?? "",
                                  ts: Date().timeIntervalSince1970)
             onCard(card)
-            return .string("shown")
+            return .object(["shown": .string(card.tag),
+                            "note": .string("a reply to this card starts with [스레드 답장 · 카드 \(card.tag): ...]")])
         case "app_owner_limits":
             return limitsStore.load().asJSON
         case "app_ask_owner":
@@ -48,6 +51,21 @@ public final class OwnerTools: @unchecked Sendable {
     /// The chat message that carries the owner's answer back to the agent.
     public static func answerMessage(_ q: OwnerQuestion, _ answer: String) -> String {
         "[주인 답변] (질문 \(q.id): \(q.question)) \(answer)"
+    }
+
+    /// A thread reply to a card (from OCTO CREW's transcript.ts): the first line names the card, so the agent knows
+    /// which deal or warning the owner means. Same format as the web page.
+    public static func threadReply(_ c: OwnerCard, _ text: String) -> String {
+        let flat = { (s: String) in s.split(whereSeparator: \.isWhitespace).joined(separator: " ") }
+        return "[스레드 답장 · 카드 \(c.tag): \(flat(c.title)) — \(String(flat(c.body).prefix(120)))]\n\(text)"
+    }
+
+    /// Splits a sent message into the quoted card line (nil when it is not a thread reply) and the owner's words.
+    public static func splitThread(_ text: String) -> (quote: String?, body: String) {
+        let head = "[스레드 답장 · 카드 "
+        guard text.hasPrefix(head), let nl = text.firstIndex(of: "\n"), text[text.index(before: nl)] == "]",
+              let colon = text[..<nl].range(of: ": ") else { return (nil, text) }
+        return (String(text[colon.upperBound..<text.index(before: nl)]), String(text[text.index(after: nl)...]))
     }
 }
 

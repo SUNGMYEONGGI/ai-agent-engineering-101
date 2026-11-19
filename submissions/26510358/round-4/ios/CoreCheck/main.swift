@@ -50,7 +50,14 @@ let r1 = try await client.chat("/tool app_owner_limits {}", user: "corecheck")
 check("agent reads owner_limits", r1.reply?.contains("max_pay_per_call") == true, r1.reply ?? "nil")
 
 let r2 = try await client.chat(#"/tool app_show_card {"title":"요약","body":"거래 3건"}"#, user: "corecheck")
-check("agent shows a card", r2.reply == "shown" && box.cards.last?.title == "요약", r2.reply ?? "nil")
+check("agent shows a card", r2.reply?.contains("shown") == true && box.cards.last?.title == "요약", r2.reply ?? "nil")
+if let c = box.cards.last {
+    let msg = OwnerTools.threadReply(c, "이 거래는 취소해")
+    let (quote, body) = OwnerTools.splitThread(msg)
+    check("thread reply names the card", r2.reply?.contains(c.tag) == true && quote?.hasPrefix("요약 — 거래 3건") == true
+          && body == "이 거래는 취소해", msg)
+    check("plain message is not a thread", OwnerTools.splitThread("안녕").quote == nil)
+}
 
 let r3 = try await client.chat(#"/tool app_ask_owner {"question":"소파 더 살까요?","options":["사도 돼","하지 마"]}"#, user: "corecheck")
 check("agent asks the owner", r3.reply?.contains("asked") == true && box.questions.last?.options == ["사도 돼", "하지 마"],

@@ -114,6 +114,11 @@ struct ChatView: View {
                     VStack(alignment: .leading, spacing: 6) {
                         Text(c.title).font(Theme.rounded(.subheadline, .bold))
                         Text(c.body).font(Theme.rounded(.subheadline)).foregroundStyle(Theme.mute)
+                        Button { model.replyTo = c; focused = true } label: {
+                            Label("답장", systemImage: "arrowshape.turn.up.left")
+                                .font(Theme.rounded(.caption, .semibold)).foregroundStyle(Theme.mute)
+                        }
+                        .buttonStyle(.plain).padding(.top, 2)
                     }
                 }
             }
@@ -122,15 +127,22 @@ struct ChatView: View {
         }
     }
 
-    private func mine(_ text: String) -> some View {
-        HStack {
-            Spacer(minLength: 56)
-            Text(text)
-                .font(Theme.rounded(.body))
-                .foregroundStyle(Theme.inkOn)
-                .padding(.horizontal, 16).padding(.vertical, 11)
-                .background(Theme.ink, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
-                .textSelection(.enabled)
+    private func mine(_ raw: String) -> some View {
+        let (quote, text) = OwnerTools.splitThread(raw)
+        return VStack(alignment: .trailing, spacing: 4) {
+            if let quote {
+                Text("↳ " + quote).font(Theme.rounded(.caption)).foregroundStyle(Theme.mute).lineLimit(1)
+                    .padding(.leading, 56)
+            }
+            HStack {
+                Spacer(minLength: 56)
+                Text(text)
+                    .font(Theme.rounded(.body))
+                    .foregroundStyle(Theme.inkOn)
+                    .padding(.horizontal, 16).padding(.vertical, 11)
+                    .background(Theme.ink, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+                    .textSelection(.enabled)
+            }
         }
     }
 
@@ -159,6 +171,22 @@ struct ChatView: View {
     // MARK: composer
 
     private var composer: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            if let c = model.replyTo {
+                HStack(spacing: 8) {
+                    Text("↳ \(c.title)에 답장").lineLimit(1)
+                    Spacer()
+                    Button { model.replyTo = nil } label: { Image(systemName: "xmark") }
+                        .accessibilityLabel("답장 취소")
+                }
+                .font(Theme.rounded(.caption, .semibold)).foregroundStyle(Theme.mute)
+                .padding(.horizontal, 26).padding(.top, 6)
+            }
+            input
+        }
+    }
+
+    private var input: some View {
         HStack(alignment: .bottom, spacing: 8) {
             TextField("\(model.character.name)에게 말하기", text: $draft, axis: .vertical)
                 .font(Theme.rounded(.body))
@@ -166,7 +194,7 @@ struct ChatView: View {
                 .focused($focused)
                 .padding(.vertical, 12).padding(.leading, 18)
             Button {
-                model.send(draft)
+                model.sendDraft(draft)
                 draft = ""
             } label: {
                 Image(systemName: "arrow.up")
