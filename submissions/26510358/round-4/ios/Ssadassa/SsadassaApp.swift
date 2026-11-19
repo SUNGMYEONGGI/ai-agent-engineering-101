@@ -5,7 +5,8 @@ import SwiftUI
 /// (agent_kit.py run ... --app 8800); this app talks to the same API the kit's web page uses (Core/), and answers
 /// the owner tools (app_show_card, app_owner_limits, app_ask_owner) and MeshKit consents natively.
 ///
-/// Launch arguments (ios/run-simulator.sh uses them): `-demo` opens demo mode, `-link <url>` connects at once.
+/// Launch arguments (ios/run-simulator.sh uses them): `-demo` opens demo mode, `-link <url>` connects at once,
+/// `-tab 0|1|2` opens on 대화/활동/나 (for simulator screenshots, which cannot tap).
 @main
 struct SsadassaApp: App {
     var body: some Scene {
@@ -52,6 +53,7 @@ struct RootView: View {
 struct MainView: View {
     @StateObject private var model: AppModel
     @Environment(\.scenePhase) private var phase
+    @State private var tab = UserDefaults.standard.integer(forKey: "tab")  // `-tab N` lands in UserDefaults
     let disconnect: () -> Void
 
     init(link: AppLink?, disconnect: @escaping () -> Void) {
@@ -60,18 +62,21 @@ struct MainView: View {
     }
 
     var body: some View {
-        TabView {
+        TabView(selection: $tab) {
             ChatView()
                 .tabItem { Label("대화", systemImage: "bubble.left.and.bubble.right") }
                 .badge(model.questions.count)
+                .tag(0)
                 .toolbarBackground(Theme.paper, for: .tabBar)
                 .toolbarBackground(.visible, for: .tabBar)
             ActivityView()
                 .tabItem { Label("활동", systemImage: "sparkles") }
+                .tag(1)
                 .toolbarBackground(Theme.paper, for: .tabBar)
                 .toolbarBackground(.visible, for: .tabBar)
             SettingsView(disconnect: disconnect)
                 .tabItem { Label("나", systemImage: "person.crop.circle") }
+                .tag(2)
                 .toolbarBackground(Theme.paper, for: .tabBar)
                 .toolbarBackground(.visible, for: .tabBar)
         }
