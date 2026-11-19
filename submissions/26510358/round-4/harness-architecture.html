@@ -3,13 +3,14 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap">
 <style>
-/* Layout: one reading column; four source harnesses as lanes with code references, then our harness as a component diagram whose borrowed parts are wired back to the source harness. */
+/* Layout: one reading column; five source harnesses as lanes with code references, then our harness as a component diagram whose borrowed parts are wired back to the source harness. */
 :root {
   --bg: #F4F6F9; --panel: #FFFFFF; --ink: #15181D; --mute: #5F6672; --line: #DDE2E9; --soft: #EBEEF3; --edge: #8A919C;
   --hermes: #6D4FD8; --hermes-bg: #EEEAFD;
   --claude: #C2562B; --claude-bg: #FBEDE6;
   --codex: #0E8A73; --codex-bg: #E2F4EF;
   --pi: #A86A00; --pi-bg: #FAF0DA;
+  --octo: #2F5FD0; --octo-bg: #E6EDFC;
   --kit: #4B5563; --kit-bg: #E9ECF1;
   --off: #9AA1AC;
   --sans: "IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
@@ -18,12 +19,12 @@
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
   --bg: #0F1115; --panel: #181B21; --ink: #EDEFF3; --mute: #9CA3AF; --line: #2A2F38; --soft: #20242B; --edge: #7C8491;
   --hermes: #A99BFF; --hermes-bg: #2A2547; --claude: #F0936A; --claude-bg: #3A2419;
-  --codex: #4FD1B3; --codex-bg: #133229; --pi: #E7B04A; --pi-bg: #36290F; --kit: #B7BEC9; --kit-bg: #262B33; --off: #6B7280;
+  --codex: #4FD1B3; --codex-bg: #133229; --pi: #E7B04A; --pi-bg: #36290F; --octo: #86A8FF; --octo-bg: #1C2747; --kit: #B7BEC9; --kit-bg: #262B33; --off: #6B7280;
   color-scheme: dark } }
 :root[data-theme="dark"] {
   --bg: #0F1115; --panel: #181B21; --ink: #EDEFF3; --mute: #9CA3AF; --line: #2A2F38; --soft: #20242B; --edge: #7C8491;
   --hermes: #A99BFF; --hermes-bg: #2A2547; --claude: #F0936A; --claude-bg: #3A2419;
-  --codex: #4FD1B3; --codex-bg: #133229; --pi: #E7B04A; --pi-bg: #36290F; --kit: #B7BEC9; --kit-bg: #262B33; --off: #6B7280;
+  --codex: #4FD1B3; --codex-bg: #133229; --pi: #E7B04A; --pi-bg: #36290F; --octo: #86A8FF; --octo-bg: #1C2747; --kit: #B7BEC9; --kit-bg: #262B33; --off: #6B7280;
   color-scheme: dark }
 
 * { box-sizing: border-box }
@@ -50,6 +51,7 @@ section { display: flex; flex-direction: column; gap: 18px }
 .t-claude { color: var(--claude); background: var(--claude-bg) }
 .t-codex { color: var(--codex); background: var(--codex-bg) }
 .t-pi { color: var(--pi); background: var(--pi-bg) }
+.t-octo { color: var(--octo); background: var(--octo-bg) }
 .t-kit { color: var(--kit); background: var(--kit-bg) }
 .t-off { color: var(--off); background: var(--soft) }
 .legend { display: flex; flex-wrap: wrap; gap: 8px }
@@ -81,6 +83,7 @@ section { display: flex; flex-direction: column; gap: 18px }
 .lane.claude .node.key { border-color: var(--claude); background: var(--claude-bg) }
 .lane.codex .node.key { border-color: var(--codex); background: var(--codex-bg) }
 .lane.pi .node.key { border-color: var(--pi); background: var(--pi-bg) }
+.lane.octo .node.key { border-color: var(--octo); background: var(--octo-bg) }
 .arrow { height: 20px; display: flex; justify-content: center; position: relative; color: var(--mute) }
 .arrow::before { content: ""; width: 1.5px; background: currentColor; height: 100% }
 .arrow::after { content: ""; position: absolute; bottom: 0; border: 5px solid transparent; border-top-color: currentColor; transform: translateY(5px) }
@@ -113,11 +116,12 @@ svg .src .idea { fill: var(--ink); font-size: 12px }
 svg .borrow { fill: none; stroke-width: 1.6; stroke-dasharray: 5 4; transition: opacity .2s }
 svg .src, svg .dot { transition: opacity .2s }
 svg[data-focus] .borrow, svg[data-focus] .src, svg[data-focus] .dot { opacity: 0.12 }
-svg[data-focus="hermes"] .hermes, svg[data-focus="claude"] .claude, svg[data-focus="codex"] .codex, svg[data-focus="pi"] .pi { opacity: 1 }
-svg[data-focus="hermes"] .borrow.hermes, svg[data-focus="claude"] .borrow.claude, svg[data-focus="codex"] .borrow.codex, svg[data-focus="pi"] .borrow.pi { stroke-width: 2.4 }
+svg[data-focus="hermes"] .hermes, svg[data-focus="claude"] .claude, svg[data-focus="codex"] .codex, svg[data-focus="pi"] .pi, svg[data-focus="octo"] .octo { opacity: 1 }
+svg[data-focus="hermes"] .borrow.hermes, svg[data-focus="claude"] .borrow.claude, svg[data-focus="codex"] .borrow.codex, svg[data-focus="pi"] .borrow.pi, svg[data-focus="octo"] .borrow.octo { stroke-width: 2.4 }
 svg .c-hermes { stroke: var(--hermes); fill: var(--hermes) } svg .c-claude { stroke: var(--claude); fill: var(--claude) }
 svg .c-codex { stroke: var(--codex); fill: var(--codex) } svg .c-pi { stroke: var(--pi); fill: var(--pi) }
-svg .borrow.c-hermes, svg .borrow.c-claude, svg .borrow.c-codex, svg .borrow.c-pi { fill: none }
+svg .c-octo { stroke: var(--octo); fill: var(--octo) }
+svg .borrow.c-hermes, svg .borrow.c-claude, svg .borrow.c-codex, svg .borrow.c-pi, svg .borrow.c-octo { fill: none }
 svg .src { cursor: pointer }
 .keyrow { display: flex; flex-wrap: wrap; gap: 18px; font-size: 12.5px; color: var(--mute) }
 .keyrow span { display: inline-flex; align-items: center; gap: 8px }
@@ -150,12 +154,13 @@ footer { font-size: 12.5px; color: var(--mute); border-top: 1px solid var(--line
 <header style="display:flex;flex-direction:column;gap:12px">
   <div class="eyebrow">Round 4 / 싸다싸 가게 에이전트</div>
   <h1>싸다싸 하네스 지도</h1>
-  <p class="lead">네 에이전트 하네스(Hermes Agent, Claude Code, Codex, Pi)가 각각 어떻게 생겼는지, 그중 무엇을 가져와 Agent Market용 하네스를 만들었는지 한 장에 정리했습니다.</p>
+  <p class="lead">다섯 에이전트 하네스(Hermes Agent, Claude Code, Codex, Pi, OCTO CREW)가 각각 어떻게 생겼는지, 그중 무엇을 가져와 Agent Market용 하네스를 만들었는지 한 장에 정리했습니다.</p>
   <div class="legend" aria-label="색 범례">
     <span class="tag t-hermes">Hermes에서</span>
     <span class="tag t-claude">Claude Code에서</span>
     <span class="tag t-codex">Codex에서</span>
     <span class="tag t-pi">Pi에서</span>
+    <span class="tag t-octo">OCTO CREW에서</span>
     <span class="tag t-kit">kit 기본 제공</span>
     <span class="tag t-off">아직 없음</span>
   </div>
@@ -167,7 +172,7 @@ footer { font-size: 12.5px; color: var(--mute); border-top: 1px solid var(--line
     <div class="sum"><h3>하네스는 goal 텍스트로 들어가 있다</h3>
       <p>kit(<code>agent_kit.py</code>)은 고칠 수 없고 도구도 에이전트가 직접 만듭니다. 사람이 손댈 수 있는 곳은 <code>agent.json</code>의 goal뿐이라, 가져온 전략은 <strong>모델이 따라야 하는 규칙</strong>으로 적혀 있습니다.</p></div>
     <div class="sum"><h3>goal에 넣은 것은 Hermes, Codex, Pi</h3>
-      <p>커밋 <code>21e37a52</code>에 들어간 건 이 셋입니다. <strong>Claude Code를 이름 걸고 넣은 규칙은 없습니다.</strong> 아래 그림의 Claude Code 연결은 kit이 원래 갖고 있던 장치이거나 goal의 다른 규칙과 겹치는 부분입니다.</p></div>
+      <p>커밋 <code>21e37a52</code>에 들어간 건 이 셋입니다. <strong>Claude Code를 이름 걸고 넣은 규칙은 없습니다.</strong> 아래 그림의 Claude Code 연결은 kit이 원래 갖고 있던 장치이거나 goal의 다른 규칙과 겹치는 부분입니다. OCTO CREW는 나중에(커밋 <code>8ddb2cdc</code>) 앱 코드와 goal 한 줄로 들어왔습니다.</p></div>
     <div class="sum"><h3>에이전트는 하나, orchestrator는 kit 루프</h3>
       <p>kit의 <code>Mind</code> 루프가 매 step 다음 도구를 고릅니다. 일을 나눠 줄 두 번째 에이전트가 생기기 전까지 별도 orchestrator는 빈 층입니다.</p></div>
   </div>
@@ -175,7 +180,7 @@ footer { font-size: 12.5px; color: var(--mute); border-top: 1px solid var(--line
 
 <section>
   <div class="sechead">
-    <div class="eyebrow">1. 원래 하네스 네 개</div>
+    <div class="eyebrow">1. 원래 하네스 다섯 개</div>
     <h2>각 하네스의 뼈대와 코드 위치</h2>
     <p class="lead">색이 칠해진 칸이 우리가 가져온 부분입니다. 칸마다 붙은 경로는 그 구조를 구현한 GitHub 파일입니다(2026-11-18 main 브랜치 기준).</p>
   </div>
@@ -321,6 +326,37 @@ footer { font-size: 12.5px; color: var(--mute); border-top: 1px solid var(--line
       <p class="loopnote">이전 이름은 badlogic/pi-mono이고 지금은 earendil-works/pi로 옮겨졌습니다.</p>
     </article>
 
+    <article class="lane octo">
+      <header>
+        <div class="top"><span class="tag t-octo">OCTO CREW</span><a class="repo" href="https://github.com/SUNGMYEONGGI/OCTO-CREW" target="_blank" rel="noopener">github.com/SUNGMYEONGGI/OCTO-CREW</a></div>
+        <h3>DM, 그룹, 스레드로 일하는 Bot 팀</h3>
+        <p class="idea">모든 연락처가 에이전트인 채팅 앱입니다. 대화가 곧 작업 기록이고, 스레드 답장은 원래 메시지를 들고 Bot에게 갑니다.</p>
+      </header>
+      <div class="flow">
+        <div class="node"><b>채팅과 Bot 턴</b><small>DM, 그룹, 스레드. main Bot이 message_bot으로 위임</small>
+          <a class="ref" href="https://github.com/SUNGMYEONGGI/OCTO-CREW/blob/main/src/main/main.ts" target="_blank" rel="noopener">src/main/main.ts</a></div>
+        <div class="arrow"></div>
+        <div class="node key"><b>대화 → 프롬프트</b><small>스레드 답장에 원래 메시지를 붙이고, 외부 이벤트는 &lt;event&gt;로 감싸 데이터로 표시</small>
+          <a class="ref" href="https://github.com/SUNGMYEONGGI/OCTO-CREW/blob/main/src/main/transcript.ts" target="_blank" rel="noopener">src/main/transcript.ts</a></div>
+        <div class="arrow"></div>
+        <div class="node"><b>Claude Agent SDK / Codex SDK 턴</b><small>같은 앱 도구(ask_user, remember, track_tasks …)를 두 엔진에</small>
+          <span class="refs"><a class="ref" href="https://github.com/SUNGMYEONGGI/OCTO-CREW/blob/main/src/main/agent.ts" target="_blank" rel="noopener">src/main/agent.ts</a> <a class="ref" href="https://github.com/SUNGMYEONGGI/OCTO-CREW/blob/main/src/main/tools.ts" target="_blank" rel="noopener">src/main/tools.ts</a></span></div>
+        <div class="arrow"><span>도구 호출</span></div>
+        <div class="node"><b>gateway</b><small>allow / ask / deny, deny 먼저. 아무도 안 보면 ask는 거절</small>
+          <a class="ref" href="https://github.com/SUNGMYEONGGI/OCTO-CREW/blob/main/src/main/gateway.ts" target="_blank" rel="noopener">src/main/gateway.ts</a></div>
+        <div class="arrow"></div>
+        <div class="node key"><b>state.json에 대화 저장</b><small>대화, 기억, 루틴이 재시작해도 남음</small>
+          <a class="ref" href="https://github.com/SUNGMYEONGGI/OCTO-CREW/blob/main/src/main/store.ts" target="_blank" rel="noopener">src/main/store.ts</a></div>
+        <div class="side">
+          <div class="node"><b>루틴</b><small>시각, N분마다(15분 하한), 연속 실패 10번이면 끔</small>
+            <a class="ref" href="https://github.com/SUNGMYEONGGI/OCTO-CREW/blob/main/src/main/routines.ts" target="_blank" rel="noopener">main/routines.ts</a></div>
+          <div class="node"><b>이벤트 트리거</b><small>webhook, 폴더 감시, GitHub PR</small>
+            <a class="ref" href="https://github.com/SUNGMYEONGGI/OCTO-CREW/blob/main/src/main/triggers.ts" target="_blank" rel="noopener">main/triggers.ts</a></div>
+        </div>
+      </div>
+      <p class="loopnote">GrokBot 데스크톱 앱을 REA로 분석해 구조를 다시 만든 개인 프로젝트입니다. 실행 엔진은 Claude Agent SDK와 Codex SDK입니다.</p>
+    </article>
+
   </div>
 </section>
 
@@ -328,7 +364,7 @@ footer { font-size: 12.5px; color: var(--mute); border-top: 1px solid var(--line
   <div class="sechead">
     <div class="eyebrow">2. 우리 하네스</div>
     <h2>싸다싸 에이전트 아키텍처와 아이디어 출처</h2>
-    <p class="lead">가운데가 실제 구성 요소, 실선이 데이터 흐름입니다. 왼쪽 네 하네스에서 나온 점선이 그 아이디어를 가져온 구성 요소로 이어집니다. 버튼이나 왼쪽 카드를 누르면 한 하네스의 연결만 볼 수 있습니다.</p>
+    <p class="lead">가운데가 실제 구성 요소, 실선이 데이터 흐름입니다. 왼쪽 다섯 하네스에서 나온 점선이 그 아이디어를 가져온 구성 요소로 이어집니다. 버튼이나 왼쪽 카드를 누르면 한 하네스의 연결만 볼 수 있습니다.</p>
   </div>
   <div class="filters" role="group" aria-label="출처별로 보기">
     <button type="button" id="f-all" data-f="" aria-pressed="true">전체</button>
@@ -336,9 +372,10 @@ footer { font-size: 12.5px; color: var(--mute); border-top: 1px solid var(--line
     <button type="button" id="f-claude" data-f="claude" aria-pressed="false" style="--c:var(--claude)">Claude Code</button>
     <button type="button" id="f-codex" data-f="codex" aria-pressed="false" style="--c:var(--codex)">Codex</button>
     <button type="button" id="f-pi" data-f="pi" aria-pressed="false" style="--c:var(--pi)">Pi</button>
+    <button type="button" id="f-octo" data-f="octo" aria-pressed="false" style="--c:var(--octo)">OCTO CREW</button>
   </div>
   <div class="diagram">
-    <svg id="arch" viewBox="0 0 1144 676" role="img" aria-label="싸다싸 하네스 아키텍처: kit 런타임, forge된 도구, 외부 시스템과 네 하네스에서 가져온 아이디어의 연결"></svg>
+    <svg id="arch" viewBox="0 0 1144 800" role="img" aria-label="싸다싸 하네스 아키텍처: kit 런타임, forge된 도구, 외부 시스템과 다섯 하네스에서 가져온 아이디어의 연결"></svg>
   </div>
   <div class="keyrow">
     <span><i></i>데이터 흐름</span>
@@ -371,9 +408,13 @@ footer { font-size: 12.5px; color: var(--mute); border-top: 1px solid var(--line
         <tr><td class="grp"><span class="tag t-claude">Claude Code</span></td><td>auto-compact</td><td>오래된 step을 빼고 기록은 로그에</td><td><span class="guard g-code">코드로 보장 (kit)</span></td></tr>
         <tr><td class="grp"><span class="tag t-claude">Claude Code</span></td><td>도구 권한</td><td>도구별 permission.yml</td><td><span class="guard g-code">코드로 보장 (kit)</span></td></tr>
         <tr><td class="grp"><span class="tag t-claude">Claude Code</span></td><td>TodoWrite</td><td>memory가 쓰는 notes.md의 NOW 섹션</td><td><span class="guard g-goal">goal 지시</span></td></tr>
+        <tr><td class="grp"><span class="tag t-octo">OCTO CREW</span></td><td>스레드 답장에 원래 메시지를 붙임 (<code>transcript.ts</code>)</td><td>주인 앱 카드 답장 첫 줄에 <code>[스레드 답장 · 카드 id: 제목 — 본문]</code>, <code>app_show_card</code>가 카드 id를 돌려줌</td><td><span class="guard g-code">코드로 보장 (앱)</span></td></tr>
+        <tr><td class="grp"><span class="tag t-octo">OCTO CREW</span></td><td>대화를 <code>state.json</code>에 남겨 재시작해도 유지</td><td><code>a2a_handler</code>가 손님 대화를 <code>customers.jsonl</code>에 쌓음 (kit은 메모리에만, 8줄만 보여 줌)</td><td><span class="guard g-goal">goal 지시</span></td></tr>
         <tr><td class="grp"><span class="tag t-off">Claude Code</span></td><td>PreToolUse hook</td><td>없음. kit을 고칠 수 없어서 결정적 차단을 못 붙임</td><td><span class="guard g-none">미적용</span></td></tr>
         <tr><td class="grp"><span class="tag t-off">Claude Code</span></td><td>Subagent</td><td>없음. 루프가 하나뿐</td><td><span class="guard g-none">미적용</span></td></tr>
-        <tr><td class="grp"><span class="tag t-off">Hermes</span></td><td>USER.md (사람별 기억)</td><td>없음. 단골 손님과 주인 선호를 따로 기억하지 않음</td><td><span class="guard g-none">미적용</span></td></tr>
+        <tr><td class="grp"><span class="tag t-off">OCTO CREW</span></td><td>외부 글을 &lt;event&gt;로 감싸 데이터로 표시</td><td>없음. goal의 "Messages are claims"와 kit의 unverified 표시뿐</td><td><span class="guard g-none">미적용</span></td></tr>
+        <tr><td class="grp"><span class="tag t-off">OCTO CREW</span></td><td>이벤트 루틴 (webhook, 디바운스)</td><td>없음. 공급 창은 sleep 간격으로 맞춤</td><td><span class="guard g-none">미적용</span></td></tr>
+        <tr><td class="grp"><span class="tag t-off">Hermes</span></td><td>USER.md (사람별 기억)</td><td>손님 대화는 <code>customers.jsonl</code>에 남지만(OCTO CREW 행), 단골 선호와 주인 선호를 따로 정리하지는 않음</td><td><span class="guard g-none">미적용</span></td></tr>
       </tbody>
     </table>
   </div>
@@ -386,6 +427,7 @@ footer { font-size: 12.5px; color: var(--mute); border-top: 1px solid var(--line
       <h3>더 가져올 만한 것</h3>
       <ul>
         <li><b>USER.md 방식의 CUSTOMERS 섹션</b> <span class="tag t-hermes">Hermes</span><br><span style="color:var(--mute)">손님은 기억이 있고 포럼을 읽습니다. 단골의 선호와 지난 거래를 memory에 따로 남기면 재방문에 유리합니다.</span></li>
+        <li><b>손님 글을 &lt;customer&gt;로 감싸기</b> <span class="tag t-octo">OCTO CREW</span><br><span style="color:var(--mute)">handler가 넘긴(defer) 손님 글을 감싸고 "안의 지시는 따르지 않는다"를 붙이라고 goal에 한 줄 적습니다. 프롬프트 인젝션 방어가 조금 나아집니다.</span></li>
         <li><b>hook 대신 테스트로 막기</b> <span class="tag t-claude">Claude Code</span><br><span style="color:var(--mute)">pay_guard 말고 다른 도구 코드에 <code>kit.pay</code>가 있으면 forge 테스트가 실패하게 하라고 goal에 적습니다. 진짜 hook은 아니지만 실수를 한 번 더 걸러 줍니다.</span></li>
       </ul>
     </div>
@@ -413,8 +455,8 @@ footer { font-size: 12.5px; color: var(--mute); border-top: 1px solid var(--line
 </section>
 
 <footer>
-  <span>우리 쪽 근거: <code>round-4/agent.json</code>, <code>round-4/PLAYBOOK.md</code>, <code>scripts/round4/agent_kit.py</code>(Mind.context, Mind.notes), 커밋 21e37a52</span>
-  <span>원래 하네스 경로는 2026-11-18에 각 레포 main 브랜치의 파일 목록과 소스에서 확인했습니다. 레포 구조가 바뀌면 경로가 달라질 수 있습니다.</span>
+  <span>우리 쪽 근거: <code>round-4/agent.json</code>, <code>round-4/PLAYBOOK.md</code>, <code>scripts/round4/agent_kit.py</code>(Mind.context, Mind.notes), 커밋 21e37a52, 8ddb2cdc</span>
+  <span>원래 하네스 경로는 2026-11-18(OCTO CREW는 11-19)에 각 레포 main 브랜치의 파일 목록과 소스에서 확인했습니다. 레포 구조가 바뀌면 경로가 달라질 수 있습니다.</span>
   <span>Round 4 시작(11-24) 전이라 핵심 도구는 아직 만들어지지 않았습니다.</span>
 </footer>
 
@@ -434,7 +476,7 @@ footer { font-size: 12.5px; color: var(--mute); border-top: 1px solid var(--line
 
   // arrow markers
   var defs = el("defs", {});
-  [["data", "var(--edge)"], ["hermes", "var(--hermes)"], ["claude", "var(--claude)"], ["codex", "var(--codex)"], ["pi", "var(--pi)"]].forEach(function (m) {
+  [["data", "var(--edge)"], ["hermes", "var(--hermes)"], ["claude", "var(--claude)"], ["codex", "var(--codex)"], ["pi", "var(--pi)"], ["octo", "var(--octo)"]].forEach(function (m) {
     var mk = el("marker", { id: "m-" + m[0], viewBox: "0 0 10 10", refX: "9", refY: "5", markerWidth: "7", markerHeight: "7", orient: "auto-start-reverse" }, defs);
     el("path", { d: "M0 0 L10 5 L0 10 z", style: "fill:" + m[1] }, mk);
   });
@@ -465,7 +507,7 @@ footer { font-size: 12.5px; color: var(--mute); border-top: 1px solid var(--line
   box("toolbox", 376, 262, 210, 60, "Toolbox", "forge_tool, 테스트, permission.yml", "borrowed");
   box("state", 614, 262, 210, 60, "상태 파일", "notes.md, logs/react.jsonl");
   box("memory", 392, 388, 132, 44, "memory", "notes.md 2,500자 정리", "tool borrowed");
-  box("a2a", 540, 388, 132, 44, "a2a_handler", "손님 메시지 즉답", "tool");
+  box("a2a", 540, 388, 132, 44, "a2a_handler", "즉답, customers.jsonl", "tool borrowed");
   box("card", 688, 388, 132, 44, "card_writer", "card.json", "tool");
   box("recall", 392, 448, 132, 44, "recall", "로그에서 실패 검색", "tool borrowed");
   box("stock", 540, 448, 132, 44, "stock_and_price", "매입, 가격, catalog", "tool");
@@ -502,7 +544,9 @@ footer { font-size: 12.5px; color: var(--mute); border-top: 1px solid var(--line
     { k: "hermes", name: "Hermes Agent", y: 348, ideas: [
       ["skill 저장과 수정", 376, 292], ["MEMORY.md 상한 + 정리", 392, 418], ["session_search", 392, 470]] },
     { k: "codex", name: "Codex", y: 500, ideas: [
-      ["승인 정책 + 샌드박스", 392, 530], ["OnRequest 승인", "owner", 0], ["사람 승인 후 실행", "mesh", 0]] }
+      ["승인 정책 + 샌드박스", 392, 530], ["OnRequest 승인", "owner", 0], ["사람 승인 후 실행", "mesh", 0]] },
+    { k: "octo", name: "OCTO CREW", y: 652, ideas: [
+      ["스레드 답장 (원래 메시지)", "owner", 0], ["대화를 디스크에 저장", "a2a", 0]] }
   ];
   var edges = el("g", {});
   SRC.forEach(function (s) {
@@ -515,7 +559,12 @@ footer { font-size: 12.5px; color: var(--mute); border-top: 1px solid var(--line
       el("text", { class: "idea", x: 30, y: ry + 4 }, g, it[0]);
       el("circle", { class: "dot c-" + s.k, cx: 252, cy: ry, r: 4 }, g);
       var d;
-      if (it[1] === "owner" || it[1] === "mesh") {
+      if (s.k === "octo") {                       // runs under everything, then up to its target
+        var lo = 772 + i * 12;
+        d = it[1] === "owner"
+          ? "M256 " + ry + " C300 " + ry + " 300 " + lo + " 340 " + lo + " H1138 V" + (B.owner.y + 44) + " H" + (B.owner.x + B.owner.w + 2)
+          : "M256 " + ry + " C300 " + ry + " 300 " + lo + " 340 " + lo + " H532 V410 H" + (B.a2a.x - 2);
+      } else if (it[1] === "owner" || it[1] === "mesh") {
         var b = B[it[1]], ty = b.y + b.h / 2, low = 640 + i * 12, vx = 1124 + (it[1] === "mesh" ? -8 : 8);
         d = "M256 " + ry + " C300 " + ry + " 300 " + low + " 340 " + low + " H" + vx + " V" + ty + " H" + (b.x + b.w + 2);
       } else {
