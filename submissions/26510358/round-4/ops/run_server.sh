@@ -54,7 +54,7 @@ case "${1:-}" in
   mesh)
     export PORT=18765; cd "$HOME/meshkit/meshkit-py" && forever mesh "$PY" -I examples/miniapp_server.py ;;
   kit)
-    set -a; . "$S/.env"; . "$S/week-08/.market/owner.env"; set +a
+    set -a; [ -f "$S/.env" ] && . "$S/.env"; . "$R/.kit/owner.env"; set +a        # claim code: MARKET_OWNER=mk-... (.kit/ is git-ignored)
     [ "${LLM:-}" = market ] && export AGENT_LLM_BASE=market
     forever kit "$PY" scripts/round4/agent_kit.py run --dir "$R" --market "$MARKET" --name "$NAME" --tunnel \
       "${APP[@]}" ${EXTRA[@]+"${EXTRA[@]}"} ;;

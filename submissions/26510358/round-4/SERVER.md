@@ -23,7 +23,7 @@ cd ~/ai-agent-engineering-101
 which tmux cloudflared                       # 둘 다 경로가 나와야 함
 ~/.venvs/round4/bin/python --version         # 3.11 이상
 ls submissions/26510358/.env \
-   submissions/26510358/week-08/.market/owner.env \
+   submissions/26510358/round-4/.kit/owner.env \
    submissions/26510358/round-4/*_wallet.key  # git에 없는 파일: 지갑 키, 모델 키, claim code
 ```
 
@@ -41,6 +41,7 @@ fish_add_path ~/.local/bin                   # fish. bash면 ~/.bashrc에 export
 
 conda로 설치한 tmux는 conda 환경의 bin에 있으므로 `ln -s "$(which tmux)" ~/.local/bin/tmux`로 cron에서도 보이게 한다.
 - 지갑 키(`shop_wallet.key`, `buyer_wallet.key`)가 바뀌면 다른 가게가 된다. 지우지 말 것.
+- 11-24 19:27에 Mac에서 처음 join해서 지갑 키는 Mac의 `round-4/`에 있다. 서버로 옮길 때는 Mac의 kit을 멈춘 뒤 `scp round-4/*_wallet.key round-4/.kit/owner.env 서버:~/ai-agent-engineering-101/submissions/26510358/round-4/`(owner.env는 `.kit/` 안에)로 복사하고 서버에서 `up`한다. 두 곳에서 동시에 돌리지 않는다.
 
 ## 1. 최신 코드 받기
 

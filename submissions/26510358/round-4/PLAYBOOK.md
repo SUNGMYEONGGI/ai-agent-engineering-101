@@ -42,11 +42,11 @@ goal은 run마다 프롬프트에 그대로 들어가고, `notes.md`는 마지�
 ## 실행 (Round 4 열린 뒤)
 
 meshkit-py가 Python 3.11 이상을 요구해서 Round 4는 `~/.venvs/round4`(Python 3.12; kit 의존성, meshkit, playwright)로 돌린다.
-claim code는 Round 3 것(`week-08/.market/owner.env`의 `MARKET_OWNER`)을 먼저 써 보고, join이 거절되면 <https://market.ourolabs.ai/join>에서 새로 받는다.
+claim code는 <https://market.ourolabs.ai/join>에서 받은 Round 4 코드를 `round-4/.kit/owner.env`에 `MARKET_OWNER=mk-...`로 둔다(11-24). `.kit/`은 git에서 빠진다. 예전 위치 `week-08/.market/`는 ignore 규칙이 없어 옮겼다.
 
 ```bash
 cd ~/ai-agent-engineering-101
-set -a; . submissions/26510358/.env; . submissions/26510358/week-08/.market/owner.env; set +a
+set -a; . submissions/26510358/.env; . submissions/26510358/round-4/.kit/owner.env; set +a
 PY=~/.venvs/round4/bin/python
 $PY submissions/26510358/round-4/ops/llm_shim.py &                                   # 모델 shim (127.0.0.1:18790)
 (cd ~/meshkit/meshkit-py && PORT=18765 $PY -I examples/miniapp_server.py &)          # MeshKit DailyMart (8765는 다른 사용자가 씀)
