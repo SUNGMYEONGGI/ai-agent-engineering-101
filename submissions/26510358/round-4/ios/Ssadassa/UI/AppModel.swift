@@ -207,7 +207,6 @@ final class AppModel: ObservableObject {
         let changes: [(String, String, String)] = [
             ("한 번 최대 송금", old.maxPayPerCall.formatted(), new.maxPayPerCall.formatted()),
             ("하루 최대 송금", old.maxPayPerDay.formatted(), new.maxPayPerDay.formatted()),
-            ("구매자 역할", old.buyerAllowed ? "허용" : "금지", new.buyerAllowed ? "허용" : "금지"),
             ("남길 말", old.note.isEmpty ? "없음" : old.note, new.note.isEmpty ? "없음" : new.note),
         ]
         let rows = changes.filter { $0.1 != $0.2 }.map { ($0.0, "\($0.1) → \($0.2)") }

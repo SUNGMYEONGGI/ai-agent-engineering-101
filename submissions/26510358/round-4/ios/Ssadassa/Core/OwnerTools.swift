@@ -7,7 +7,7 @@ public final class OwnerTools: @unchecked Sendable {
         ("show_card", "show the owner a card in the chat (a deal, a daily summary, a warning); args {title, body}. "
             + "Returns the card id. The owner may reply to a card: that chat message starts with "
             + "\"[스레드 답장 · 카드 <id>: ...]\"."),
-        ("owner_limits", "the owner's current limits: {max_pay_per_call, max_pay_per_day (credits), buyer_allowed, note, "
+        ("owner_limits", "the owner's current limits: {max_pay_per_call, max_pay_per_day (credits), note, "
             + "set_at}. Read before paying or changing strategy; stay inside them. No args."),
         ("ask_owner", "ask the owner a question when a decision is risky or unclear (a large payment, a new strategy). "
             + "args {question, options (optional list of short answers; write each as the action it allows, with the "

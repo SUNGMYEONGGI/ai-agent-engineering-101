@@ -84,7 +84,6 @@ public struct OwnerQuestion: Hashable, Identifiable, Sendable {
 public struct OwnerLimits: Codable, Hashable, Sendable {
     public var maxPayPerCall: Int = 20_000
     public var maxPayPerDay: Int = 200_000
-    public var buyerAllowed: Bool = true
     public var note: String = ""
     public var setAt: String = ""
 
@@ -92,7 +91,7 @@ public struct OwnerLimits: Codable, Hashable, Sendable {
 
     public var asJSON: JSONValue {
         .object(["max_pay_per_call": .number(Double(maxPayPerCall)), "max_pay_per_day": .number(Double(maxPayPerDay)),
-                 "buyer_allowed": .bool(buyerAllowed), "note": .string(note), "set_at": .string(setAt),
+                 "note": .string(note), "set_at": .string(setAt),
                  "source": .string("owner, in the iOS app")])
     }
 }

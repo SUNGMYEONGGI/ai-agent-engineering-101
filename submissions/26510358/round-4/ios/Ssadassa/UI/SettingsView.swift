@@ -75,12 +75,6 @@ struct SettingsView: View {
                     Divider().padding(.leading, 18)
                     stepperRow("하루 최대 송금", $draft.maxPayPerDay, 0...10_000_000, 50_000)
                     Divider().padding(.leading, 18)
-                    Toggle(isOn: $draft.buyerAllowed) {
-                        Text("구매자 역할로 사도 됨").font(Theme.rounded(.subheadline, .medium))
-                    }
-                    .tint(Theme.ink)
-                    .padding(.horizontal, 18).padding(.vertical, 12)
-                    Divider().padding(.leading, 18)
                     TextField("에이전트에게 남길 말 (예: 오늘은 가구 재고를 늘리지 말 것)", text: $draft.note, axis: .vertical)
                         .font(Theme.rounded(.subheadline))
                         .lineLimit(2...5)

@@ -188,7 +188,6 @@ textarea::placeholder{color:var(--text-mute)}
   <p class="sub">에이전트는 <span class="mono">app_owner_limits</span> 도구로 이 값을 읽습니다. 이 기기에만 저장됩니다.</p>
   <label class="field"><span>한 번에 보낼 수 있는 최대 금액 (credits)</span><input type="number" id="lpay" min="0" step="1000"></label>
   <label class="field"><span>하루에 보낼 수 있는 최대 금액 (credits)</span><input type="number" id="lday" min="0" step="1000"></label>
-  <label class="toggle"><span>구매자(buyer) 역할로 사도 됨</span><input type="checkbox" id="lbuy"></label>
   <label class="field"><span>에이전트에게 남길 말</span><textarea id="lnote" placeholder="예: 오늘은 가구 재고를 늘리지 말 것"></textarea></label>
   <div class="actions"><button type="button" id="lcancel">닫기</button><button type="button" class="yes" id="lsave">저장</button></div>
 </div></div>
@@ -223,13 +222,13 @@ function setReply(c) {
 }
 
 const LIMITS_KEY = 'ssadassa-limits';
-const DEFAULT_LIMITS = {max_pay_per_call: 20000, max_pay_per_day: 200000, buyer_allowed: true, note: ''};
+const DEFAULT_LIMITS = {max_pay_per_call: 20000, max_pay_per_day: 200000, note: ''};
 function readLimits() {
-  try { return Object.assign({}, DEFAULT_LIMITS, JSON.parse(localStorage.getItem(LIMITS_KEY) || '{}')) }
+  try { const v = Object.assign({}, DEFAULT_LIMITS, JSON.parse(localStorage.getItem(LIMITS_KEY) || '{}')); delete v.buyer_allowed; return v }  // saved before the shop went shop-only
   catch (e) { return Object.assign({}, DEFAULT_LIMITS) }
 }
 function writeLimits(v) { try { localStorage.setItem(LIMITS_KEY, JSON.stringify(v)) } catch (e) {} }
-miniapp.offer('owner_limits', 'the owner\'s current limits: {max_pay_per_call, max_pay_per_day (credits), buyer_allowed, note, set_at}. ' +
+miniapp.offer('owner_limits', 'the owner\'s current limits: {max_pay_per_call, max_pay_per_day (credits), note, set_at}. ' +
   'Read before paying or changing strategy; stay inside them. No args.', () => Object.assign(readLimits(), {source: 'owner, in the app'}));
 
 const questions = [];
@@ -263,14 +262,14 @@ $('askbtn').onclick = showAsk;
 
 function openSettings() {
   const v = readLimits();
-  $('lpay').value = v.max_pay_per_call; $('lday').value = v.max_pay_per_day; $('lbuy').checked = !!v.buyer_allowed; $('lnote').value = v.note || '';
+  $('lpay').value = v.max_pay_per_call; $('lday').value = v.max_pay_per_day; $('lnote').value = v.note || '';
   $('settings').hidden = false;
 }
 $('set').onclick = openSettings;
 $('lcancel').onclick = () => { $('settings').hidden = true; };
 $('lsave').onclick = () => {
   writeLimits({max_pay_per_call: Math.max(0, +$('lpay').value || 0), max_pay_per_day: Math.max(0, +$('lday').value || 0),
-               buyer_allowed: $('lbuy').checked, note: $('lnote').value.trim().slice(0, 500), set_at: new Date().toISOString()});
+               note: $('lnote').value.trim().slice(0, 500), set_at: new Date().toISOString()});
   $('settings').hidden = true;
 };
 
@@ -359,7 +358,7 @@ function fillActivity() {
   list($('apptools'), Object.entries(view.app_tools || {}).map(([k, v]) => [k, v]));
   const l = readLimits();
   list($('limitsview'), [['한 번 최대 ' + l.max_pay_per_call.toLocaleString() + ' / 하루 최대 ' + l.max_pay_per_day.toLocaleString() + ' credits',
-                          (l.buyer_allowed ? '구매자 역할 허용' : '구매자 역할 금지') + (l.note ? ' · ' + l.note : '')]]);
+                          l.note || '남긴 말 없음']]);
 }
 $('act').onclick = () => { fillActivity(); $('activity').hidden = false; };
 $('activity').onclick = e => { if (e.target === $('activity')) $('activity').hidden = true; };
