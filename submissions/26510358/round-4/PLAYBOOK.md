@@ -19,11 +19,13 @@ goal은 run마다 프롬프트에 그대로 들어가고, `notes.md`는 마지�
 | 원가/정가 비율 food 0.51, A 0.62, B 0.56, C 0.50 | week-08 72시간 ledger 분석 (11-13) |
 | 같은 등급 시장가보다 4% 이상 높게 부르지 않는다 | 11-07 호가 상한 +0.12 → +0.04: 점유율 0.019→0.026, 체결률 0.37→0.41 |
 | 첫 호가 뒤 한 번은 양보한다 | 11-15 haggle canary 채택: 마진 점유율 0.890 vs 0.872 |
-| C등급 파손 약 35% | 11-09 saved 분석: C등급 보증 없을 때 거래당 saved −0.104 |
+| (삭제, 11-24) C등급 파손 약 35%, 파손 시 환불 | Round 4는 파손 확률을 공개하지 않고 시장이 환불하지 않는다(ROUND4.md). 환불은 가게가 원장의 `broken`과 보증 기간을 보고 직접 송금 |
 | 프리미엄 가구는 수요가 상한 | 11-09, 11-11: 재고를 5배·2배로 늘려도 판매 그대로 |
 | 버려진 협상이 잡은 재고는 3분 안에 푼다 | 11-07: 재고 없음(no_stock) 35건 중 28건이 버려진 협상이 잡고 있던 재고 |
-| 공급은 약 15분마다 짧게 열림, 시간당 50개 넘으면 가격 급등 | Round 3 패치 3.2, restock 로그 |
-| 마감 전 재고 정리 | Round 3는 남은 재고를 원가로 쳤다. Round 4에서도 그런지는 `/rules`에서 확인할 것 |
+| 공급 창은 약 20분마다 3분, 여는 분은 매번 다름. 402 견적 후 120초 안에 송금 | 시장 홈페이지, ROUND4.md (11-24). Round 3의 15분 주기와 가격 급등 규칙은 뺌 |
+| 재고는 하루이틀 안에 팔 만큼만 | 보관료 시간당 0.5%(다음 재고 값에 더함), 48시간마다 한 등급 하락(ROUND4.md "Stock ages") |
+| 손님에게는 지금 등급을 말한다 | 시장이 등급 주장을 검사하지 않는다(`claim_honest` 없음). 지금 등급은 `GET /api/inventory` |
+| 거래는 `/api/settle`을 통과해야 인정 | 손님이 송금 후 보낸 mandate를 가게가 `/api/settle`로 넘긴다(ROUND4.md "Paying for a deal") |
 
 ## 운영에서 배운 것 (goal 밖, 사람이 챙길 것)
 
@@ -40,7 +42,7 @@ goal은 run마다 프롬프트에 그대로 들어가고, `notes.md`는 마지�
 ## 실행 (Round 4 열린 뒤)
 
 meshkit-py가 Python 3.11 이상을 요구해서 Round 4는 `~/.venvs/round4`(Python 3.12; kit 의존성, meshkit, playwright)로 돌린다.
-claim code는 Round 3 것(`week-08/.market/owner.env`의 `MARKET_OWNER`)을 먼저 써 보고, join이 거절되면 https://market.ourolabs.ai/join 에서 새로 받는다.
+claim code는 Round 3 것(`week-08/.market/owner.env`의 `MARKET_OWNER`)을 먼저 써 보고, join이 거절되면 <https://market.ourolabs.ai/join>에서 새로 받는다.
 
 ```bash
 cd ~/ai-agent-engineering-101
@@ -52,7 +54,7 @@ $PY scripts/round4/agent_kit.py run --dir submissions/26510358/round-4 \
     --market https://market.ourolabs.ai --name myeonggi --tunnel --app 8800 --app-tunnel
 ```
 
-kit이 출력한 buyer 지갑 주소로 https://faucet.maroo.io 에서 tOKRW를 받는다(5,000씩, 10,000까지).
+가게로만 들어가므로 faucet은 쓰지 않는다. 시장이 가게 지갑에 시작 자금 5,000 tOKRW를 보낸다(ROUND4.md). buyer를 켤 때만(`KIT_FLAGS=--with-buyer`) buyer 지갑 주소로 <https://faucet.maroo.io>에서 tOKRW를 받는다(5,000씩, 10,000까지).
 
 ## 미니앱 (`app/`)
 
@@ -61,7 +63,7 @@ starter 페이지에 세 가지를 더했다. 페이지 도구는 kit이 polling
 | 페이지 도구 | 하는 일 |
 |---|---|
 | `app_show_card` | 채팅에 카드 표시 (거래, 요약, 경고) |
-| `app_owner_limits` | 주인이 설정 시트에서 정한 한도: 1회·하루 최대 송금, buyer 허용 여부, 메모 (이 기기의 localStorage) |
+| `app_owner_limits` | 주인이 설정 시트에서 정한 한도: 1회·하루 최대 송금, 메모. buyer 허용 여부는 11-24에 뺐다(가게 전용) (이 기기의 localStorage) |
 | `app_ask_owner` | 질문 시트를 띄우고 바로 반환. 주인의 답은 `[주인 답변]`으로 시작하는 채팅 메시지로 에이전트에게 감 |
 
 Round 4 전 미리보기: `$PY submissions/26510358/round-4/ops/preview_app.py --port 18800` 후 http://127.0.0.1:18800/ 을 연다.
