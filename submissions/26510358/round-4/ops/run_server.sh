@@ -1,12 +1,14 @@
 #!/usr/bin/env bash
 # Keep the shop running on the server, independent of any SSH/VSCode session.
-#   ops/run_server.sh up        open tmux session "shop": windows shim, kit (and mesh if ~/meshkit exists)
+#   ops/run_server.sh up        start systemd user services shop-kit (+ shop-shim with LLM=own, shop-mesh if ~/meshkit exists),
+#                               enabled so they come back after a reboot (needs `loginctl enable-linger`)
 #   ops/run_server.sh link      print the latest owner-app link (https://...trycloudflare.com/?k=...)
 #   ops/run_server.sh restart   restart the kit (after git pull); "restart shim" for the shim
-#   ops/run_server.sh down      stop everything
-#   ops/run_server.sh status    windows alive, recent kit events, model failures, today's tokens, disk
+#   ops/run_server.sh down      stop and disable everything
+#   ops/run_server.sh status    services alive, recent kit events, model failures, today's tokens, disk
 # Env: LLM=market (default) uses the market's model desk (no shim, no key), LLM=own the shim, KIT_FLAGS="--with-buyer" adds kit flags.
-# Each window restarts its process 10 s after it exits. Output goes to round-4/.kit/<name>.log,
+# BACKEND=tmux keeps the old tmux session "shop" (for WSL without systemd, see WINDOWS.md).
+# systemd restarts a process 10 s after it exits (tmux: the forever loop). Output goes to round-4/.kit/<name>.log,
 # which is git-ignored on purpose: the kit prints the app link with its access code there.
 set -uo pipefail
 SELF=$(cd "$(dirname "$0")" && pwd)/$(basename "$0")
@@ -18,6 +20,8 @@ NAME=${NAME:-Hermes Shop}
 LLM=${LLM:-market}                              # market = the model desk; LLM=own uses ops/llm_shim.py and the key in .env
 MARKET=${MARKET:-https://market.ourolabs.ai}
 SESSION=${SESSION:-shop}
+UNITS=$HOME/.config/systemd/user
+if [ -z "${BACKEND:-}" ]; then systemctl --user show-environment >/dev/null 2>&1 && BACKEND=systemd || BACKEND=tmux; fi
 read -r -a APP <<< "${APP_FLAGS:---app 8800 --app-tunnel}"
 read -r -a EXTRA <<< "${KIT_FLAGS:-}"
 export PATH="$HOME/.local/bin:$PATH"            # cloudflared/tmux installed without root; cron has no login PATH
@@ -27,6 +31,10 @@ cd "$ROOT"
 
 forever() {                                     # name, command...
   local name=$1; shift
+  if [ -n "${INVOCATION_ID:-}" ]; then          # under systemd: run once, Restart= brings it back
+    echo "[$(date '+%F %T')] start $name (systemd)" >> "$R/.kit/$name.log"
+    exec "$@" >> "$R/.kit/$name.log" 2>&1
+  fi
   while true; do
     echo "[$(date '+%F %T')] start $name" | tee -a "$R/.kit/$name.log"
     "$@" 2>&1 | tee -a "$R/.kit/$name.log"
@@ -34,6 +42,50 @@ forever() {                                     # name, command...
     sleep 10
   done
 }
+
+unit() {                                        # name, env... : write ~/.config/systemd/user/shop-<name>.service
+  local name=$1; shift; mkdir -p "$UNITS"
+  {
+    echo "[Unit]"
+    echo "Description=round-4 $NAME: $name"
+    echo "After=network-online.target${AFTER:+ $AFTER}"
+    echo "StartLimitIntervalSec=0"
+    echo "[Service]"
+    for e in "$@"; do printf 'Environment="%s"\n' "$e"; done
+    echo "ExecStart=$SELF $name"
+    echo "ExecStopPost=/bin/sh -c 'echo \"[\$\$(date \"+%%F %%T\")] $name exited (\$\$SERVICE_RESULT \$\$EXIT_STATUS), systemd restarts in 10 s\" >> $R/.kit/$name.log'"
+    echo "Restart=always"
+    echo "RestartSec=10"
+    echo "[Install]"
+    echo "WantedBy=default.target"
+  } > "$UNITS/shop-$name.service"
+}
+
+sd() { systemctl --user "$@"; }
+names() { for n in shim kit mesh; do [ -f "$UNITS/shop-$n.service" ] && echo "shop-$n"; done; }
+
+if [ "$BACKEND" = systemd ]; then case "${1:-}" in
+  up)
+    if sd is-active -q shop-kit; then echo "already up: $SELF status"; exit 0; fi
+    rm -f "$UNITS"/shop-{shim,kit,mesh}.service
+    U="shop-kit"
+    if [ "$LLM" != market ]; then unit shim "PY=$PY"; U="shop-shim $U"; AFTER=shop-shim.service; fi
+    unit kit "LLM=$LLM" "NAME=$NAME" "MARKET=$MARKET" "PY=$PY" "APP_FLAGS=${APP[*]}" "KIT_FLAGS=${EXTRA[*]:-}"
+    AFTER=
+    [ -d "$HOME/meshkit/meshkit-py" ] && { unit mesh "PY=$PY"; U="$U shop-mesh"; }
+    sd daemon-reload && sd enable --now $U
+    echo "up: $U. logs: tail -f $R/.kit/kit.log   app link (after ~1 min): $SELF link"
+    loginctl show-user "$USER" -p Linger 2>/dev/null | grep -q yes || echo "warning: linger is off, services stop when you log out: loginctl enable-linger $USER"
+    exit 0 ;;
+  restart)
+    sd restart "shop-${2:-kit}"; exit ;;
+  down)
+    U=$(names); [ -n "$U" ] && sd disable --now $U; echo "down: ${U:-nothing installed}"; exit 0 ;;
+  status)
+    for n in $(names); do echo "$n $(sd is-active "$n") since $(sd show "$n" -p ActiveEnterTimestamp --value) restarts=$(sd show "$n" -p NRestarts --value)"; done
+    [ -z "$(names)" ] && echo "no shop services installed: $SELF up"
+    set -- status-common ;;
+esac; fi
 
 case "${1:-}" in
   up)
@@ -60,8 +112,8 @@ case "${1:-}" in
       "${APP[@]}" ${EXTRA[@]+"${EXTRA[@]}"} ;;
   link)
     grep -o 'https://[^ ]*?k=[^ ]*' "$R/.kit/kit.log" 2>/dev/null | tail -1 || echo "no link yet: is the kit up?" ;;
-  status)
-    tmux list-windows -t "$SESSION" -F '#{window_name} #{?pane_dead,DEAD,alive}' 2>/dev/null || echo "tmux session $SESSION is not up"
+  status|status-common)
+    [ "$BACKEND" = tmux ] && { tmux list-windows -t "$SESSION" -F '#{window_name} #{?pane_dead,DEAD,alive}' 2>/dev/null || echo "tmux session $SESSION is not up"; }
     echo "--- recent kit events"
     grep -E '\[(tunnel|market|kit|mind|maroo)\]' "$R/.kit/kit.log" 2>/dev/null | grep -v '?k=' | tail -8
     echo "--- model failures in the last 500 kit lines: $(tail -500 "$R/.kit/kit.log" 2>/dev/null | grep -c 'model call failed')"
