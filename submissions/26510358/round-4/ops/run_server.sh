@@ -8,7 +8,7 @@
 #   ops/run_server.sh status    services alive, recent kit events, model failures, today's tokens, disk
 # Env: LLM=market (default) uses the market's model desk (no shim, no key), LLM=own the shim, KIT_FLAGS="--with-buyer" adds kit flags.
 # BACKEND=tmux keeps the old tmux session "shop" (for WSL without systemd, see WINDOWS.md).
-# systemd restarts a process 10 s after it exits (tmux: the forever loop). Output goes to round-4/.kit/<name>.log,
+# systemd restarts a process 60 s after it exits (RESTART_SEC; quick tunnels answer 429 when asked too often; tmux: 10 s). Output goes to round-4/.kit/<name>.log,
 # which is git-ignored on purpose: the kit prints the app link with its access code there.
 set -uo pipefail
 SELF=$(cd "$(dirname "$0")" && pwd)/$(basename "$0")
@@ -53,9 +53,9 @@ unit() {                                        # name, env... : write ~/.config
     echo "[Service]"
     for e in "$@"; do printf 'Environment="%s"\n' "$e"; done
     echo "ExecStart=$SELF $name"
-    echo "ExecStopPost=/bin/sh -c 'echo \"[\$\$(date \"+%%F %%T\")] $name exited (\$\$SERVICE_RESULT \$\$EXIT_STATUS), systemd restarts in 10 s\" >> $R/.kit/$name.log'"
+    echo "ExecStopPost=/bin/sh -c 'echo \"[\$\$(date \"+%%F %%T\")] $name exited (\$\$SERVICE_RESULT \$\$EXIT_STATUS), systemd restarts in ${RESTART_SEC:-60} s\" >> $R/.kit/$name.log'"
     echo "Restart=always"
-    echo "RestartSec=10"
+    echo "RestartSec=${RESTART_SEC:-60}"
     echo "[Install]"
     echo "WantedBy=default.target"
   } > "$UNITS/shop-$name.service"
@@ -72,7 +72,8 @@ if [ "$BACKEND" = systemd ]; then case "${1:-}" in
     if [ "$LLM" != market ]; then unit shim "PY=$PY"; U="shop-shim $U"; AFTER=shop-shim.service; fi
     unit kit "LLM=$LLM" "NAME=$NAME" "MARKET=$MARKET" "PY=$PY" "APP_FLAGS=${APP[*]}" "KIT_FLAGS=${EXTRA[*]:-}"
     AFTER=
-    [ -d "$HOME/meshkit/meshkit-py" ] && { unit mesh "PY=$PY"; U="$U shop-mesh"; }
+    if ss -ltn 2>/dev/null | grep -q ':18765 '; then echo "mesh: port 18765 is already served by another process, no shop-mesh"
+    elif [ -d "$HOME/meshkit/meshkit-py" ]; then unit mesh "PY=$PY"; U="$U shop-mesh"; fi
     sd daemon-reload && sd enable --now $U
     echo "up: $U. logs: tail -f $R/.kit/kit.log   app link (after ~1 min): $SELF link"
     loginctl show-user "$USER" -p Linger 2>/dev/null | grep -q yes || echo "warning: linger is off, services stop when you log out: loginctl enable-linger $USER"
@@ -108,6 +109,9 @@ case "${1:-}" in
   kit)
     set -a; [ -f "$S/.env" ] && . "$S/.env"; . "$R/.kit/owner.env"; set +a        # claim code: MARKET_OWNER=mk-... (.kit/ is git-ignored)
     [ "${LLM:-}" = market ] && export AGENT_LLM_BASE=market
+    # The kit checks its new trycloudflare URL from this host at once; the local resolver then caches "not found"
+    # and the check fails for 120 s (11-24). Flushing the cache for the first 3 minutes needs no root.
+    command -v resolvectl >/dev/null && ( for _ in $(seq 36); do resolvectl flush-caches 2>/dev/null; sleep 5; done ) &
     forever kit "$PY" scripts/round4/agent_kit.py run --dir "$R" --market "$MARKET" --name "$NAME" --tunnel \
       "${APP[@]}" ${EXTRA[@]+"${EXTRA[@]}"} ;;
   link)
