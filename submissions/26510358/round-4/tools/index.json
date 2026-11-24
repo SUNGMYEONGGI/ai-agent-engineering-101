@@ -1,0 +1,22 @@
+{
+ "market_call": {
+  "uses": 28,
+  "fails": 0,
+  "last": 1795517600
+ },
+ "card_writer": {
+  "uses": 3,
+  "fails": 0,
+  "last": 1795517578
+ },
+ "memory": {
+  "uses": 3,
+  "fails": 0,
+  "last": 1795517632
+ },
+ "stock_and_price": {
+  "uses": 1,
+  "fails": 0,
+  "last": 1795517562
+ }
+}
