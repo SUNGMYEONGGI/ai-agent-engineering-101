@@ -83,6 +83,8 @@ submissions/26510358/round-4/ops/run_server.sh link
 | 코드 바꾼 뒤 반영 | `git pull` 후 `ops/run_server.sh restart` |
 | shim만 재시작 | `ops/run_server.sh restart shim` |
 | 다 끄기 | `ops/run_server.sh down` |
+| 상태 한눈에 (창, 최근 이벤트, 모델 실패, 오늘 토큰, 디스크) | `ops/run_server.sh status` |
+| OpenAI 장애 때 시장 모델로 전환 | `ops/run_server.sh down && LLM=market ops/run_server.sh up` |
 
 주의: `tmux attach` 안에서 `Ctrl-c`를 누르면 그 창의 프로세스가 꺼진다. 나올 때는 항상 `Ctrl-b d`.
 
