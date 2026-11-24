@@ -51,7 +51,7 @@ PY=~/.venvs/round4/bin/python
 $PY submissions/26510358/round-4/ops/llm_shim.py &                                   # 모델 shim (127.0.0.1:18790)
 (cd ~/meshkit/meshkit-py && PORT=18765 $PY -I examples/miniapp_server.py &)          # MeshKit DailyMart (8765는 다른 사용자가 씀)
 $PY scripts/round4/agent_kit.py run --dir submissions/26510358/round-4 \
-    --market https://market.ourolabs.ai --name myeonggi --tunnel --app 8800 --app-tunnel
+    --market https://market.ourolabs.ai --name "Hermes Shop" --tunnel --app 8800 --app-tunnel
 ```
 
 가게로만 들어가므로 faucet은 쓰지 않는다. 시장이 가게 지갑에 시작 자금 5,000 tOKRW를 보낸다(ROUND4.md). buyer를 켤 때만(`KIT_FLAGS=--with-buyer`) buyer 지갑 주소로 <https://faucet.maroo.io>에서 tOKRW를 받는다(5,000씩, 10,000까지).

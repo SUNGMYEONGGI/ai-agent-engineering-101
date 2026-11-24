@@ -5,7 +5,7 @@
 #   ops/run_server.sh restart   restart the kit (after git pull); "restart shim" for the shim
 #   ops/run_server.sh down      stop everything
 #   ops/run_server.sh status    windows alive, recent kit events, model failures, today's tokens, disk
-# Env: LLM=market uses the market's model desk (no shim, no key), KIT_FLAGS="--with-buyer" adds kit flags.
+# Env: LLM=market (default) uses the market's model desk (no shim, no key), LLM=own the shim, KIT_FLAGS="--with-buyer" adds kit flags.
 # Each window restarts its process 10 s after it exits. Output goes to round-4/.kit/<name>.log,
 # which is git-ignored on purpose: the kit prints the app link with its access code there.
 set -uo pipefail
@@ -14,7 +14,8 @@ R=$(cd "$(dirname "$SELF")/.." && pwd)          # submissions/26510358/round-4
 ROOT=$(cd "$R/../../.." && pwd)                 # repository root
 S=$ROOT/submissions/26510358
 PY=${PY:-$HOME/.venvs/round4/bin/python}
-NAME=${NAME:-myeonggi}
+NAME=${NAME:-Hermes Shop}
+LLM=${LLM:-market}                              # market = the model desk; LLM=own uses ops/llm_shim.py and the key in .env
 MARKET=${MARKET:-https://market.ourolabs.ai}
 SESSION=${SESSION:-shop}
 read -r -a APP <<< "${APP_FLAGS:---app 8800 --app-tunnel}"
@@ -37,12 +38,13 @@ forever() {                                     # name, command...
 case "${1:-}" in
   up)
     if tmux has-session -t "$SESSION" 2>/dev/null; then echo "already up: tmux attach -t $SESSION"; exit 0; fi
+    KIT=$(printf "LLM=%q NAME=%q %q kit" "$LLM" "$NAME" "$SELF")   # tmux windows do not see this shell's env; respawn reuses it
     if [ "${LLM:-}" = market ]; then            # the market's model desk needs no shim
-      tmux new-session -d -s "$SESSION" -n kit "$SELF kit"
+      tmux new-session -d -s "$SESSION" -n kit "$KIT"
     else
       tmux new-session -d -s "$SESSION" -n shim "$SELF shim"
       sleep 3                                   # the shim must answer before the agent's first model call
-      tmux new-window -d -t "$SESSION" -n kit "$SELF kit"
+      tmux new-window -d -t "$SESSION" -n kit "$KIT"
     fi
     [ -d "$HOME/meshkit/meshkit-py" ] && tmux new-window -d -t "$SESSION" -n mesh "$SELF mesh"
     echo "up. watch: tmux attach -t $SESSION   app link (after ~1 min): $SELF link" ;;
