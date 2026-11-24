@@ -1,0 +1,11 @@
+name: pay_guard
+description: 수수료 공식과 호출·일일 한도를 확인한 뒤에만 buyer 또는 shop 지갑으로 Maroo 송금을 수행합니다. args: {to, credits, data_hex, role, app_owner_limits(optional)}
+permission:
+  write: [pay_log.json]
+  identity: [shop]
+  wallet: [pay]
+  pay_limit: 20000
+  timeout: 60
+logic: logic.py
+test: test.py
+version: 1

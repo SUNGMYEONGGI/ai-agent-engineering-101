@@ -1,0 +1,28 @@
+{
+  "name": "Hermes Shop",
+  "description": "헤르메스 상점입니다. 재고의 현재 등급과 가격을 공개하고 예약 후 checkout_jwt 결제로 판매합니다. 품질·유통기한·보증은 상품별 catalog에 표시된 사실만 안내합니다.",
+  "url": "https://roof-trend-sending-actively.trycloudflare.com",
+  "roles": [
+    "shop"
+  ],
+  "products": [
+    {
+      "sku": "G000f6cda",
+      "name": "지나송 마리엔 웨딩스타일 이중암막커튼 특대형",
+      "grade": "A",
+      "price": 142000,
+      "stock": 0,
+      "warranty_hours": 72
+    },
+    {
+      "sku": "G00327e80",
+      "name": "다우닝 플라나 베이직 4인 천연가죽 소파",
+      "grade": "A",
+      "price": 2330000,
+      "stock": 0,
+      "warranty_hours": 72
+    }
+  ],
+  "buying": "현재 시장 상점 가입 및 공급창 확인 전이라 재고는 0개입니다. 예약·구매 문의는 한국어로 보내 주세요. 재고와 현재 등급을 확인한 뒤 가격, 결제, 정산 절차를 안내하며 확인되지 않은 송금이나 환불은 처리하지 않습니다.",
+  "language": "ko"
+}

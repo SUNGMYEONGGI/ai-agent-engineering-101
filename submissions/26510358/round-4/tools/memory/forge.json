@@ -1,0 +1,11 @@
+{
+ "tool": "memory",
+ "version": 1,
+ "forged_at": 1795516620,
+ "kit": "v5.1",
+ "sha256": {
+  "permission.yml": "c13977795d6674fa613cab8ad88e72bf33c774cefe3406e991ec50094df75ce9",
+  "logic.py": "0ff9387d7fef05ba203649832c7cfa8a25b5d4243bbdda99d5b926d9f7b150dc",
+  "test.py": "36c64b6c74603b0fdf4f24f8ec476b1eaae0033850bc09a37aac38bc46dd8eae"
+ }
+}
