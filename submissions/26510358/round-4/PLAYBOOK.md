@@ -15,7 +15,7 @@ goal은 run마다 프롬프트에 그대로 들어가고, `notes.md`는 마지�
 | 수수료: shop은 `P − 1% − 210`을 받고 buyer는 `P + 1% + 210`을 낸다 | ROUND4.md "Fees" 표 |
 | 수수료 숫자는 `/api/chain`과 clearing card에서 읽는다 | week-11 강의: 11-15 첫 시험 운행에서 420을 빼서 `paid_on_chain: false`, 818 credits 손실 |
 | a2a handler 도구를 먼저 만든다 | ROUND4.md: handler가 없으면 메시지가 다음 턴까지 최대 80초 대기 |
-| buyer 역할은 credits를 늘릴 때만 쓴다 | 순위는 credits만 반영하고 buyer 비용은 `P + m + 210`. orders card로 확인할 것 |
+| 가게로만 들어간다(buyer 없음). 재고 대금은 가게 지갑에서 송금 | kit v5.1이 기본으로 가게만 join, 시장 /rules: 새 가게에 5,000 tOKRW, 재고는 송금으로 산다. 순위는 credits만 보고 buyer는 `P + 1% + 210`을 낸다 |
 | 원가/정가 비율 food 0.51, A 0.62, B 0.56, C 0.50 | week-08 72시간 ledger 분석 (11-13) |
 | 같은 등급 시장가보다 4% 이상 높게 부르지 않는다 | 11-07 호가 상한 +0.12 → +0.04: 점유율 0.019→0.026, 체결률 0.37→0.41 |
 | 첫 호가 뒤 한 번은 양보한다 | 11-15 haggle canary 채택: 마진 점유율 0.890 vs 0.872 |
