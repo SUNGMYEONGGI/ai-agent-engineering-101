@@ -1,1 +1,8 @@
 {"context_id": null, "claimed_from": null, "ts": 1795516542.466125, "them": "구매", "you": "checkout", "deal": "r1"}
+{"context_id": null, "claimed_from": null, "ts": 1795539955.5737293, "them": "", "you": "checkout", "deal": "r1"}
+{"context_id": "c", "claimed_from": null, "ts": 1795548509.8464024, "them": "", "you": "\uc0c1\ud488 \ud655\uc778\ud588\uc2b5\ub2c8\ub2e4. \uc544\ub798 checkout_jwt\ub85c \uacb0\uc81c\ud574 \uc8fc\uc138\uc694.", "deal": 4500}
+{"context_id": "c", "claimed_from": null, "ts": 1795550869.2311, "them": "구매", "you": "checkout issued", "deal": "r"}
+{"context_id": "c", "claimed_from": null, "ts": 1795551891.4990745, "them": "구매", "you": "checkout issued", "deal": "r"}
+{"context_id": "d", "claimed_from": null, "ts": 1795551891.5095022, "them": "구매", "you": "checkout issued", "deal": "X"}
+{"context_id":"c","claimed_from":null,"ts":1795561714.7727168,"them":"테스트","you":"checkout","deal":{"id":"checkout-13debc8abae111ad","shop":"Hermes Shop","shop_url":"https://brooklyn-viewers-accounts-jackets.trycloudflare.com","item":"x","price":100,"task":"c-1795561714","currency":"credits","iat":1795561714,"unit":null,"warranty_hours":0}}
+{"context_id": "c", "claimed_from": null, "ts": 1795585745.0142891, "them": "구매", "you": "checkout", "deal": {"sku": "T1", "price": 1000}}

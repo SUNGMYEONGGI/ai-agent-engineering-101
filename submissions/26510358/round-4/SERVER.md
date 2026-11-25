@@ -1,13 +1,14 @@
-# 서버에서 24시간 돌리기 (SMC 서버 + tmux)
+# 서버에서 24시간 돌리기 (SMC 서버 + systemd)
 
-에이전트는 SMC 서버의 tmux 안에서 돈다. 노트북을 덮거나 SSH·VSCode를 닫아도 서버 프로세스는 그대로다.
+에이전트는 SMC 서버의 systemd 사용자 서비스(`shop-kit` 등)로 돈다. 노트북을 덮거나 SSH·VSCode를 닫아도, 서버가 재부팅돼도 다시 켜진다
+(linger가 켜져 있어야 함: `loginctl show-user $USER -p Linger`가 `Linger=yes`, 11-24 확인). systemd가 없는 곳(WSL 등)에서는 예전처럼 tmux를 쓴다(`BACKEND=tmux`).
 주인 앱(iOS, 웹)은 kit이 내주는 `https://….trycloudflare.com/?k=…` 주소로 붙는다.
 
 ```
-[SMC 서버] tmux "shop"
-  ├─ shim   ops/llm_shim.py        127.0.0.1:18790 → OpenAI
-  ├─ mesh   MeshKit DailyMart      127.0.0.1:18765 (~/meshkit 있을 때만)
-  └─ kit    agent_kit.py run       가게 A2A(--tunnel) + 주인 앱 8800(--app-tunnel)
+[SMC 서버] systemd --user
+  ├─ shop-shim  ops/llm_shim.py        127.0.0.1:18790 → OpenAI (LLM=own일 때만)
+  ├─ shop-mesh  MeshKit DailyMart      127.0.0.1:18765 (~/meshkit 있을 때만)
+  └─ shop-kit   agent_kit.py run       가게 A2A(--tunnel) + 주인 앱 8800(--app-tunnel)
                                       │
                https://xxx.trycloudflare.com/?k=코드
                                       │
@@ -20,7 +21,7 @@ SSH로 서버에 들어가서 확인한다.
 
 ```bash
 cd ~/ai-agent-engineering-101
-which tmux cloudflared                       # 둘 다 경로가 나와야 함
+which cloudflared                            # 경로가 나와야 함 (tmux는 BACKEND=tmux일 때만)
 ~/.venvs/round4/bin/python --version         # 3.11 이상
 ls submissions/26510358/.env \
    submissions/26510358/round-4/.kit/owner.env \
@@ -57,7 +58,8 @@ cd ~/ai-agent-engineering-101 && git pull
 submissions/26510358/round-4/ops/run_server.sh up
 ```
 
-tmux 세션 `shop`이 백그라운드로 생기고 창마다 프로세스 하나씩 돈다. 프로세스가 죽으면 10초 뒤 다시 켜진다.
+`~/.config/systemd/user/shop-*.service`를 만들고 `enable --now`한다. 프로세스가 죽으면 10초 뒤 systemd가 다시 켜고,
+서버 재부팅 뒤에도 자동으로 켜진다. 유닛 파일은 `up`할 때마다 그때의 `LLM`, `NAME`, `MARKET`, `APP_FLAGS`, `KIT_FLAGS`로 다시 쓴다.
 출력은 `round-4/.kit/{shim,kit,mesh}.log`에 쌓인다. `.kit/`는 git에 올라가지 않는다(접근 코드가 찍히기 때문).
 
 이름이나 시장을 바꾸려면 환경변수로 넘긴다: `NAME=다른이름 MARKET=https://... ops/run_server.sh up`.
@@ -79,25 +81,20 @@ submissions/26510358/round-4/ops/run_server.sh link
 
 | 하고 싶은 것 | 명령 |
 |---|---|
-| 돌아가는 화면 보기 | `tmux attach -t shop` (창 이동 `Ctrl-b n`, 빠져나오기 `Ctrl-b d`) |
-| 로그만 보기 | `tail -f submissions/26510358/round-4/.kit/kit.log` |
+| 서비스 상태 | `systemctl --user status shop-kit` |
+| 로그 보기 | `tail -f submissions/26510358/round-4/.kit/kit.log` |
 | 코드 바꾼 뒤 반영 | `git pull` 후 `ops/run_server.sh restart` |
 | shim만 재시작 | `ops/run_server.sh restart shim` |
 | 다 끄기 | `ops/run_server.sh down` |
 | 상태 한눈에 (창, 최근 이벤트, 모델 실패, 오늘 토큰, 디스크) | `ops/run_server.sh status` |
 | OpenAI 장애 때 시장 모델로 전환 | `ops/run_server.sh down && LLM=market ops/run_server.sh up` |
 
-주의: `tmux attach` 안에서 `Ctrl-c`를 누르면 그 창의 프로세스가 꺼진다. 나올 때는 항상 `Ctrl-b d`.
+`tail -f`는 `Ctrl-c`로 빠져나와도 kit에 영향이 없다. 설정(LLM, NAME 등)을 바꾸려면 `down` 후 새 환경변수로 `up`.
 
 ## 5. 서버 재부팅 대비
 
-tmux도 재부팅에는 사라진다. 허용되는 서버라면 crontab에 등록한다.
-
-```bash
-crontab -e
-# 아래 한 줄 추가 (경로는 서버의 실제 경로로)
-@reboot /home/<계정>/ai-agent-engineering-101/submissions/26510358/round-4/ops/run_server.sh up
-```
+systemd 서비스는 `enable`돼 있어 재부팅 뒤 자동으로 켜진다(linger 필요). crontab `@reboot`는 필요 없다.
+`BACKEND=tmux`로 돌릴 때만 `@reboot …/ops/run_server.sh up`을 crontab에 넣는다.
 
 재부팅 뒤에는 앱 주소가 바뀌므로 `run_server.sh link`로 새 주소를 받아 앱에 다시 넣는다.
 
@@ -114,7 +111,7 @@ crontab -e
 APP_FLAGS="--app 8800 --app-host 0.0.0.0" ops/run_server.sh up
 ```
 
-- Cloudflare 계정에 도메인이 있으면: named tunnel(`cloudflared tunnel create ssadassa`, `cloudflared tunnel route dns ssadassa ssadassa.<도메인>`, `cloudflared tunnel run --url http://127.0.0.1:8800 ssadassa`)을 tmux 창 하나에 더 띄운다. 주소는 `https://ssadassa.<도메인>/?k=<.kit/app.key 내용>`으로 고정.
+- Cloudflare 계정에 도메인이 있으면: named tunnel(`cloudflared tunnel create ssadassa`, `cloudflared tunnel route dns ssadassa ssadassa.<도메인>`, `cloudflared tunnel run --url http://127.0.0.1:8800 ssadassa`)을 서비스 하나로 더 띄운다(`shop-kit.service`를 본떠 `~/.config/systemd/user/`에). 주소는 `https://ssadassa.<도메인>/?k=<.kit/app.key 내용>`으로 고정.
 - 도메인이 없으면: Tailscale(`tailscale serve --bg 8800`), 주소는 `https://<서버>.<tailnet>.ts.net/?k=…`. 폰과 노트북에도 Tailscale 앱이 필요하고, 서버에 tailscaled를 띄울 수 있어야 한다.
 - `0.0.0.0`은 학교망에도 8800 포트를 연다. 접근 코드가 막아 주지만 서버 정책을 먼저 확인한다.
 - iOS 앱은 https 주소만 쓴다(Info.plist에는 로컬 네트워크 예외만 있음). Tailscale IP(`http://100.x…`)를 직접 넣으면 막힌다.
@@ -127,7 +124,7 @@ APP_FLAGS="--app 8800 --app-host 0.0.0.0" ops/run_server.sh up
 | 앱이 "연결 실패" | kit이 재시작돼 주소가 바뀜. `link`로 새 주소 |
 | 에이전트가 말을 안 함 | `tail .kit/shim.log`. `OPENAI_API_KEY is not set`이면 `.env` 경로, 400이면 모델 설정 |
 | 같은 오류로 10초마다 재시작 | `grep exited .kit/kit.log`로 반복 확인 후 `run_server.sh down`, 원인 고치고 다시 `up` |
-| 하루 지나니 세션이 없음 | `tmux ls`. 서버가 오래 도는 사용자 프로세스를 정리하는지 관리자에게 확인 |
+| 서비스가 inactive | `systemctl --user status shop-kit`, `journalctl --user -u shop-kit -n 50`. 로그아웃 뒤 꺼졌으면 linger 확인 |
 
 ## 비용
 

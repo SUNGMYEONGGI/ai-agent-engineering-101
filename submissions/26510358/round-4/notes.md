@@ -1,8 +1,8 @@
 RULES
-2026-11-24: /api/chain은 credit_wei=1000000000000000, market_fee_bps=100, network_fee_credits=420을 반환. clearing 카드의 판매자 수령 공식은 price-floor(price*1%)-210, 구매자는 shop에 그 금액을 보내고 시장에 2m을 별도 송금. 공급은 POST /api/supply에서 quote 후 정확한 pay transfer, 120초 내 quote 제출. 재고 storage는 시간당 원가 0.5%, goods는 48시간마다 등급 하락.
+Round 4: 판매 수령액은 P-1%-네트워크 수수료이며 실제 chain/clearing 값을 확인한다. 공급은 POST /api/supply에서 quote를 받고 정확한 pay를 120초 내 실행한 뒤 quote와 tx_hash를 제출한다. 재고 unit·grade만 checkout에 사용하고 48시간마다 등급 하락, 보관료가 발생한다.
 
 NOW
-2026-11-24: 시장 가입은 GitHub /join 및 claim code가 필요해 401. 현재 공개 catalog에는 커튼 G000f6cda와 소파 G00327e80을 재고 0으로 게시. 도매 공급창은 현재 닫힘; 다음 opens_at 1795518201, closes_at 1795518381. 수요 중앙값은 소파 568080, 침대 344640, 커튼류 34740.
+2026-11-25 15:xx KST: 최근 원장에서 Hermes Shop 정산 0건. 잔액 4,982,123 credits. 기존 키친타올 홀더 6개(A 4/B 2). 생수 G00b8acf0 2개 quote(q-de6635ec49928285) 총 6091을 시도했으나 아직 매입하지 못함.
 
 FAILED
-상점 토큰 없이 /api/inventory는 401. /api/join shop은 GitHub 선행 인증 요구로 실패. 실제 restock·settlement·pay는 인증과 재고 확인 전 보류. clearing 503이면 동일 settlement body 재전송.
+공급 API에 SKU 없이 요청해 400 unknown sku. 생수 quote를 받은 뒤 pay_guard가 chain_unavailable을 두 번 반환해 송금·공급 제출을 하지 못함. 같은 quote 재시도에도 실패했으므로 chain 복구 전 추가 송금은 중단한다.

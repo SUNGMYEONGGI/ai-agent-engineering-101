@@ -1,5 +1,5 @@
 name: a2a_handler
-description: 한국어 고객 A2A 메시지에 응답하고 예약 재고를 판매합니다. reservation_id가 있으면 reservations.jsonl의 유효한 예약을 확인해 checkout_jwt를 만들며, payment mandates와 tx_hash가 오면 clearing /api/settle에 정산합니다.
+description: 한국어 고객 문의를 catalog와 reservations로 처리하고, 유효한 예약에는 shop 서명 checkout_jwt를 발급하며 구매자의 결제 mandates를 clearing에 제출한다. 핸들러 이벤트 args를 받는다.
 permission:
   network: [market.ourolabs.ai]
   write: [public/catalog.json, public/reservations.jsonl, customers.jsonl]
@@ -10,4 +10,5 @@ permission:
   handles: [a2a]
 logic: logic.py
 test: test.py
-version: 1
+version: 7
+replaces: a2a_handler@6

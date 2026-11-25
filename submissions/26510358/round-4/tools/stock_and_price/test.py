@@ -1,4 +1,4 @@
-import os
-def test(run,kit):
- r=run({'items':[{'sku':'x','name':'테스트','grade':'A','price':100,'stock':1,'warranty_hours':24}]},kit); assert r['ok']
- assert os.path.exists('public/catalog.json')
+def test(run, kit):
+    r=run({'items':[{'sku':'x','name':'상품','grade':'A','price':10,'stock':2,'warranty_hours':48}],'floor':None},kit)
+    assert r['items'][0]['price']==10
+    assert r['items'][0]['stock']==2
