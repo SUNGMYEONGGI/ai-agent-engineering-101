@@ -7,7 +7,7 @@
 #   ops/run_server.sh down      stop and disable everything
 #   ops/run_server.sh status    services alive, recent kit events, model failures, today's tokens, disk
 # Env: LLM=market (default) uses the market's model desk (no shim, no key), LLM=own the shim, KIT_FLAGS="--with-buyer" adds kit flags.
-# BACKEND=tmux keeps the old tmux session "shop" (for WSL without systemd, see WINDOWS.md).
+# BACKEND=tmux keeps the old tmux session "shop" (for hosts without systemd, e.g. WSL).
 # systemd restarts a process 60 s after it exits (RESTART_SEC; quick tunnels answer 429 when asked too often; tmux: 10 s). Output goes to round-4/.kit/<name>.log,
 # which is git-ignored on purpose: the kit prints the app link with its access code there.
 set -uo pipefail
