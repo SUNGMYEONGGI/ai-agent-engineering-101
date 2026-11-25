@@ -22,7 +22,7 @@ MacBook (앱)                         GitHub origin/round-4                 smc-
 | 4. 에이전트 기록 첫 commit | O 완료 (11-25 15:05) | `95fa125e`: 에이전트 파일 6개, 키·`.kit/`·`.env` 없음. 이후 쌓이는 로그는 5단계 타이머가 맡음 |
 | 5. 자동 commit 타이머 | O 완료 (11-25 15:06) | `shop-sync.timer` enabled, 매 정시. 첫 실행 success → `4229c2f8` push |
 | 6. goal REVIEW 규칙 | △ 진행 | goal에 `REVIEW EVERY 6 HOURS` 문단 작성·commit 완료(`EVERY RUN` 바로 뒤). **`restart` → `link`가 남음** |
-| 7. Mac 저장소·미리보기 | ? 진행 | Mac에서 확인 필요 |
+| 7. Mac 저장소·미리보기 | △ 진행 | 11-25 15:09 Mac `git pull`이 Mac에 남은 에이전트 파일 때문에 멈춤 → 7-1 |
 | 8. Mac `ssh -L` | ? 진행 | Mac에서 확인 필요 (5~6단계 뒤에) |
 
 각 단계 끝의 **확인**이 통과해야 다음 단계로 간다.
@@ -195,14 +195,34 @@ git log --oneline -3 origin/round-4                  # "agent records" commit (�
 
 ```bash
 cd ~/Desktop/ai-agent-engineering-101
-pkill -f agent_kit.py; pgrep -fl agent_kit.py   # Mac에서 kit이 돌고 있지 않아야 한다(같은 지갑으로 가게가 둘이 된다)
+pkill -f agent_kit.py; pgrep -fl agent_kit.py   # 아무것도 안 나와야 한다(같은 지갑으로 가게가 둘이 된다)
 git config pull.rebase false
-git status --short submissions/26510358/round-4  # Mac에 남은 수정이 있으면 먼저 정리(아래)
-git checkout round-4 && git pull origin round-4
+git checkout round-4
+git status --short submissions/26510358/round-4  # app/, ios/ 밖에 M이나 ??가 있으면 아래 7-1을 먼저 한다
+git log --oneline --stat origin/round-4..HEAD    # Mac에만 있는 commit. 있으면 무엇인지 본다(7-1의 마지막 줄)
+git pull origin round-4
 ```
 
-Mac working tree에 `app/`, `ios/` 밖의 수정(`tools/`, `logs/`, `notes.md` 등, 11-24 Mac 첫 run의 잔재)이 남아 있으면
-서버 쪽이 정본이므로 버린다: `git restore --source=HEAD -- <그 경로들>`. 지갑 키와 `.kit/`는 git 밖이라 영향 없다.
+### 7-1. Mac에 남은 에이전트 파일 치우기 (pull이 "would be overwritten"으로 멈출 때)
+
+11-24 Mac 첫 run 뒤 commit되지 않은 `tools/`, `logs/`, `notes.md`, `card.json`, `pay_log.json`, `tools/.deprecated/` 등이
+Mac에 남아 있으면 pull이 멈춘다. 서버 쪽이 정본이지만 로그는 채점 증거라서 **버리지 않고 stash로 치운다**.
+
+▶ 실행 위치: 💻 **Mac 터미널**
+
+```bash
+cd ~/Desktop/ai-agent-engineering-101 && R=submissions/26510358/round-4
+git stash push -u -m "mac leftovers after the 11-24 Mac run" -- $R ":(exclude)$R/app" ":(exclude)$R/ios"
+git status --short $R                            # app/, ios/ 밖은 비어 있어야 한다
+git pull origin round-4                          # Mac에만 있는 commit이 있으면 merge commit이 생긴다(정상)
+git stash list                                   # stash@{0}: mac leftovers ... 가 남아 있다
+```
+
+- `-u`는 untracked(`pay_log.json`, `tools/.deprecated/`)도 함께 치운다. 서버가 이 파일들을 이미 commit해서 그대로 두면 pull이 막힌다.
+- 지갑 키와 `.kit/`는 `.gitignore`된 파일이라 stash에 들어가지 않고 그대로 있다.
+- stash 안의 Mac 로그에 서버에 없는 기록(11-24 19:52 commit 뒤 Mac kit을 멈출 때까지)이 있으면, 나중에
+  `git show 'stash@{0}':$R/logs/agent-kit.log > $R/logs/agent-kit-mac-1124.log`처럼 **새 이름으로** 꺼내 Mac에서 commit한다.
+  서버가 쓰는 `logs/agent-kit.log`에 덮어쓰지 않는다.
 
 미리보기(`ops/preview_app.py`)는 kit 모듈을 그대로 불러오므로 서버와 같은 패키지가 필요하다.
 
