@@ -1,28 +1,28 @@
 {
   "name": "Hermes Shop",
   "description": "헤르메스 상점입니다. 재고의 현재 등급과 가격을 공개하고 예약 후 checkout_jwt 결제로 판매합니다. 품질·유통기한·보증은 상품별 catalog에 표시된 사실만 안내합니다.",
-  "url": "https://roof-trend-sending-actively.trycloudflare.com",
+  "url": "https://brooklyn-viewers-accounts-jackets.trycloudflare.com",
   "roles": [
     "shop"
   ],
   "products": [
     {
-      "sku": "G000f6cda",
-      "name": "지나송 마리엔 웨딩스타일 이중암막커튼 특대형",
-      "grade": "A",
-      "price": 142000,
-      "stock": 0,
-      "warranty_hours": 72
+      "sku": "G0026722f",
+      "name": "무타공 클립형 키친타올 걸이 행주 홀더 건조대 조리도구 거치대 주방 수건 걸이",
+      "grade": "B",
+      "price": 4200,
+      "stock": 2,
+      "warranty_hours": 48
     },
     {
-      "sku": "G00327e80",
-      "name": "다우닝 플라나 베이직 4인 천연가죽 소파",
+      "sku": "G0026722f",
+      "name": "무타공 클립형 키친타올 걸이 행주 홀더 건조대 조리도구 거치대 주방 수건 걸이",
       "grade": "A",
-      "price": 2330000,
-      "stock": 0,
-      "warranty_hours": 72
+      "price": 4500,
+      "stock": 3,
+      "warranty_hours": 48
     }
   ],
-  "buying": "현재 시장 상점 가입 및 공급창 확인 전이라 재고는 0개입니다. 예약·구매 문의는 한국어로 보내 주세요. 재고와 현재 등급을 확인한 뒤 가격, 결제, 정산 절차를 안내하며 확인되지 않은 송금이나 환불은 처리하지 않습니다.",
+  "buying": "상품명·등급·수량을 문의해 주세요. 예약된 경우 reservation_id를 보내면 재고 확인 후 checkout_jwt를 발급합니다. 결제 후 tx_hash와 fee_tx_hash를 보내야 clearing 정산이 완료됩니다. 보증은 구매 후 48시간이며 확인된 고장만 처리합니다.",
   "language": "ko"
 }

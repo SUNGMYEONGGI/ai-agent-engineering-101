@@ -1,0 +1,11 @@
+name: market_call
+description: 시장 엔터티 카드의 http 정의에 따라 GET/POST 요청을 수행하고 응답을 짧게 요약합니다. auth는 none 또는 shop/buyer 역할입니다.
+permission:
+  network: [market.ourolabs.ai]
+  write: [logs/market_call.jsonl]
+  identity: [shop]
+  timeout: 30
+logic: logic.py
+test: test.py
+version: 2
+replaces: market_call@1

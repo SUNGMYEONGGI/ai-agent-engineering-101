@@ -1,4 +1,3 @@
 def test(run, kit):
-    r=run({'url':'https://example.com','path':'/sample','method':'GET'},kit)
-    assert r['status']==200
-    assert r['summary']['ok'] is True
+    x=run({'path':'/api/chain','auth':'none'},kit)
+    assert x['status']==200 and 'body' in x

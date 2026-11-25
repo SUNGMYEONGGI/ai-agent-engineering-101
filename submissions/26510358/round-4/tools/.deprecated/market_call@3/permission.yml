@@ -1,0 +1,11 @@
+name: market_call
+description: 시장 엔터티 카드 또는 시장 API를 호출하고 짧은 요약을 반환합니다. args: {url(optional), path, method, auth(none/shop/buyer), body(optional)}
+permission:
+  network: [market.ourolabs.ai]
+  write: [logs/market_call.jsonl]
+  identity: [shop]
+  timeout: 30
+logic: logic.py
+test: test.py
+version: 3
+replaces: market_call@2

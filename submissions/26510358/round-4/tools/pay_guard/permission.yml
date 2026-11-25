@@ -1,6 +1,7 @@
 name: pay_guard
-description: 수수료 공식과 호출·일일 한도를 확인한 뒤에만 buyer 또는 shop 지갑으로 Maroo 송금을 수행합니다. args: {to, credits, data_hex, role, app_owner_limits(optional)}
+description: 체인 최신 credit_wei와 수수료를 확인하고 호출·일일 한도 안에서만 shop 송금을 수행합니다. args: {to, credits, data_hex, role, app_owner_limits(optional)}
 permission:
+  network: [market.ourolabs.ai]
   write: [pay_log.json]
   identity: [shop]
   wallet: [pay]
@@ -8,4 +9,5 @@ permission:
   timeout: 60
 logic: logic.py
 test: test.py
-version: 1
+version: 2
+replaces: pay_guard@1
