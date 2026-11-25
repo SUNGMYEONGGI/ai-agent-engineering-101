@@ -21,7 +21,7 @@ MacBook (앱)                         GitHub origin/round-4                 smc-
 | 3. git 설정·push 인증 | O 완료 (11-25 15:05) | `pull.rebase=false`, gh 로그인(scope `repo`), push 성공 `48db7a68..95fa125e` |
 | 4. 에이전트 기록 첫 commit | O 완료 (11-25 15:05) | `95fa125e`: 에이전트 파일 6개, 키·`.kit/`·`.env` 없음. 이후 쌓이는 로그는 5단계 타이머가 맡음 |
 | 5. 자동 commit 타이머 | O 완료 (11-25 15:06) | `shop-sync.timer` enabled, 매 정시. 첫 실행 success → `4229c2f8` push |
-| 6. goal REVIEW 규칙 | X 진행 | `agent.json`에 `REVIEW` 없음 |
+| 6. goal REVIEW 규칙 | △ 진행 | goal에 `REVIEW EVERY 6 HOURS` 문단 작성·commit 완료(`EVERY RUN` 바로 뒤). **`restart` → `link`가 남음** |
 | 7. Mac 저장소·미리보기 | ? 진행 | Mac에서 확인 필요 |
 | 8. Mac `ssh -L` | ? 진행 | Mac에서 확인 필요 (5~6단계 뒤에) |
 
@@ -154,7 +154,7 @@ journalctl --user -u shop-sync -n 20 --no-pager      # 오류 없음
 git log --oneline -3 origin/round-4                  # "agent records" commit (바뀐 게 있었다면)
 ```
 
-## 6단계. [서버] goal에 6시간 REVIEW 규칙 넣기 — X 진행
+## 6단계. [서버] goal에 6시간 REVIEW 규칙 넣기 — △ 진행 (goal 작성 완료, restart 남음)
 
 에이전트는 이미 최대 120초마다 깨어나 도구를 forge하고 고친다. 빠진 "n시간마다 돌아보기"를 goal에 넣는다.
 
