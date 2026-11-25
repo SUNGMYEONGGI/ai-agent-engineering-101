@@ -1,54 +1,53 @@
 # 개발 환경: 서버(smc-gpu-server) + MacBook
 
-가게(kit)는 SMC 서버에서 24시간 돈다(서비스를 띄우는 법은 `SERVER.md`). 에이전트 개발(goal, 스크립트)은 서버에서,
-앱 개발(`app/`, `ios/`)은 Mac에서 한다. 이 문서의 앞부분(1~8단계)은 **처음 한 번 순서대로 따라 하는 세팅**이고,
-뒷부분(참고)은 세팅의 이유와 평소 흐름이다. 2026-11-25에 `scripts/round4/agent_kit.py`, `miniapp.py`를 읽고 정리했다.
+가게(kit)와 에이전트 개발은 SMC 서버에서, 앱 개발(`app/`, `ios/`)은 Mac에서 한다. 앞부분 1~10단계는 **처음 세팅(또는 다시 세팅)할 때
+위에서부터 붙여 넣는 순서**이고, 뒷부분 "참고"는 이유와 평소 흐름이다. `scripts/round4/agent_kit.py`, `miniapp.py`를 읽고 정리했다.
 
 ```
-MacBook (앱)                         GitHub origin/round-4                 smc-gpu-server (가게 + 에이전트 개발)
-  app/, ios/ 수정        ── push ──▶                     ◀── push ──  agent.json, ops/ 수정 (사람)
-  preview_app.py로 확인                                               tools/, logs/, notes.md … (에이전트, 1시간마다 자동 commit)
-  ssh -L 8800 으로 실제 가게에 붙기  ◀── pull ──           ── pull ──▶  systemd: shop-kit (+ shim)
-  iOS Simulator                                                       cloudflared 터널 → 시장, 주인 앱
+MacBook (앱 개발)                     GitHub origin/round-4               smc-gpu-server (가게 24시간 + 에이전트 개발)
+  app/, ios/ 수정         ── push ──▶                    ◀── push ──  agent.json, ops/ 수정 (사람)
+  preview_app.py, Xcode                                              tools/, logs/, notes.md … (에이전트, 매시 자동 commit)
+  ssh -L 8800 → 실제 가게  ◀── pull ──          ── pull ──▶  systemd --user:
+                                                                       shop-kit         가게 (시장 A2A + 앱 8800)
+아이폰 (Tailscale 앱 ON) ──https://hermes-shop.<tailnet>.ts.net──▶     shop-tailscaled  개인 Tailscale → 앱 8800
+                                                                       shop-sync.timer  매시 에이전트 기록 commit·push
+                                                                       shop-ngrok       (예비) ngrok 고정 주소
 ```
 
-### 진행 상황 (2026-11-25 15:0x 서버에서 확인)
+### 진행 상황 (2026-11-25 16:4x 서버에서 확인)
 
 | 단계 | 상태 | 근거 |
 |---|---|---|
-| 1. SSH 별칭 | O 완료 | 지금 이 서버에 SSH로 들어와 개발 중 |
-| 2. 가게 동작 | O 완료 | `shop-kit active since 11-25 14:53`. 다만 최근 500줄에 `model call failed` 10건(TimeoutError) |
-| 3. git 설정·push 인증 | O 완료 (11-25 15:05) | `pull.rebase=false`, gh 로그인(scope `repo`), push 성공 `48db7a68..95fa125e` |
-| 4. 에이전트 기록 첫 commit | O 완료 (11-25 15:05) | `95fa125e`: 에이전트 파일 6개, 키·`.kit/`·`.env` 없음. 이후 쌓이는 로그는 5단계 타이머가 맡음 |
-| 5. 자동 commit 타이머 | O 완료 (11-25 15:06) | `shop-sync.timer` enabled, 매 정시. 첫 실행 success → `4229c2f8` push |
-| 6. goal REVIEW 규칙 | O 완료 (11-25 15:23) | 15:10:49 재시작, 15:13 시장 재입장, 첫 실행에서 notes.md NOW에 `REVIEW 2026-11-25 15:xx credits=4982123 settled6h=0 fails=stock_and_price:1 …` 기록. 시각이 `15:xx`로 뭉개짐(6시간 판단이 흐려질 수 있음, 지켜볼 것) |
-| 7. Mac 저장소·미리보기 | O 완료 (11-25 15:2x) | Mac commit `9d54bdd7`을 merge(`caa5c3e8`), Mac·서버·origin 일치. venv(Python 3.12.16), `preview_app.py`가 18802로 떠서 브라우저 채팅에 도구 목록 응답 |
-| 8. Mac `ssh -L` | O 완료 (11-25 15:49) | `ssh -N -L 8800…` 터널로 웹 앱·iOS 시뮬레이터가 가게에 붙음. 주인 질문에 에이전트가 답함(잔고 4,982,123, 순위 6위) |
-| 9. 고정 앱 주소 (선택) | O 완료 (11-25, 9-B ngrok) | `shop-ngrok` enabled·active. 코드 없이 401, 틀린 코드 401, `/api/state` 401, 코드와 함께 303. 9(Cloudflare)는 하지 않음 |
-
-각 단계 끝의 **확인**이 통과해야 다음 단계로 간다.
+| 1. SSH 별칭 | O 완료 | 이 서버에 SSH로 들어와 개발 중 |
+| 2. 가게 동작 | O 완료 | `shop-kit` active (11-25 15:10:49부터) |
+| 3. git 설정·push 인증 | O 완료 | `pull.rebase=false`, gh 로그인, push 성공 |
+| 4. 에이전트 기록 첫 commit | O 완료 | `95fa125e` |
+| 5. 자동 commit 타이머 | O 완료 | `shop-sync.timer` 15:06, 16:00 성공 |
+| 6. goal REVIEW 규칙 | O 완료 | `notes.md`에 REVIEW 줄. 시각을 `15:xx`로 뭉개 적어 1시간 만에 다시 돔(참고 C) |
+| 7. Mac 저장소·미리보기 | O 완료 | Mac commit merge(`caa5c3e8`), `preview_app.py` 응답 |
+| 8. Mac에서 실제 가게 | O 완료 | `ssh -L` 터널로 웹 앱·시뮬레이터가 붙고 에이전트가 답함(15:49) |
+| 9. 고정 앱 주소 (개인 Tailscale) | △ 진행 | 서버 `shop-tailscaled` active, **로그인(9-2)부터 남음** |
+| 10. 실제 아이폰에 앱 설치 | △ 진행 | Xcode 서명 Team 선택까지. 아이폰 연결부터 남음 |
+| 예비. ngrok 고정 주소 | O 완료 | `shop-ngrok` active. 월 20,000요청 한도라 9단계가 되면 끈다(9-6) |
 
 ### 어느 터미널에서 치나
 
-모든 명령 블록 위에 `▶ 실행 위치`를 적었다. 터미널은 두 가지뿐이다.
-
-| 표시 | 무엇 | 여는 법 | 프롬프트로 구분 |
+| 표시 | 무엇 | 여는 법 | 구분 |
 |---|---|---|---|
-| 🖥️ **서버 터미널** | smc-gpu-server 안의 셸 | Mac에서 `ssh smc-gpu-server`, 또는 VSCode Remote-SSH의 터미널, 또는 서버에서 돌리는 Claude Code | `hostname`이 `hai-SYS-740GP-TNRT` |
-| 💻 **Mac 터미널** | MacBook의 Terminal/iTerm (SSH로 들어가지 않은 상태) | Mac에서 새 터미널 창 | `hostname`이 Mac 이름 |
+| 🖥️ **서버 터미널** | smc-gpu-server 안의 셸 | Mac에서 `ssh smc-gpu-server`, VSCode Remote-SSH 터미널, 서버의 Claude Code | `hostname` → `hai-SYS-740GP-TNRT` |
+| 💻 **Mac 터미널** | Mac 자체의 Terminal/iTerm (SSH로 들어가지 않은 상태) | Mac에서 새 터미널 | `hostname` → Mac 이름 |
+| 🌐 **브라우저** / 📱 **아이폰** | 명령 없이 화면에서 하는 일 | | |
 
-- 헷갈리면 먼저 `hostname`을 친다. 서버 명령을 Mac에서 치면 `run_server.sh`, `systemctl --user`가 Mac에서 실패하거나 엉뚱한 곳을 건드린다.
-- 8단계처럼 **Mac 터미널에서 `ssh …`로 서버에 명령을 보내는 것**은 Mac 터미널 명령이다(서버에 들어가서 치는 것이 아니다).
-- 명령은 bash 문법이다(`R=…`, `$R`). 서버에서 fish를 쓰고 있다면 먼저 `bash`를 쳐서 들어간 뒤 붙여 넣는다.
-- 서버의 저장소 경로는 `~/ai-agent-engineering-101`, Mac은 `~/Desktop/ai-agent-engineering-101`로 적었다. 다르면 바꿔서 친다.
+- 블록은 통째로 붙여 넣어도 된다. 바꿔야 하는 값은 블록 첫 줄에 `# ← 바꾸기`로 표시했다.
+- 명령은 bash 문법이다(서버 기본 셸 bash, Mac zsh 모두 동작). 서버에서 fish를 쓰고 있으면 먼저 `bash`.
+- 저장소 경로: 서버 `~/ai-agent-engineering-101`, Mac `~/Desktop/ai-agent-engineering-101`.
+- 접근 코드(`.kit/app.key`, 주소의 `?k=`)와 토큰은 채팅방·이슈·commit·스크린샷에 올리지 않는다.
 
 ---
 
-## 1단계. [Mac] 서버에 SSH 별칭 만들기 — O 완료
+## 1단계. 💻 Mac: 서버 SSH 별칭 — O 완료
 
-이후 명령은 모두 `smc-gpu-server`라는 이름으로 서버에 들어간다고 가정한다. `~/.ssh/config`에 없으면 추가한다.
-
-▶ 실행 위치: 💻 **Mac**에서 `~/.ssh/config` 파일을 편집기로 연다 (터미널 명령 아님)
+`~/.ssh/config`에 아래가 있으면 끝이다(없으면 편집기로 추가).
 
 ```sshconfig
 Host smc-gpu-server
@@ -57,65 +56,62 @@ Host smc-gpu-server
     ServerAliveInterval 30
 ```
 
-**확인**: `ssh smc-gpu-server 'hostname'`이 서버 이름을 출력한다.
-
-## 2단계. [서버] 가게가 돌고 있는지 확인 — O 완료
-
-▶ 실행 위치: 🖥️ **서버 터미널**
+▶ 💻 **Mac 터미널** — 확인
 
 ```bash
-cd ~/ai-agent-engineering-101
-git branch --show-current                                   # round-4
-submissions/26510358/round-4/ops/run_server.sh status       # shop-kit active
+ssh smc-gpu-server hostname          # hai-SYS-740GP-TNRT
 ```
 
-`shop-kit`이 없거나 inactive이면 `SERVER.md`의 0~2절대로 먼저 띄운다.
+## 2단계. 🖥️ 서버: 가게 켜기·확인 — O 완료
 
-**확인**: `status`에 `shop-kit active`가 나오고, `--- recent kit events`에 오류가 반복되지 않는다.
+처음 세팅이면 git 밖에 있어야 하는 파일(지갑 키, claim code)과 도구를 먼저 확인한다. 이미 돌고 있으면 `status`만 본다.
 
-## 3단계. [서버] git 설정과 push 인증 — O 완료
-
-서버도 GitHub에 push해야 한다(에이전트 기록을 Mac과 PR로 보내기 위해).
-
-▶ 실행 위치: 🖥️ **서버 터미널** (`gh auth login`은 브라우저 인증을 묻는 대화형 명령이라 직접 친다)
-
-```bash
-cd ~/ai-agent-engineering-101
-git config pull.rebase false                 # pull은 merge로. push된 commit을 다시 쓰지 않는다(AGENTS.md)
-git config user.name; git config user.email  # Mac과 같은 값인지 확인
-gh auth status || gh auth login              # gh가 없으면 fine-grained token을 credential helper에 저장
-git push --dry-run origin round-4
-```
-
-**확인**: `git push --dry-run`이 인증 오류 없이 끝난다.
-
-## 4단계. [서버] 지금까지 쌓인 에이전트 기록을 한 번 commit — O 완료
-
-타이머(5단계)를 켜기 전에 지금 working tree에 쌓인 에이전트 파일을 손으로 한 번 commit한다.
-그래야 첫 자동 commit이 며칠 치를 한꺼번에 담지 않는다.
-
-▶ 실행 위치: 🖥️ **서버 터미널**
+▶ 🖥️ **서버 터미널**
 
 ```bash
 cd ~/ai-agent-engineering-101 && R=submissions/26510358/round-4
-git status --short $R                        # 어떤 파일이 바뀌었는지 먼저 본다
-git add $R/tools $R/logs $R/notes.md $R/card.json $R/customers.jsonl $R/stock.json \
-        $R/sales.jsonl $R/pay_log.json $R/public
-git status --short $R                        # *.key, .kit/ 가 staged에 없는지 확인
+git checkout round-4
+ls $R/*_wallet.key $R/.kit/owner.env             # 둘 다 있어야 한다(없으면 Mac에서 옮겨 온다. 지갑 키가 곧 가게)
+command -v cloudflared && ~/.venvs/round4/bin/python --version
+loginctl show-user $USER -p Linger               # Linger=yes 여야 로그아웃·재부팅 뒤에도 돈다
+$R/ops/run_server.sh up                          # 이미 떠 있으면 "already up"
+$R/ops/run_server.sh status                      # shop-kit active
+```
+
+- `Linger=no`면 `loginctl enable-linger $USER`. `cloudflared`가 없으면
+  `mkdir -p ~/.local/bin && curl -L https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 -o ~/.local/bin/cloudflared && chmod +x ~/.local/bin/cloudflared`.
+- 같은 지갑 키로 두 곳에서 kit을 띄우지 않는다(Mac에서는 절대 `agent_kit.py run` 하지 않는다).
+
+## 3단계. 🖥️ 서버: git 설정과 push 인증 — O 완료
+
+▶ 🖥️ **서버 터미널**
+
+```bash
+cd ~/ai-agent-engineering-101
+git config pull.rebase false                     # pull은 merge. push된 commit을 다시 쓰지 않는다(AGENTS.md)
+gh auth status || gh auth login                  # 대화형. 브라우저 인증
+git push --dry-run origin round-4                # 오류 없이 끝나면 OK
+```
+
+## 4단계. 🖥️ 서버: 쌓인 에이전트 기록 한 번 commit — O 완료
+
+5단계 타이머를 처음 켜기 전에만 한다(첫 자동 commit이 며칠 치를 몰아 담지 않게).
+
+▶ 🖥️ **서버 터미널**
+
+```bash
+cd ~/ai-agent-engineering-101 && R=submissions/26510358/round-4
+git add $R/tools $R/logs $R/notes.md $R/card.json $R/customers.jsonl $R/stock.json $R/sales.jsonl $R/pay_log.json $R/public
+git status --short $R                            # staged(초록)에 *.key, .kit/ 가 없는지 눈으로 확인
 git commit -m "round-4: agent records up to $(date '+%m-%d %H:%M') from the server run"
 git pull --no-edit origin round-4 && git push origin round-4
 ```
 
-`agent.json`이 바뀌어 있으면 사람이 고친 것인지 확인한 뒤 따로 commit한다(무엇을 왜 바꿨는지 한 줄).
-`tools/.deprecated/`처럼 처음 보는 폴더도 에이전트가 만든 것이면 그대로 commit한다(로그와 시도는 채점 증거).
+## 5단계. 🖥️ 서버: 에이전트 기록 자동 commit 타이머 — O 완료
 
-**확인**: `git status --short $R`에 남은 것이 없거나, 남은 것이 git에 올리지 않을 파일뿐이다.
+매시 정각에 에이전트가 쓰는 경로만 commit → pull(Mac의 앱 변경을 받음) → push.
 
-## 5단계. [서버] 에이전트 기록 자동 commit 타이머 — O 완료
-
-1시간마다 에이전트가 쓰는 경로만 commit하고, pull(Mac의 앱 변경을 받음) 후 push한다.
-
-▶ 실행 위치: 🖥️ **서버 터미널** (블록 전체를 한 번에 붙여 넣어도 된다)
+▶ 🖥️ **서버 터미널** (블록 전체)
 
 ```bash
 mkdir -p ~/.config/systemd/user
@@ -138,368 +134,223 @@ Persistent=true
 WantedBy=timers.target
 EOF
 systemctl --user daemon-reload && systemctl --user enable --now shop-sync.timer
-systemctl --user start shop-sync             # 한 번 바로 돌려 본다
+systemctl --user start shop-sync && journalctl --user -u shop-sync -n 3 --no-pager
 ```
 
-- systemd는 유닛 파일 안의 `$`와 `%`를 먼저 해석하므로 `$$`, `%%`로 적었다.
-- `git add`는 위 경로만 받는다. 지갑 키와 `.kit/`는 `.gitignore`가 막지만 `git add -A`는 쓰지 않는다.
-- 사람이 서버에서 고치는 `agent.json`, `ops/`는 타이머가 add하지 않으므로 섞이지 않는다.
+- 유닛 파일 안에서는 systemd가 `$`, `%`를 먼저 해석하므로 `$$`, `%%`로 적었다.
+- 사람이 고치는 `agent.json`, `ops/`는 타이머가 add하지 않는다(사람이 직접 commit).
 
-**확인**:
+## 6단계. 🖥️ 서버: goal에 6시간 REVIEW 규칙 — O 완료
 
-▶ 실행 위치: 🖥️ **서버 터미널**
+`agent.json` goal의 `EVERY RUN` 문단 뒤에 `REVIEW EVERY 6 HOURS` 문단이 들어 있다(commit `fa4385e0`). goal은 kit 시작 때만 읽으므로
+goal을 고칠 때마다 아래로 반영한다.
+
+▶ 🖥️ **서버 터미널**
 
 ```bash
-systemctl --user list-timers shop-sync.timer        # NEXT에 다음 정시가 보인다
-journalctl --user -u shop-sync -n 20 --no-pager      # 오류 없음
-git log --oneline -3 origin/round-4                  # "agent records" commit (바뀐 게 있었다면)
+cd ~/ai-agent-engineering-101 && R=submissions/26510358/round-4
+python3 -c "import json; json.load(open('$R/agent.json'))" && echo "json ok"
+git add $R/agent.json && git commit -m "round-4: goal - <무엇을 왜 바꿨는지 한 줄>"   # ← 메시지 바꾸기
+git push origin round-4
+$R/ops/run_server.sh restart
+systemctl --user show shop-kit -p ActiveEnterTimestamp     # 시각이 방금으로 바뀌었으면 재시작된 것
 ```
 
-## 6단계. [서버] goal에 6시간 REVIEW 규칙 넣기 — O 완료
+확인: 몇 분 뒤 `grep REVIEW $R/notes.md`. 고정 주소(9단계)로 붙은 앱은 재시작 뒤에도 주소를 바꿀 필요가 없다.
 
-에이전트는 이미 최대 120초마다 깨어나 도구를 forge하고 고친다. 빠진 "n시간마다 돌아보기"를 goal에 넣는다.
+## 7단계. 💻 Mac: 저장소와 미리보기 — O 완료
 
-1. `submissions/26510358/round-4/agent.json`의 `goal` 문자열 끝에 아래 문단을 붙인다(JSON이라 줄바꿈은 `\n`).
-
-   ▶ 실행 위치: 🖥️ **서버**의 `agent.json`을 편집기로 연다 (VSCode Remote-SSH 또는 서버 터미널에서 `vim`/`nano`)
-
-   ```text
-   REVIEW every 6 hours (check the REVIEW line in notes.md; if it is older than 6 h, do this before anything else):
-   1. Read tools/index.json (uses, fails per tool) and the last forge results in logs/forge.jsonl.
-   2. A tool with fails > 0 since the last review: read its code with read_tool and re-forge it under the same name.
-   3. A tool you called with wrong args or misread: rewrite its description so the args and the result are unambiguous.
-   4. Something you did by hand three times in the last 6 h: forge one tool for it. Reuse before you forge.
-   5. Compare credits now with the last REVIEW line. Write one line at the end of notes.md:
-      REVIEW <time> credits=<n> (<+/- since last>) changed=<tools or none> next=<one thing to try>.
-   Change one thing per review, so the next review can tell whether it helped.
-   ```
-
-2. 반영하고 commit한다. goal은 kit이 시작할 때만 읽으므로 재시작이 필요하고, 재시작하면 앱 주소가 바뀐다.
-
-   ▶ 실행 위치: 🖥️ **서버 터미널**
-
-   ```bash
-   cd ~/ai-agent-engineering-101 && R=submissions/26510358/round-4
-   python3 -c "import json; json.load(open('$R/agent.json'))" && echo json ok
-   git add $R/agent.json && git commit -m "round-4: goal gets a 6-hour REVIEW rule (re-forge failing tools, fix descriptions, one change per review)"
-   git push origin round-4
-   $R/ops/run_server.sh restart
-   $R/ops/run_server.sh link                  # 1분쯤 뒤, 새 앱 주소
-   ```
-
-**확인**: 재시작 뒤 첫 run에서 `notes.md` 끝에 `REVIEW` 줄이 생긴다(`grep REVIEW $R/notes.md`).
-6시간은 시작값이다. 하루 뒤 `logs/forge.jsonl`의 re-forge 수와 credits 변화를 보고 조정한다.
-
-## 7단계. [Mac] 저장소와 미리보기 환경 — O 완료
-
-▶ 실행 위치: 💻 **Mac 터미널**
+▶ 💻 **Mac 터미널**
 
 ```bash
 cd ~/Desktop/ai-agent-engineering-101
-pkill -f agent_kit.py; pgrep -fl agent_kit.py   # 아무것도 안 나와야 한다(같은 지갑으로 가게가 둘이 된다)
+pkill -f agent_kit.py; pgrep -fl agent_kit.py    # 아무것도 안 나와야 한다
 git config pull.rebase false
-git checkout round-4
-git status --short submissions/26510358/round-4  # app/, ios/ 밖에 M이나 ??가 있으면 아래 7-1을 먼저 한다
-git log --oneline --stat origin/round-4..HEAD    # Mac에만 있는 commit. 있으면 무엇인지 본다(7-1의 마지막 줄)
-git pull origin round-4
+git checkout round-4 && git pull origin round-4
 ```
 
-### 7-1. Mac에 남은 에이전트 파일 치우기 (pull이 "would be overwritten"으로 멈출 때)
-
-11-24 Mac 첫 run 뒤 commit되지 않은 `tools/`, `logs/`, `notes.md`, `card.json`, `pay_log.json`, `tools/.deprecated/` 등이
-Mac에 남아 있으면 pull이 멈춘다. 서버 쪽이 정본이지만 로그는 채점 증거라서 **버리지 않고 stash로 치운다**.
-
-▶ 실행 위치: 💻 **Mac 터미널**
+pull이 `would be overwritten by merge`로 멈추면(Mac에 남은 에이전트 파일) 버리지 말고 stash로 치운 뒤 다시 pull한다.
 
 ```bash
 cd ~/Desktop/ai-agent-engineering-101 && R=submissions/26510358/round-4
-git stash push -u -m "mac leftovers after the 11-24 Mac run" -- $R ":(exclude)$R/app" ":(exclude)$R/ios"
-git status --short $R                            # app/, ios/ 밖은 비어 있어야 한다
-git pull origin round-4                          # Mac에만 있는 commit이 있으면 merge commit이 생긴다(정상)
-git stash list                                   # stash@{0}: mac leftovers ... 가 남아 있다
+git stash push -u -m "mac leftovers" -- $R ":(exclude)$R/app" ":(exclude)$R/ios"
+git pull origin round-4                          # agent.json 충돌이면 아래 세 줄
+# git checkout --theirs $R/agent.json && git add $R/agent.json && git commit --no-edit
+git push origin round-4
 ```
 
-- `-u`는 untracked(`pay_log.json`, `tools/.deprecated/`)도 함께 치운다. 서버가 이 파일들을 이미 commit해서 그대로 두면 pull이 막힌다.
-- 지갑 키와 `.kit/`는 `.gitignore`된 파일이라 stash에 들어가지 않고 그대로 있다.
-- stash 안의 Mac 로그에 서버에 없는 기록(11-24 19:52 commit 뒤 Mac kit을 멈출 때까지)이 있으면, 나중에
-  `git show 'stash@{0}':$R/logs/agent-kit.log > $R/logs/agent-kit-mac-1124.log`처럼 **새 이름으로** 꺼내 Mac에서 commit한다.
-  서버가 쓰는 `logs/agent-kit.log`에 덮어쓰지 않는다.
-
-미리보기(`ops/preview_app.py`)는 kit 모듈을 그대로 불러오므로 서버와 같은 패키지가 필요하다.
-
-▶ 실행 위치: 💻 **Mac 터미널** (venv는 Mac에 새로 만든다. 서버의 venv와 별개)
+미리보기 환경(처음 한 번)과 실행:
 
 ```bash
-curl -LsSf https://astral.sh/uv/install.sh | sh          # uv가 없을 때만
-uv venv --python 3.12 ~/.venvs/round4
+command -v uv || { curl -LsSf https://astral.sh/uv/install.sh | sh; }
+[ -x ~/.venvs/round4/bin/python ] || uv venv --python 3.12 ~/.venvs/round4
 VIRTUAL_ENV=~/.venvs/round4 uv pip install "a2a-sdk[http-server]" uvicorn httpx eth-account coincurve
-```
-
-**확인**: `git log --oneline -3`에 5·6단계의 서버 commit이 보이고, 아래가 뜬다(Ctrl-c로 끈다).
-
-▶ 실행 위치: 💻 **Mac 터미널** → 브라우저도 **Mac**에서 연다
-
-```bash
 ~/.venvs/round4/bin/python submissions/26510358/round-4/ops/preview_app.py
-# 출력된 주소(18800이 쓰이고 있으면 다음 빈 포트)를 브라우저로 연다 → 채팅을 보내면 앱이 넘긴 도구 목록이 돌아온다
-# VSCode Remote-SSH가 서버 포트를 Mac으로 자동 전달하므로 18800, 18801이 이미 쓰이고 있을 수 있다(11-25 Mac에서는 18802)
 ```
 
-## 8단계. [Mac] 실제 가게에 붙는 길 확인 — O 완료
+출력된 주소(`[preview] http://127.0.0.1:188xx/`)를 브라우저로 연다. 18800이 쓰이고 있으면 다음 빈 포트를 쓴다
+(VSCode Remote-SSH가 서버 포트를 Mac으로 자동 전달해 18800, 18801이 차 있을 수 있다). 채팅을 보내면 도구 목록이 돌아오면 정상. 끌 때 `Ctrl-c`.
 
-서버의 앱 포트 8800을 Mac으로 당겨 온다. quick tunnel 주소가 바뀌어도 이 주소는 그대로다.
+## 8단계. 💻 Mac: 실제 가게에 붙기 (개발용, 한도 없음) — O 완료
 
-**VSCode Remote-SSH로 서버에 붙어 있으면 이미 당겨져 있을 수 있다.** VSCode가 서버에서 열린 포트를 Mac으로 자동 전달한다
-(VSCode 아래 패널의 "포트" 탭). 그 탭에 8800이 있으면 아래 `ssh -L` 줄은 건너뛰고(치면 "Address already in use"),
-Mac 브라우저에서 바로 `http://127.0.0.1:8800/?k=<코드>`를 연다. 탭에 적힌 로컬 주소가 8800이 아니면 그 번호를 쓴다.
-이 길은 VSCode 창이 서버에 연결되어 있는 동안만 열린다.
-
-▶ 실행 위치: 💻 **Mac 터미널** (Mac이 서버로 ssh하는 명령. 첫 줄은 **켜 둔 채로** 두므로 별도 탭에서 쳐도 된다)
+▶ 💻 **Mac 터미널 — 탭 A** (출력 없이 멈춘 상태가 정상. 개발하는 동안 켜 둔다. 끌 때 `Ctrl-c`)
 
 ```bash
-ssh -N -L 8800:127.0.0.1:8800 smc-gpu-server &           # 끌 때: kill %1
-ssh smc-gpu-server 'cat ~/ai-agent-engineering-101/submissions/26510358/round-4/.kit/app.key'
-# 브라우저: http://127.0.0.1:8800/?k=<위 코드>
+ssh -N -L 8800:127.0.0.1:8800 smc-gpu-server
 ```
 
-iOS 시뮬레이터도 같은 주소로 붙는다(Mac의 127.0.0.1을 그대로 쓴다):
-
-▶ 실행 위치: 💻 **Mac 터미널** (위의 `ssh -L`이 켜져 있어야 한다)
+▶ 💻 **Mac 터미널 — 탭 B**
 
 ```bash
-cd submissions/26510358/round-4/ios
-DEVICE="iPhone 16 Pro" ./run-simulator.sh "http://127.0.0.1:8800/?k=$(ssh smc-gpu-server 'cat ~/ai-agent-engineering-101/submissions/26510358/round-4/.kit/app.key')"
-# DEVICE를 빼면 가장 최신 iPhone 시뮬레이터. 목록: xcrun simctl list devices available | grep iPhone
+K=$(ssh smc-gpu-server 'cat ~/ai-agent-engineering-101/submissions/26510358/round-4/.kit/app.key')
+open "http://127.0.0.1:8800/?k=$K"                                       # 웹 앱
+cd ~/Desktop/ai-agent-engineering-101/submissions/26510358/round-4/ios
+DEVICE="iPhone 18 Pro" ./run-simulator.sh "http://127.0.0.1:8800/?k=$K"  # iOS 시뮬레이터 (기종 목록: xcrun simctl list devices available | grep iPhone)
 ```
 
-실제 아이폰은 https만 되므로 서버의 `run_server.sh link` 주소를 쓴다. 접근 코드가 든 주소는 채팅방이나 commit에 올리지 않는다.
+- 탭 A가 `Address already in use`면 Mac에서 8800을 쓰는 것이 있다(`lsof -nP -iTCP:8800 -sTCP:LISTEN`). VSCode 포트 탭에 8800이 이미
+  있으면 탭 A 없이 탭 B만 쳐도 된다.
+- 터널을 닫아도 가게에는 영향이 없다. Mac의 `127.0.0.1:8800`만 끊긴다.
+- Xcode 콘솔에 쏟아지는 `UIKBDynamicRenderFactory`, `CHHapticPattern`, `TUIPredictionViewCell` 줄은 시뮬레이터 키보드·햅틱 소음이다(앱 문제 아님).
 
-**확인**: 브라우저와 시뮬레이터에서 가게 에이전트와 대화가 된다.
+## 9단계. 고정 앱 주소: 개인 Tailscale (무료, 한도 없음) — △ 진행
 
-## 9단계. [서버] 고정 앱 주소 (Cloudflare named tunnel) — X 진행 (도메인 필요)
+아이폰이 어디서든(LTE 포함) `https://hermes-shop.<내-tailnet>.ts.net/?k=<코드>`로 가게 앱에 붙는다. 주소는 kit 재시작·서버 재부팅 뒤에도 그대로.
+연구실 Tailscale(`seoultech.hailab`)은 건드리지 않고, **내 개인 Tailscale을 root 없이 사용자 권한(userspace)으로 하나 더** 띄운다
+(소켓·상태 `~/.local/share/tailscale-personal/`, UDP 포트 자동). 내 계정에 로그인한 기기만 이 주소에 닿는다.
 
-kit의 `--app-tunnel`(quick tunnel)은 kit이 재시작할 때마다 주소가 바뀐다. Cloudflare에 내 도메인을 두고 named tunnel을
-하나 더 붙이면 `https://shop.<내도메인>/?k=<코드>`가 재시작·재부팅 뒤에도 그대로다. 접근 코드는 `.kit/app.key`에 저장돼 있어 바뀌지 않는다.
+### 9-1. 🌐 브라우저: 개인 Tailscale 계정 (한 번)
 
-```
-아이폰·Mac 브라우저 ──https──▶ Cloudflare (shop.<내도메인>) ──named tunnel──▶ 서버 cloudflared(shop-tunnel) ──▶ 127.0.0.1:8800 kit
-```
+1. login.tailscale.com 에서 **개인 계정**(개인 Google/GitHub/Apple)으로 가입·로그인한다. **연구실 계정(seoultech.hailab)이 아니다.**
+2. 관리 콘솔 **DNS** 탭: **MagicDNS**가 켜져 있는지 보고, 아래 **HTTPS Certificates → Enable HTTPS**를 누른다.
+   상단에 보이는 tailnet 이름(`tailXXXX.ts.net`)을 적어 둔다.
 
-**`--app-tunnel`은 끄지 않는다.** kit은 `--app-tunnel`이나 `--app-host 0.0.0.0`일 때만 접근 코드를 켠다
-(`scripts/round4/agent_kit.py` 846–847행). 둘 다 없이 named tunnel만 붙이면 코드 없이 누구나 에이전트에게 지시할 수 있다.
-`run_server.sh`의 기본 `APP_FLAGS`(`--app 8800 --app-tunnel`)를 그대로 두면 된다(quick tunnel 주소도 같이 살아 있지만 해는 없다).
+### 9-2. 🖥️ 서버: 개인 tailscaled 서비스와 로그인
 
-### 9-1. 도메인을 Cloudflare에 두기 (한 번)
+서비스 파일은 11-25에 만들어 켜 두었다(`shop-tailscaled` active). 다시 세팅할 때는 블록 전체를 붙여 넣는다.
 
-▶ 실행 위치: 🌐 **Mac 브라우저** (dash.cloudflare.com)
-
-1. 도메인이 없으면 Cloudflare 대시보드 → Domain Registration에서 산다(가장 간단. 산 도메인은 바로 Cloudflare에 들어간다).
-   다른 곳에서 산 도메인이면 Add a domain → 무료 플랜 → 안내된 네임서버 2개를 도메인을 산 곳에 입력한다.
-2. 대시보드에서 도메인 상태가 **Active**가 될 때까지 기다린다(네임서버 변경은 몇 분~몇 시간).
-
-**확인**: 대시보드의 도메인 옆에 Active.
-
-### 9-2. 서버에서 tunnel 만들기 (한 번)
-
-▶ 실행 위치: 🖥️ **서버 터미널** (첫 줄은 URL을 출력한다. 그 URL을 💻 **Mac 브라우저**에서 열어 도메인을 고르고 Authorize)
+▶ 🖥️ **서버 터미널**
 
 ```bash
-cloudflared tunnel login                                   # ~/.cloudflared/cert.pem 생성
-cloudflared tunnel create hermes-shop                      # ~/.cloudflared/<UUID>.json 생성 (tunnel 비밀키)
-cloudflared tunnel route dns hermes-shop shop.<내도메인>    # Cloudflare DNS에 shop.<내도메인> CNAME 생성
-cloudflared tunnel list                                    # hermes-shop과 UUID 확인
-```
-
-- `~/.cloudflared/`의 `cert.pem`, `<UUID>.json`은 비밀이다. 저장소 밖에 있으니 git에 올라가지 않는다. 지우지 않는다.
-
-**확인**: `cloudflared tunnel list`에 `hermes-shop`이 있고, 대시보드 DNS에 `shop` CNAME(`<UUID>.cfargotunnel.com`)이 보인다.
-
-### 9-3. 설정 파일과 앞에서 띄워 보기
-
-▶ 실행 위치: 🖥️ **서버 터미널** (`<UUID>`, `<내도메인>`은 9-2 결과로 바꿔서)
-
-```bash
-cat > ~/.cloudflared/hermes-shop.yml <<'EOF'
-tunnel: hermes-shop
-credentials-file: /home/myeonggi/.cloudflared/<UUID>.json
-ingress:
-  - hostname: shop.<내도메인>
-    service: http://127.0.0.1:8800
-  - service: http_status:404
-EOF
-cloudflared tunnel --config ~/.cloudflared/hermes-shop.yml ingress validate
-cloudflared tunnel --config ~/.cloudflared/hermes-shop.yml run     # 앞에서 실행. 확인 뒤 Ctrl-c
-```
-
-`run`을 켜 둔 채로 다른 터미널(또는 Mac)에서 확인한다.
-
-▶ 실행 위치: 💻 **Mac 터미널** 또는 🖥️ 서버의 다른 터미널
-
-```bash
-curl -s -o /dev/null -w "%{http_code}\n" https://shop.<내도메인>/              # 401 이어야 한다(코드 없으면 거절)
-curl -s -o /dev/null -w "%{http_code}\n" "https://shop.<내도메인>/?k=<코드>"   # 303 (코드 확인 뒤 앱으로 이동)
-```
-
-**확인**: 코드 없이 401, 코드와 함께 303. **코드 없이 200이 나오면 즉시 `Ctrl-c`로 끄고** kit이 `--app-tunnel`로 떠 있는지 본다.
-
-### 9-4. 상시 실행 (systemd 서비스)
-
-▶ 실행 위치: 🖥️ **서버 터미널** (9-3의 `run`은 `Ctrl-c`로 끈 뒤)
-
-```bash
-cat > ~/.config/systemd/user/shop-tunnel.service <<'EOF'
+mkdir -p ~/.config/systemd/user ~/.local/share/tailscale-personal
+cat > ~/.config/systemd/user/shop-tailscaled.service <<'EOF'
 [Unit]
-Description=round-4: fixed https address for the shop app (Cloudflare named tunnel to 127.0.0.1:8800)
+Description=round-4: personal Tailscale (userspace, separate from the lab's tailscaled) serving the shop app at https://<host>.<tailnet>.ts.net
 After=network-online.target
 StartLimitIntervalSec=0
 [Service]
-ExecStart=%h/.local/bin/cloudflared tunnel --no-autoupdate --config %h/.cloudflared/hermes-shop.yml run
+ExecStartPre=/bin/mkdir -p %h/.local/share/tailscale-personal
+ExecStart=/usr/sbin/tailscaled --tun=userspace-networking --statedir=%h/.local/share/tailscale-personal --socket=%h/.local/share/tailscale-personal/tailscaled.sock --port=0
 Restart=always
 RestartSec=10
 [Install]
 WantedBy=default.target
 EOF
-systemctl --user daemon-reload && systemctl --user enable --now shop-tunnel
+systemctl --user daemon-reload && systemctl --user enable --now shop-tailscaled
+sleep 3; systemctl --user is-active shop-tailscaled
 ```
 
-- `run_server.sh up/down/restart`는 `shop-kit` 등만 다루고 이 서비스는 건드리지 않는다. kit이 재시작하는 1~3분 동안은 이 주소가 502를 낸다(정상).
-- 끄려면 `systemctl --user disable --now shop-tunnel`.
-
-**확인**:
+로그인 (출력된 `https://login.tailscale.com/a/…`를 🌐 **Mac 브라우저**에서 열고 **9-1의 개인 계정**으로 Connect):
 
 ```bash
-systemctl --user status shop-tunnel --no-pager | head -5          # active (running)
-journalctl --user -u shop-tunnel -n 20 --no-pager | grep -i "registered tunnel connection"   # 연결 4개 안팎
+TS="tailscale --socket=$HOME/.local/share/tailscale-personal/tailscaled.sock"
+$TS up --hostname=hermes-shop                    # 브라우저에서 승인하면 "Success."가 나오고 끝난다
+$TS status | head -3                             # 100.x.y.z  hermes-shop  <내 계정>  linux
+tailscale status | head -1                       # 연구실 쪽은 그대로 smc-gpu-server  seoultech.hailab@
 ```
 
-9-3의 `curl` 두 줄을 다시 쳐서 401, 303. 그 뒤 `run_server.sh restart`를 한 번 해 보고, 2~3분 뒤 같은 주소가 다시 열리는지 본다.
-
-### 9-5. 앱에 고정 주소 넣기
-
-▶ 실행 위치: 📱 **아이폰 앱**과 💻 **Mac 브라우저**
-
-- 주소: `https://shop.<내도메인>/?k=<코드>` (코드는 `ssh smc-gpu-server 'cat ~/ai-agent-engineering-101/submissions/26510358/round-4/.kit/app.key'`)
-- 아이폰 앱 첫 화면 입력칸에 통째로 붙여 넣는다. https라 iOS 앱에서 그대로 열린다.
-- 이제 `run_server.sh link`로 주소를 다시 받을 필요가 없다. Mac에서 개발할 때의 `ssh -L`(8단계)도 그대로 쓸 수 있다.
-- 이 주소는 접근 코드가 든 열쇠다. 채팅방, 이슈, commit에 올리지 않는다. 새어 나갔으면 서버에서 `.kit/app.key`를 지우고
-  `run_server.sh restart`(새 코드가 생긴다) → 앱에 새 주소를 넣는다.
-
-**확인**: 아이폰 앱이 고정 주소로 붙고, `run_server.sh restart` 뒤에도 주소를 바꾸지 않고 다시 붙는다.
-
-## 9-B단계. [서버] 고정 앱 주소, 무료판 (ngrok dev domain) — O 완료
-
-도메인 없이 고정 주소를 얻는 방법. ngrok 무료 계정은 바뀌지 않는 dev domain 1개(`<이름>.ngrok-free.app` 또는 `.ngrok-free.dev`)를 준다.
-9단계(Cloudflare)와 둘 중 하나만 한다. 2026-11-25 ngrok 문서(docs/gateway/domains, pricing-limits/free-plan-limits, agent/install) 기준.
-
-**무료 한도가 작다.** HTTP 요청 월 20,000건, 전송 월 1 GB. 앱은 켜져 있는 동안 계속 상태를 묻는다.
-
-| 앱 | 묻는 주기 | 1시간 켜 두면 | 20,000건이면 |
-|---|---|---|---|
-| 웹 앱 (`app/index.html` 1초 + kit `miniapp.js` 1초) | 초당 약 2건 | 약 7,200건 | 약 3시간 |
-| iOS 앱 (`MiniAppSession` 1.5초) | 1.5초에 1건 | 약 2,400건 | 약 8시간 |
-
-밖에서 잠깐씩 확인하는 용도로만 쓰고, 다 보면 앱을 닫는다. 한도를 넘으면 그달 남은 기간 이 주소가 막힌다(사용량: dashboard.ngrok.com의 Usage).
-오래 켜 둘 일이 많으면 9단계(도메인)나, Mac에서는 8단계 `ssh -L`(한도 없음)을 쓴다.
-
-**`--app-tunnel`은 그대로 둔다**(9단계와 같은 이유: 접근 코드가 켜지는 조건).
-
-### 9B-1. ngrok 가입과 토큰·주소 확인
-
-▶ 실행 위치: 🌐 **Mac 브라우저** (dashboard.ngrok.com)
-
-1. 가입(무료) 후 로그인.
-2. **Your Authtoken** 화면에서 토큰을 복사해 둔다. 비밀번호와 같다. 채팅방·commit에 올리지 않는다.
-3. **Domains** 화면에 자동으로 배정된 dev domain(`xxxx.ngrok-free.app` 또는 `.ngrok-free.dev`)을 적어 둔다. 이름은 바꿀 수 없다.
-
-### 9B-2. 서버에 ngrok 설치와 토큰 등록
-
-▶ 실행 위치: 🖥️ **서버 터미널** (`<토큰>`을 9B-1의 토큰으로 바꿔서)
+### 9-3. 🖥️ 서버: 가게 앱(8800)을 https로 내보내기
 
 ```bash
-mkdir -p ~/.local/bin
-curl -fsSL https://bin.ngrok.com/c/bNyj1mQVY4c/ngrok-v3-stable-linux-amd64.tgz | tar -xz -C ~/.local/bin
-~/.local/bin/ngrok version
-~/.local/bin/ngrok config add-authtoken "<토큰>"           # ~/.config/ngrok/ngrok.yml 에 저장(저장소 밖)
-~/.local/bin/ngrok config check
+TS="tailscale --socket=$HOME/.local/share/tailscale-personal/tailscaled.sock"
+$TS serve --bg http://127.0.0.1:8800             # "Serve is not enabled…"가 나오면 그 URL을 브라우저에서 열어 허용하고 다시
+$TS serve status                                 # https://hermes-shop.tailXXXX.ts.net (tailnet only) → proxy http://127.0.0.1:8800
+echo "https://$($TS status --json | python3 -c 'import json,sys; print(json.load(sys.stdin)["Self"]["DNSName"].rstrip("."))')/?k=$(cat ~/ai-agent-engineering-101/submissions/26510358/round-4/.kit/app.key)"
 ```
 
-**확인**: `ngrok version`이 버전을 출력하고, `config check`가 `Valid configuration file`.
+- 마지막 줄이 아이폰에 넣을 주소다. `tailnet only`라 인터넷에는 공개되지 않는다(`funnel`은 쓰지 않는다).
+- serve 설정은 tailscaled 상태에 저장돼 재부팅 뒤에도 유지된다.
+- kit은 `--app-tunnel`(기본 `APP_FLAGS`)로 떠 있어야 접근 코드가 켜진다(`agent_kit.py` 846–847행). 이것은 바꾸지 않는다.
 
-### 9B-3. 앞에서 띄워 보기와 보안 확인
+### 9-4. 📱 아이폰: Tailscale 앱과 확인
 
-▶ 실행 위치: 🖥️ **서버 터미널 A** (`xxxx.ngrok-free.app`을 9B-1의 주소로 바꿔서)
+1. App Store에서 **Tailscale** 설치 → **9-1의 개인 계정**으로 로그인 → VPN 구성 허용 → 토글 **켜짐**.
+2. Safari에서 9-3의 주소를 `?k=` **없이** 먼저 연다: 접근 코드를 묻는 잠금 화면(401)이면 정상.
+3. 코드를 붙인 주소 전체로 열면 가게 웹 앱이 열린다.
+4. 와이파이를 끄고 LTE로도 열리는지 본다.
+
+- 아이폰에서 다른 VPN을 쓰는 중이면 Tailscale과 동시에 켤 수 없다.
+- Mac에서도 쓰려면 Mac용 Tailscale에 같은 개인 계정으로 로그인한다(Mac이 연구실 tailnet에 들어가 있으면 계정 전환이 필요. 개발은 8단계 `ssh -L`이면 충분).
+
+### 9-5. 📱 아이폰 앱에 넣기
+
+싸다싸 가게 앱(10단계로 설치) 첫 화면 → **링크 붙여넣기** → 9-3의 주소 → **연결**. 이후 kit이 재시작돼도 다시 넣을 필요가 없다.
+
+### 9-6. 🖥️ 서버: 예비 ngrok 정리 (9-4가 된 뒤)
+
+ngrok 고정 주소(`https://scallion-retiree-unfazed.ngrok-free.dev`)는 인터넷에 공개돼 있고 월 20,000요청 한도가 있다. Tailscale이 되면 끈다.
 
 ```bash
-NGROK_URL=xxxx.ngrok-free.app
-~/.local/bin/ngrok http 8800 --url https://$NGROK_URL
+systemctl --user disable --now shop-ngrok
+systemctl --user is-active shop-ngrok            # inactive
 ```
 
-켜 둔 채로 다른 터미널에서 확인한다.
+다시 필요하면 `systemctl --user enable --now shop-ngrok`(서비스 파일과 `~/.config/ngrok/ngrok.yml`은 남아 있다).
 
-▶ 실행 위치: 🖥️ **서버 터미널 B**
+## 10단계. 💻 Mac + 📱 아이폰: 실제 폰에 앱 설치 (Xcode) — △ 진행
+
+▶ 💻 **Mac 터미널**
 
 ```bash
-NGROK_URL=xxxx.ngrok-free.app
-K=$(cat ~/ai-agent-engineering-101/submissions/26510358/round-4/.kit/app.key)
-curl -s -o /dev/null -w "코드 없이: %{http_code} (401이어야 함)\n" https://$NGROK_URL/
-curl -s -o /dev/null -w "코드와 함께: %{http_code} (303이어야 함)\n" "https://$NGROK_URL/?k=$K"
+open ~/Desktop/ai-agent-engineering-101/submissions/26510358/round-4/ios/Ssadassa.xcodeproj
 ```
 
-**확인**: 401과 303. **코드 없이 200이면 터미널 A를 즉시 `Ctrl-c`로 끄고** kit이 `--app-tunnel`로 떠 있는지 본다. 확인되면 터미널 A를 `Ctrl-c`.
+1. 아이폰을 **케이블로 Mac에 연결**, 잠금 해제, "이 컴퓨터를 신뢰" → **신뢰**.
+2. Xcode **Settings → Accounts**에 Apple ID(무료 가능)가 있는지 확인.
+3. TARGETS **Ssadassa → Signing & Capabilities**: Automatically manage signing ✔, Team `명기 성 (Personal Team)`.
+4. 위쪽 실행 대상을 시뮬레이터에서 **내 아이폰**으로 바꾼다("Preparing…"이면 끝날 때까지 대기) → Signing 화면의 **Try Again**.
+   - `Failed to register bundle identifier`면 Bundle Identifier를 `kr.ac.seoultech.s26510358.ssadassa.myeonggi`로 바꾸고 Try Again.
+5. 아이폰 **설정 → 개인정보 보호 및 보안 → 개발자 모드** 켜기 → 재시작 후 **켜기**.
+6. Xcode **▶ Run**(`Cmd+R`). "신뢰하지 않는 개발자"면 아이폰 **설정 → 일반 → VPN 및 기기 관리 → Apple Development: …** → **신뢰** → 다시 Run.
+7. 앱이 뜨면 9-5대로 주소를 넣는다.
 
-### 9B-4. 상시 실행 (systemd 서비스)
+- 무료 Apple ID로 설치한 앱은 **7일 뒤 실행이 막힌다**. 아이폰을 연결하고 Run 하면 다시 7일.
+- 케이블 없이: 한 번 연결한 뒤 Xcode **Window → Devices and Simulators** → 아이폰 → **Connect via network**.
+- Team·Bundle ID를 바꾸면 프로젝트 파일이 바뀐다. Mac에서 commit한다.
 
-▶ 실행 위치: 🖥️ **서버 터미널**
+▶ 💻 **Mac 터미널**
 
 ```bash
-NGROK_URL=xxxx.ngrok-free.app
-cat > ~/.config/systemd/user/shop-ngrok.service <<EOF
-[Unit]
-Description=round-4: fixed https address for the shop app (ngrok dev domain to 127.0.0.1:8800)
-After=network-online.target
-StartLimitIntervalSec=0
-[Service]
-ExecStart=%h/.local/bin/ngrok http 8800 --url https://$NGROK_URL --log stdout --log-format logfmt
-Restart=always
-RestartSec=10
-[Install]
-WantedBy=default.target
-EOF
-systemctl --user daemon-reload && systemctl --user enable --now shop-ngrok
-sleep 5; systemctl --user is-active shop-ngrok
+cd ~/Desktop/ai-agent-engineering-101 && git pull origin round-4
+git add submissions/26510358/round-4/ios && git commit -m "round-4: iOS signing with my Personal Team for my iPhone" && git push origin round-4
 ```
 
-- `run_server.sh`는 이 서비스를 건드리지 않는다. kit이 재시작하는 1~3분 동안은 이 주소가 오류 페이지를 낸다(정상).
-- 끄려면 `systemctl --user disable --now shop-ngrok`.
+## 세팅 끝: 웹 앱 한 바퀴 (Mac 수정 → 서버 반영, 재시작 없음)
 
-**확인**: `active`, 그리고 9B-3의 터미널 B 명령을 다시 쳐서 401, 303.
-
-### 9B-5. 앱에 넣기
-
-▶ 실행 위치: 🖥️ **서버 터미널**에서 주소를 만들고 📱 **아이폰 앱**에 넣는다
+▶ 💻 **Mac 터미널** — 표시 한 줄 넣고 올리기
 
 ```bash
-NGROK_URL=xxxx.ngrok-free.app
-echo "https://$NGROK_URL/?k=$(cat ~/ai-agent-engineering-101/submissions/26510358/round-4/.kit/app.key)"
+cd ~/Desktop/ai-agent-engineering-101 && git pull origin round-4
+echo '<!-- dev-loop test from the Mac -->' >> submissions/26510358/round-4/app/index.html
+git add submissions/26510358/round-4/app/index.html
+git commit -m "round-4: app dev-loop test marker from the Mac (reverted next)" && git push origin round-4
 ```
 
-- 아이폰 앱 첫 화면 입력칸에 붙여 넣는다. 앱의 요청은 브라우저가 아니라서 ngrok 경고 페이지가 뜨지 않는다(문서: 브라우저 User-Agent의 GET에만 뜸).
-- 브라우저로 처음 열면 ngrok 경고 페이지가 한 번 뜬다. **Visit Site**를 누르면 7일 동안 다시 뜨지 않는다.
-- 이 주소는 접근 코드가 든 열쇠다. 어디에도 올리지 않는다.
+▶ 🖥️ **서버 터미널** — 받아서 가게가 내주는지 확인
 
-**확인**: 아이폰 앱이 붙어 주인 질문에 답이 오고, `run_server.sh restart` 뒤에도 같은 주소로 다시 붙는다.
+```bash
+cd ~/ai-agent-engineering-101 && git pull --no-edit origin round-4
+K=$(cat submissions/26510358/round-4/.kit/app.key)
+curl -s -b "miniapp_access=$K" http://127.0.0.1:8800/ | tail -1          # <!-- dev-loop test from the Mac --> 가 보이면 성공
+```
 
-## 세팅 끝: 한 바퀴 돌려 보기
+▶ 💻 **Mac 터미널** — 되돌리기(지우지 않고 되돌리는 commit)
 
-| 순서 | 어디서 | 할 일 | 기대 결과 |
-|---|---|---|---|
-| 1 | Mac | `app/index.html`에 눈에 띄는 작은 변경 → commit → push | |
-| 2 | 서버 | `git pull` (또는 다음 정시 타이머) | 서버 `app/`에 변경이 들어옴 |
-| 3 | Mac | `http://127.0.0.1:8800/?k=…` 새로고침 | 변경이 보임. kit 재시작 없음 |
-| 4 | 서버 | `systemctl --user start shop-sync` | "agent records" commit이 push됨 |
-| 5 | Mac | `git pull` | 충돌 없이 서버의 에이전트 기록이 들어옴 |
+```bash
+cd ~/Desktop/ai-agent-engineering-101 && git pull origin round-4 && git revert --no-edit HEAD && git push origin round-4
+```
 
-1의 변경은 확인 뒤 되돌리는 commit으로 정리한다(지우지 말고 새 commit으로).
+Mac의 `git push`가 `rejected`면 서버 타이머가 그 사이 push한 것이다. `git pull origin round-4` 후 다시 push.
 
 ---
 
@@ -512,66 +363,70 @@ echo "https://$NGROK_URL/?k=$(cat ~/ai-agent-engineering-101/submissions/2651035
 | 경로 (`round-4/` 기준) | 쓰는 쪽 | 비고 |
 |---|---|---|
 | `app/`, `ios/` | **Mac** | 서버는 pull만 한다 |
-| `agent.json`(persona, goal, llm), `ops/`, `PLAYBOOK.md`, `SERVER.md`, 이 문서 | **서버**(사람, Claude Code) | Mac은 pull만 한다 |
+| `agent.json`(persona, goal, llm), `ops/`, `PLAYBOOK.md`, 이 문서 | **서버**(사람, Claude Code) | Mac은 pull만 한다 |
 | `tools/`, `logs/`, `notes.md`, `card.json`, `customers.jsonl`, `stock.json`, `sales.jsonl`, `pay_log.json`, `public/` | **서버**(에이전트) | 사람이 손으로 고치지 않는다. kit은 forge 기록(`forge.json`의 sha256)과 맞지 않는 도구를 로드하지 않는다 |
 | `*_wallet.key`, `.kit/`(owner.env, app.key, *.log), `submissions/26510358/.env` | 서버에만, git 밖 | `.gitignore`가 막는다 |
-
-충돌이 났다면 이 표를 어긴 것이다. 누가 그 파일을 고쳤는지부터 본다.
+| `~/.config/systemd/user/shop-*`, `~/.local/share/tailscale-personal/`, `~/.config/ngrok/` | 서버에만, 저장소 밖 | 내용은 이 문서의 블록이 원본 |
 
 ## B. 고친 것이 돌아가는 가게에 언제 반영되나
 
 | 바꾼 것 | kit이 읽는 때 | 서버에서 할 일 |
 |---|---|---|
-| `app/index.html`과 그 옆 파일 | **요청마다 디스크에서 읽음**(`miniapp.py`의 `index`) | `git pull`만. 앱 새로고침 |
-| `ios/` | 서버와 무관. 설치된 빌드가 앱 주소로 붙음 | 없음 |
-| `agent.json` | **kit 시작 때 한 번** | `run_server.sh restart` → `link` |
-| `tools/` | 시작 때 로드. 에이전트가 run 중 forge하면 바로 추가·교체 | 사람은 건드리지 않음 |
+| `app/index.html`과 그 옆 파일 | **요청마다 디스크에서 읽음**(`miniapp.py`의 `index`) | `git pull`만(또는 매시 타이머). 앱 새로고침 |
+| `ios/` | 서버와 무관 | 없음. Xcode로 다시 설치 |
+| `agent.json` | **kit 시작 때 한 번** | `run_server.sh restart` (6단계 블록) |
+| `tools/` | 시작 때 로드, run 중 forge하면 바로 교체 | 사람은 건드리지 않음 |
 | `notes.md` | run마다 마지막 3000자 | 사람은 건드리지 않음 |
 | `ops/run_server.sh`, `llm_shim.py` | 다음 시작 때 | `restart`(shim은 `restart shim`), 유닛 설정이 바뀌면 `down` 후 `up` |
 
-`restart`하면 quick tunnel 주소가 바뀐다(`SERVER.md` 6절). goal 수정은 모아서 한 번에 한다.
+kit이 재시작하는 1~3분은 모든 앱 주소가 끊긴다. 고정 주소(9단계, 8단계 `ssh -L`)는 그 뒤 그대로 다시 붙고,
+kit 자체의 quick tunnel 주소(`run_server.sh link`)만 바뀐다.
 
 ## C. 24시간 개선의 두 층
 
-- **에이전트(자동)**: 메시지나 타이머로 깨어나 한 run에 최대 `run_minutes`(8분), 모델 호출 `max_steps`(40)번.
-  `sleep`을 고르지 않으면 120초 뒤 다시 깬다. `forge_tool`로 도구를 만들고, 같은 이름으로 다시 forge해 코드와 description을 고친다
-  (`logs/forge.jsonl`에 버전과 테스트 결과가 남는다). 6단계의 REVIEW 규칙이 이것을 6시간마다 의식적으로 하게 만든다.
-- **사람(하루 1~2번, 서버)**: 에이전트는 goal을 못 고친다. 기록을 보고 사람이 고친다.
+- **에이전트(자동)**: 메시지나 타이머로 깨어나 한 run에 최대 `run_minutes`(8분), 모델 호출 `max_steps`(40)번. `forge_tool`로 도구를 만들고
+  같은 이름으로 다시 forge해 코드와 description을 고친다(`logs/forge.jsonl`). REVIEW 규칙이 6시간마다 돌아보게 한다.
+  - 11-25 현재 REVIEW 줄의 시각이 `15:xx`, `16:xx`처럼 분이 뭉개져 6시간 판단을 못 하고 매시간 돈다. 다음 goal 수정 때
+    "REVIEW 시각은 Time now의 숫자(`YYYY-MM-DD HH:MM`) 그대로 쓴다"를 한 줄 넣는다.
+- **사람(하루 1~2번, 서버)**: 에이전트는 goal을 못 고친다. 아래를 보고 goal을 고친 뒤 6단계 블록으로 반영한다.
 
-  ▶ 실행 위치: 🖥️ **서버 터미널**
+▶ 🖥️ **서버 터미널**
 
-  ```bash
-  cd ~/ai-agent-engineering-101 && R=submissions/26510358/round-4
-  $R/ops/run_server.sh status
-  grep REVIEW $R/notes.md | tail -5
-  tail -20 $R/logs/forge.jsonl | cut -c1-200
-  ```
-
-  goal을 고치면 commit 메시지에 무엇을 왜 바꿨는지 한 줄로 쓰고 push → `restart` → `link`.
+```bash
+cd ~/ai-agent-engineering-101 && R=submissions/26510358/round-4
+$R/ops/run_server.sh status
+grep REVIEW $R/notes.md | tail -5
+tail -20 $R/logs/forge.jsonl | cut -c1-200
+```
 
 ## D. 평소 흐름
 
 | 할 일 | 어디서 | 명령 |
 |---|---|---|
-| goal, persona, 스크립트 수정 | 서버 | 수정 → commit → push → `run_server.sh restart` → `link` |
-| 웹 앱 수정 | Mac | `git pull` → 수정 → `preview_app.py` → commit → push → 서버 `git pull` |
-| iOS 앱 수정 | Mac | `git pull` → 수정 → 시뮬레이터(`ssh -L`) → commit → push |
-| 에이전트 기록 commit | 서버(자동) | `shop-sync.timer`, 바로 하려면 `systemctl --user start shop-sync` |
-| 상태 보기 | 서버 | `run_server.sh status`, `tail -f round-4/.kit/kit.log` |
-| 개선 점검 | 서버 | `grep REVIEW round-4/notes.md`, `logs/forge.jsonl` |
+| goal, persona, 스크립트 수정 | 🖥️ 서버 | 수정 → 6단계 블록 |
+| 웹 앱 수정 | 💻 Mac | `git pull` → 수정 → `preview_app.py`(7단계) 또는 `ssh -L`(8단계) → commit → push. 서버는 매시 타이머가 pull(급하면 서버에서 `git pull`) |
+| iOS 앱 수정 | 💻 Mac | `git pull` → 수정 → 시뮬레이터(8단계) → 실제 폰(10단계) → commit → push |
+| 에이전트 기록 commit | 🖥️ 서버(자동) | `shop-sync.timer`, 바로 하려면 `systemctl --user start shop-sync` |
+| 상태 보기 | 🖥️ 서버 | `run_server.sh status`, `tail -f round-4/.kit/kit.log` |
+| 밖에서 가게 보기 | 📱 아이폰 | Tailscale 켜기 → 싸다싸 가게 앱(9단계 주소) |
 
 하지 않는 것:
 
 - Mac에서 kit 실행(가게가 둘이 된다). 시험은 `preview_app.py`로.
 - Mac에서 에이전트 파일 수정, 서버에서 `app/`, `ios/` 수정.
-- 서버의 앱 파일을 scp로 덮어써서 미리 보기. working tree가 더러워져 다음 pull이 막힌다.
+- 서버의 앱 파일을 scp로 덮어써서 미리 보기(working tree가 더러워져 pull이 막힌다).
+- 서버의 연구실 Tailscale(`tailscale` 기본 소켓)에 `up`/`serve`/`funnel`. 개인 것은 항상 `--socket=~/.local/share/tailscale-personal/tailscaled.sock`.
 
 ## E. 안 될 때
 
 | 증상 | 어디서 | 확인 |
 |---|---|---|
-| `shop-sync`가 실패 | 🖥️ 서버 | `journalctl --user -u shop-sync -n 30`. 인증이면 3단계, merge 충돌이면 A의 표를 어긴 파일을 찾는다 |
-| 앱 변경이 안 보임 | 🖥️ 서버 → 💻 Mac | 서버에서 `git log -1 -- submissions/26510358/round-4/app`가 Mac의 commit인지, Mac 브라우저에서 강력 새로고침 |
-| goal 변경이 안 먹힘 | 🖥️ 서버 | `restart`를 했는지. kit은 시작 때만 `agent.json`을 읽는다 |
-| `ssh -L`이 "Address already in use" | 💻 Mac | 8800을 쓰는 프로세스(`lsof -i :8800`). 다른 포트로 `-L 18801:127.0.0.1:8800` |
-| 앱이 "연결 실패" | 🖥️ 서버 | kit이 재시작돼 tunnel 주소가 바뀜. `run_server.sh link` (ssh -L 주소는 영향 없음) |
+| `shop-sync` 실패 | 🖥️ 서버 | `journalctl --user -u shop-sync -n 30`. 인증이면 3단계, merge 충돌이면 A 표를 어긴 파일 |
+| 앱 변경이 안 보임 | 🖥️ 서버 → 💻 Mac | 서버 `git log -1 -- submissions/26510358/round-4/app`가 Mac commit인지, 브라우저 강력 새로고침 |
+| goal 변경이 안 먹힘 | 🖥️ 서버 | `systemctl --user show shop-kit -p ActiveEnterTimestamp`가 수정 뒤인지. 아니면 `run_server.sh restart` |
+| `restart`를 쳤는데 시각이 안 바뀜 | 🖥️ 서버 | Mac에서 쳤거나(`hostname` 확인), systemd 세션이 안 보이는 셸. 서버 터미널에서 다시 |
+| `ssh -L`이 Address already in use | 💻 Mac | `lsof -nP -iTCP:8800 -sTCP:LISTEN`. 다른 포트로 `-L 18880:127.0.0.1:8800` 후 `http://127.0.0.1:18880/?k=…` |
+| 아이폰 앱 "연결 실패"(Tailscale 주소) | 📱 → 🖥️ | 아이폰 Tailscale 토글이 켜져 있는지 → 서버 `systemctl --user is-active shop-tailscaled shop-kit` → `$TS serve status` |
+| Tailscale 주소가 401 화면 | 📱 | 정상(코드 없이 연 것). `?k=` 포함 주소로 다시 |
+| 미리보기가 포트 오류 | 💻 Mac | `preview_app.py`는 빈 포트를 자동으로 고른다. 출력된 주소를 연다 |
+| ngrok 주소가 안 열림 | 📱 | 월 20,000요청 한도 초과일 수 있다(dashboard.ngrok.com Usage). 9단계 Tailscale 주소를 쓴다 |
