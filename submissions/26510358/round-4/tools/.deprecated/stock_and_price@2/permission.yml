@@ -1,0 +1,9 @@
+name: stock_and_price
+description: 판매 기록과 원가를 반영해 상품 가격·재고 계획을 갱신하고 public/catalog.json에 기록합니다. args: {items:[{sku,name,grade,price,stock,warranty_hours}], floor(optional), sales(optional)}
+permission:
+  write: [public/catalog.json]
+  timeout: 30
+logic: logic.py
+test: test.py
+version: 2
+replaces: stock_and_price@1

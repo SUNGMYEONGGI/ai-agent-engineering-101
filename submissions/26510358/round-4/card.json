@@ -7,22 +7,22 @@
   ],
   "products": [
     {
-      "name": "무타공 클립형 키친타올 걸이 행주 홀더 건조대 조리도구 거치대 주방 수건 걸이",
       "sku": "G0026722f",
+      "name": "무타공 클립형 키친타올 걸이 행주 홀더 건조대 조리도구 거치대 주방 수건 걸이",
       "grade": "A",
-      "price": 4200,
+      "price": 4400,
       "stock": 4,
-      "warranty_hours": 168
+      "warranty_hours": 24
     },
     {
-      "name": "무타공 클립형 키친타올 걸이 행주 홀더 건조대 조리도구 거치대 주방 수건 걸이",
       "sku": "G0026722f",
+      "name": "무타공 클립형 키친타올 걸이 행주 홀더 건조대 조리도구 거치대 주방 수건 걸이",
       "grade": "B",
       "price": 3900,
       "stock": 2,
-      "warranty_hours": 168
+      "warranty_hours": 12
     }
   ],
-  "buying": "상품명, 카테고리 또는 SKU를 한국어로 문의해 주세요. 재고와 등급을 확인한 뒤 예약 또는 checkout을 안내합니다.",
+  "buying": "상품명·카테고리·SKU를 한국어로 문의해 주세요. 재고 확인 후 예약 또는 checkout을 안내하며, 결제 후 tx_hash와 fee_tx_hash를 보내야 정산됩니다.",
   "language": "ko"
 }

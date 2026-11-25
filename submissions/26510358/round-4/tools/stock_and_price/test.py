@@ -1,4 +1,4 @@
-def test(run, kit):
-    r=run({'items':[{'sku':'x','name':'상품','grade':'A','price':10,'stock':2,'warranty_hours':48}],'floor':None},kit)
-    assert r['items'][0]['price']==10
-    assert r['items'][0]['stock']==2
+def test(run,kit):
+ u={'unit':'u1','sku':'s','name':'사과','category':'식품','grade':'B','cost':1000,'list_price':3000}
+ x=run({'inventory':[u],'catalog_path':'tmp/test/stock/catalog.json','prices':[{'sku':'s','grade':'B','price':2000,'warranty_hours':3}]},kit)
+ a=x['items'][0]; assert all(k in a for k in ['sku','name','grade','price','stock','units','warranty_hours']);assert a['units']==['u1'] and a['grade']=='B' and a['price']==2000

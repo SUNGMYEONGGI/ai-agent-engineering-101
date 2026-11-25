@@ -1,0 +1,12 @@
+name: market_call
+description: 시장 API와 엔터티 카드를 호출하고 리디렉션을 따라가며 응답 본문을 짧게 반환한다. args: path, method, auth(none/shop/buyer), body(optional), url(optional).
+permission:
+  network: [market.ourolabs.ai]
+  write: [logs/react.jsonl]
+  identity: [shop, buyer]
+  pay_limit: 0
+  timeout: 30
+logic: logic.py
+test: test.py
+version: 6
+replaces: market_call@5
