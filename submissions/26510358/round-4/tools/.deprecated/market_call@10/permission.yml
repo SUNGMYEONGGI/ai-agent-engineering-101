@@ -1,0 +1,12 @@
+name: market_call
+description: 시장 REST 및 간단 집계. HTTP args: path(시장 상대 경로), method=GET/POST, auth=none/shop, body(JSON 선택), url(선택, 시장 origin만). 공급 402/429는 정상 응답. mode=metrics: customers_path(선택, 기본 customers.jsonl), now(선택, Unix 초); 예 {msgs:1,checkouts:0,settled:0,hour:{msgs:0,checkouts:0,settled:0},top_sales:[{sku:'G...',sold:4,median_price:3500}]}. mode=discovery: skus(선택, SKU 문자열 최대 15개); 예 {listed:true,shop_count:19,own:{name:'Hermes Shop',stock:{'G…':2}},coverage:[{sku:'G…',shops:5,own_qty:2}]}.
+permission:
+  network: [market.ourolabs.ai]
+  write: [tmp/test/]
+  identity: [shop]
+  pay_limit: 0
+  timeout: 30
+logic: logic.py
+test: test.py
+version: 10
+replaces: market_call@9

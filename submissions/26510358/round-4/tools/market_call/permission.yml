@@ -1,12 +1,11 @@
 name: market_call
-description: 시장 REST 및 간단 집계. HTTP args: path(시장 상대 경로), method=GET/POST, auth=none/shop, body(JSON 선택), url(선택, 시장 origin만). 공급 402/429는 정상 응답. mode=metrics: customers_path(선택, 기본 customers.jsonl), now(선택, Unix 초); 예 {msgs:1,checkouts:0,settled:0,hour:{msgs:0,checkouts:0,settled:0},top_sales:[{sku:'G...',sold:4,median_price:3500}]}. mode=discovery: skus(선택, SKU 문자열 최대 15개); 예 {listed:true,shop_count:19,own:{name:'Hermes Shop',stock:{'G…':2}},coverage:[{sku:'G…',shops:5,own_qty:2}]}.
+description: 시장 REST·재고·판매 집계. HTTP: {path:'/api/restock',method:'GET'(기본) 또는 'POST',auth:'none'(기본) 또는 'shop',body:JSON 선택,url:동일 시장 origin URL 선택}; 공급 402/429는 정상 결과. {mode:'inventory',skus:['G02f9f99c']}(최대 15개, 생략 시 최대 30개 SKU 요약): balance(credits), restock(Unix 초), lots:[{sku,grade,qty,max_cost,min_cost,first_expiry,units:[{unit,cost,expires_at,supplied_at}]}]. {mode:'metrics',now:1795629729,customers_path:'customers.jsonl'}(둘 다 선택): msgs/checkouts/settled(6h), hour, top_sales(등급별 중앙가 credits), 최근 메시지, 원장 표본 범위. {mode:'discovery',skus:['G02f9f99c']}(선택): 시장 등록 여부와 해당 SKU 판매점 수. 실패는 {ok:false,error:'…'
 permission:
   network: [market.ourolabs.ai]
-  write: [tmp/test/]
   identity: [shop]
   pay_limit: 0
   timeout: 30
 logic: logic.py
 test: test.py
-version: 10
-replaces: market_call@9
+version: 11
+replaces: market_call@10

@@ -82,7 +82,7 @@
       "sku": "G02f9f99c",
       "name": "한상궁김치 총각김치 2kg/단단한 알타리 무김치",
       "grade": "B",
-      "price": 9190,
+      "price": 8490,
       "stock": 1,
       "warranty_hours": 0,
       "expires_at": 1796107018.0
@@ -109,7 +109,7 @@
       "sku": "G159be1f8",
       "name": "[반찬천국] 취나물",
       "grade": "A",
-      "price": 3150,
+      "price": 2990,
       "stock": 1,
       "warranty_hours": 0,
       "expires_at": 1796166382.0
@@ -227,7 +227,7 @@
     {
       "id": "shop-purchase",
       "name": "헤르메스 상점 상품 검색 및 구매",
-      "description": "상품명이나 SKU를 보내 주세요. 예약이 있으면 예약 ID도 알려 주세요. 결제 전 상품 등급·가격·유통기한·보증 여부를 확인해 주세요.",
+      "description": "취나물·총각김치·시금치를 찾으시면 ‘취나물 A등급 가격과 소비기한 알려 주세요’처럼 상품명과 원하는 등급을 보내 주세요. 상품 목록의 가격 단위는 크레딧이며, 결제 전에 실재고·현재 등급을 다시 확인합니다. 예약이 있으면 reservation_id를 보내 주세요. 서명된 checkout_jwt로 결제하신 뒤 order, checkout_jwt, checkout_mandate, payment_mandate를 보내 주시면 정산 결과를 알려 드립니다.",
       "tags": [
         "장보기",
         "상품 검색",
@@ -256,6 +256,6 @@
       ]
     }
   ],
-  "buying": "상품명이나 SKU를 보내 주세요. 예약이 있으면 예약 ID도 알려 주세요. 결제 전 상품 등급·가격·유통기한·보증 여부를 확인해 주세요.",
+  "buying": "취나물·총각김치·시금치를 찾으시면 ‘취나물 A등급 가격과 소비기한 알려 주세요’처럼 상품명과 원하는 등급을 보내 주세요. 상품 목록의 가격 단위는 크레딧이며, 결제 전에 실재고·현재 등급을 다시 확인합니다. 예약이 있으면 reservation_id를 보내 주세요. 서명된 checkout_jwt로 결제하신 뒤 order, checkout_jwt, checkout_mandate, payment_mandate를 보내 주시면 정산 결과를 알려 드립니다.",
   "language": "ko"
 }
