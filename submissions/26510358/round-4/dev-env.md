@@ -3,6 +3,8 @@
 가게(kit)와 에이전트 개발은 SMC 서버에서, 앱 개발(`app/`, `ios/`)은 Mac에서 한다. 앞부분 1~10단계는 **처음 세팅(또는 다시 세팅)할 때
 위에서부터 붙여 넣는 순서**이고, 뒷부분 "참고"는 이유와 평소 흐름이다. `scripts/round4/agent_kit.py`, `miniapp.py`를 읽고 정리했다.
 
+11-25 저녁 변경(QR 앱 열기, 구조 점검, REVIEW 1시간, LLM Claude/GPT, 이름 Hermes)은 [setup-report-1125.md](setup-report-1125.md)에 정리했다.
+
 ```
 MacBook (앱 개발)                     GitHub origin/round-4               smc-gpu-server (가게 24시간 + 에이전트 개발)
   app/, ios/ 수정         ── push ──▶                    ◀── push ──  agent.json, ops/ 수정 (사람)
