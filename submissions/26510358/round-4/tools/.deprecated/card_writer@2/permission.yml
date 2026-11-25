@@ -1,0 +1,11 @@
+name: card_writer
+description: 한국어 Agent Card를 갱신한다. args: items=[{sku,name,grade,price(정수 credits),stock(개),warranty_hours(시간),expires_at(Unix 초 또는 null)}], buying(한국어 안내), card_path(기본 card.json; tmp/test 하위는 테스트 전용). 예: {written:true,items:22}.
+permission:
+  write: [card.json, tmp/test/]
+  identity: [shop]
+  pay_limit: 0
+  timeout: 10
+logic: logic.py
+test: test.py
+version: 2
+replaces: card_writer@1

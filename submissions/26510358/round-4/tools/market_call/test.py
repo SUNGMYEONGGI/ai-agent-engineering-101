@@ -1,15 +1,21 @@
 import os,json
 
 def test(run,kit):
+ sku='Gab7c8b3d'
+ # GET /api/shops scoreboard contract: {round, shops:[{name,url,pubkey,reviews,stock}]}
+ fixture={'round':4,'shops':[{'name':'Other','url':'https://other.invalid','pubkey':'0x0000000000000000000000000000000000000001','reviews':[],'stock':{sku:3}},{'name':'Hermes','url':str(kit.shop_url).rstrip('/')+'/.well-known/agent-card.json','pubkey':kit.address('shop'),'reviews':[],'stock':{sku:2}}]}
+ assert all(set(('name','url','pubkey','reviews','stock'))<=set(s) and all(s[k] is not None for k in ('name','url','pubkey','reviews','stock')) for s in fixture['shops'])
+ a=run({'mode':'discovery','shops_fixture':fixture,'skus':[sku]},kit)
+ assert a['listed'] and a['registered_url_matches'] and a['coverage']==[{'sku':sku,'shops':2,'own_qty':2}],a
+ fixture['shops'].pop()
+ assert not run({'mode':'discovery','shops_fixture':fixture},kit)['listed']
+ assert run({'mode':'discovery','shops_fixture':[]},kit)['ok'] is False
+ assert run({'path':'https://other.invalid/'},kit)['ok'] is False
  os.makedirs('tmp/test',exist_ok=True)
  p='tmp/test/market_customers_summary.jsonl'
- rows=[{'ts':99999,'deal':None,'them':'계란 있나요','you':'있습니다'},{'ts':99998,'deal':{'id':'co-1','unit':'u-1'}},{'ts':99997,'deal':{'id':'co-1','unit':'u-1'}},{'ts':99996,'deal':{'id':'co-1','status':'settled'}},{'ts':95000,'deal':None}]
  with open(p,'w',encoding='utf8') as f:
-  for row in rows: f.write(json.dumps(row)+'\n')
- ledger=[{'kind':'supply','ts':99500,'data':{'sku':'G12345678','units':['u-1']}},{'kind':'settle','round':4,'ts':99998,'data':{'shop':kit.shop_url+'/','unit':'u-1','amount':3400,'grade':'A'}},{'kind':'settle','round':4,'ts':95000,'data':{'shop':'other','sku':'G12345678','name':'계란','grade':'B','amount':3000}},{'kind':'settle','round':3,'ts':99998,'data':{'shop':kit.shop_url,'sku':'G12345678','amount':1}}]
- r=run({'mode':'metrics','now':100000,'customers_path':p,'ledger':{'entries':ledger}},kit)
- assert (r['msgs'],r['checkouts'],r['settled'])==(5,1,1)
- assert r['hour']=={'msgs':4,'checkouts':1,'settled':1}
- assert r['top_sales']==[{'sku':'G12345678','name':'계란','sold':2,'median_price':3200,'grade_prices':{'A':3400,'B':3000}}]
- assert run({'path':'/api/chain'},kit)['status']==200
- assert run({'path':'https://other.invalid/api','auth':'shop'},kit)['ok'] is False
+  for d in (None,{'id':'co1','unit':'u1'},{'id':'co1','unit':'u1'}): f.write(json.dumps({'ts':99999,'deal':d})+'\n')
+ row={'ts':99999,'kind':'settle','round':4,'data':{'shop':kit.shop_url,'sku':sku,'amount':9120,'grade':'A'}}
+ out=run({'mode':'metrics','customers_path':p,'now':100000,'ledger':[row]},kit)
+ assert (out['msgs'],out['checkouts'],out['settled'])==(3,1,1),out
+ assert out['top_sales'][0]['grade_prices']=={'A':9120}

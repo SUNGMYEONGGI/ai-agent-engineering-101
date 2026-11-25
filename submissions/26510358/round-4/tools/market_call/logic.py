@@ -5,6 +5,19 @@ from collections import defaultdict,Counter
 def number(v):
  return isinstance(v,(int,float)) and not isinstance(v,bool)
 
+def discovery(args,kit,body):
+ if not isinstance(body,dict) or not isinstance(body.get('shops'),list): return {'ok':False,'error':'상점 목록 형식 오류'}
+ shops=[x for x in body['shops'] if isinstance(x,dict) and isinstance(x.get('stock'),dict)]
+ def norm(v): return str(v or '').rstrip('/').removesuffix('/.well-known/agent-card.json')
+ here=norm(kit.shop_url)
+ by_url=next((s for s in shops if norm(s.get('url'))==here),None)
+ addr=str(kit.address('shop') or '').lower()
+ own=by_url or next((s for s in shops if addr and str(s.get('pubkey','')).lower()==addr),None)
+ stock=own['stock'] if own else {}
+ skus=args.get('skus',[])
+ if not isinstance(skus,list) or len(skus)>15 or any(not isinstance(s,str) for s in skus): return {'ok':False,'error':'skus는 최대 15개 문자열 목록'}
+ return {'round':body.get('round'),'shop_count':len(shops),'listed':own is not None,'registered_url_matches':bool(by_url),'own':{k:own.get(k) for k in ('name','url','stock')} if own else None,'coverage':[{'sku':s,'shops':sum(bool(x['stock'].get(s)) for x in shops),'own_qty':stock.get(s,0)} for s in skus]}
+
 def summarize(args,kit,ledger):
  now=args.get('now',time.time()); rows=[]
  try:
@@ -63,11 +76,13 @@ def summarize(args,kit,ledger):
 def run(args,kit):
  try:
   base=kit.market.rstrip('/')+'/'
-  if args.get('mode')=='metrics':
-   if kit.testing: ledger=args.get('ledger',[])
+  mode=args.get('mode')
+  if mode in ('metrics','discovery'):
+   path='api/ledger?after=-500' if mode=='metrics' else 'api/shops'
+   if kit.testing: data=args.get('ledger',[]) if mode=='metrics' else args.get('shops_fixture',{})
    else:
-    r=httpx.get(urljoin(base,'api/ledger?after=-500'),timeout=25); r.raise_for_status(); ledger=r.json()
-   return summarize(args,kit,ledger)
+    r=httpx.get(urljoin(base,path),timeout=25,follow_redirects=False); r.raise_for_status(); data=r.json()
+   return summarize(args,kit,data) if mode=='metrics' else discovery(args,kit,data)
   target=urljoin((args.get('url') or base).rstrip('/')+'/',args.get('path','/')); parsed=urlsplit(target); origin=urlsplit(base)
   if (parsed.scheme,parsed.netloc)!=(origin.scheme,origin.netloc): return {'ok':False,'error':'시장 origin 이외의 URL 거부'}
   auth=args.get('auth','none'); method=args.get('method','GET').upper()

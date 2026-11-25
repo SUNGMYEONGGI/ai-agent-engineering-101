@@ -1,0 +1,11 @@
+{
+ "tool": "card_writer",
+ "version": 3,
+ "forged_at": 1795612757,
+ "kit": "v5.1",
+ "sha256": {
+  "permission.yml": "58d3a6bc643f8eeafe1662167377d7b413d14e3cb90d7a9699997795d5bbba01",
+  "logic.py": "a180c6ae6a961bc503ff7861ebc570c871848b1d376ecab6a69c2421e027edbd",
+  "test.py": "f63e058ea74110000ae566d2accebf2da701eca1a235ec0f40f3fc65f0ebe2d8"
+ }
+}

@@ -1,0 +1,10 @@
+name: card_writer
+description: 상품·구매 방법을 반영해 한국어 Agent Card를 card.json에 작성합니다. args: {items, buying}.
+permission:
+  write: [card.json]
+  identity: [shop]
+  pay_limit: 0
+  timeout: 10
+logic: logic.py
+test: test.py
+version: 1

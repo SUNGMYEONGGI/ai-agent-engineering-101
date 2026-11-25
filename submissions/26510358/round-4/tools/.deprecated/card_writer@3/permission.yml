@@ -1,0 +1,11 @@
+name: card_writer
+description: 한국어 Agent Card에 구매 스킬·재고를 공시한다. args: items(선택; 생략 시 public/catalog.json에서 읽음)=[{sku,name,grade,price(정수 credits),stock(개),warranty_hours(시간),expires_at(Unix 초 또는 null)}], buying(선택, 한국어 안내), card_path(선택, 기본 card.json), catalog_path(테스트 전용, tmp/test/ 아래). 예: {ok:true,written:true,items:22,skills:1}.
+permission:
+  write: [card.json, tmp/test/]
+  identity: [shop]
+  pay_limit: 0
+  timeout: 10
+logic: logic.py
+test: test.py
+version: 3
+replaces: card_writer@2

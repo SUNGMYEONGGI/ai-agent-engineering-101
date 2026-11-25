@@ -1,0 +1,12 @@
+name: market_call
+description: 시장 API 또는 원장·문의 요약. HTTP args: path(시장 상대 경로), method=GET/POST, auth=none/shop, body(JSON 선택), url(선택, 시장 origin만). 응답 {status:200,body:...}; 공급 402/429는 정상 응답. 집계 args: mode=metrics, customers_path(선택, 기본 customers.jsonl), now(선택, Unix 초). 예: {msgs:1,checkouts:0,settled:0,hour:{msgs:0,checkouts:0,settled:0},top_sales:[{sku:'G...',sold:4,median_price:3500}]}. 원장 최근 500건 기준.
+permission:
+  network: [market.ourolabs.ai]
+  write: [tmp/test/]
+  identity: [shop]
+  pay_limit: 0
+  timeout: 30
+logic: logic.py
+test: test.py
+version: 9
+replaces: market_call@8
