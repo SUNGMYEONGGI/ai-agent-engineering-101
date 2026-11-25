@@ -24,7 +24,7 @@ MacBook (앱)                         GitHub origin/round-4                 smc-
 | 6. goal REVIEW 규칙 | O 완료 (11-25 15:23) | 15:10:49 재시작, 15:13 시장 재입장, 첫 실행에서 notes.md NOW에 `REVIEW 2026-11-25 15:xx credits=4982123 settled6h=0 fails=stock_and_price:1 …` 기록. 시각이 `15:xx`로 뭉개짐(6시간 판단이 흐려질 수 있음, 지켜볼 것) |
 | 7. Mac 저장소·미리보기 | O 완료 (11-25 15:2x) | Mac commit `9d54bdd7`을 merge(`caa5c3e8`), Mac·서버·origin 일치. venv(Python 3.12.16), `preview_app.py`가 18802로 떠서 브라우저 채팅에 도구 목록 응답 |
 | 8. Mac `ssh -L` | O 완료 (11-25 15:49) | `ssh -N -L 8800…` 터널로 웹 앱·iOS 시뮬레이터가 가게에 붙음. 주인 질문에 에이전트가 답함(잔고 4,982,123, 순위 6위) |
-| 9. 고정 앱 주소 (선택) | X 진행 | 둘 중 하나: 9 Cloudflare(도메인 필요, 한도 없음) 또는 9-B ngrok 무료(월 20,000요청: iOS 앱 약 8시간 분량) |
+| 9. 고정 앱 주소 (선택) | O 완료 (11-25, 9-B ngrok) | `shop-ngrok` enabled·active. 코드 없이 401, 틀린 코드 401, `/api/state` 401, 코드와 함께 303. 9(Cloudflare)는 하지 않음 |
 
 각 단계 끝의 **확인**이 통과해야 다음 단계로 간다.
 
@@ -386,7 +386,7 @@ journalctl --user -u shop-tunnel -n 20 --no-pager | grep -i "registered tunnel c
 
 **확인**: 아이폰 앱이 고정 주소로 붙고, `run_server.sh restart` 뒤에도 주소를 바꾸지 않고 다시 붙는다.
 
-## 9-B단계. [서버] 고정 앱 주소, 무료판 (ngrok dev domain) — X 진행
+## 9-B단계. [서버] 고정 앱 주소, 무료판 (ngrok dev domain) — O 완료
 
 도메인 없이 고정 주소를 얻는 방법. ngrok 무료 계정은 바뀌지 않는 dev domain 1개(`<이름>.ngrok-free.app` 또는 `.ngrok-free.dev`)를 준다.
 9단계(Cloudflare)와 둘 중 하나만 한다. 2026-11-25 ngrok 문서(docs/gateway/domains, pricing-limits/free-plan-limits, agent/install) 기준.
