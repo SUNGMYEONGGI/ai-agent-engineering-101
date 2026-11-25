@@ -45,7 +45,7 @@ echo "== 가게";    $R/ops/run_server.sh status | head -12
 echo "== git";     git fetch -q origin; git status -sb | head -1; git --no-pager log --oneline -3 | cut -c1-90
 echo "== 타이머";  journalctl --user -u shop-sync --since "-3h" --no-pager | grep -cE "Finished"; journalctl --user -u shop-sync --since "-3h" --no-pager | grep -E "Failed|error" | tail -2
 echo "== REVIEW";  grep -o "REVIEW 20[^ ]* [^ ]*" $R/notes.md | tail -3
-echo "== 앱 8800"; K=$(cat $R/.kit/app.key); curl -s -o /dev/null -w "local 코드없이 %{http_code} / 코드 %{http_code}\n" http://127.0.0.1:8800/; curl -s -o /dev/null -w "local 코드와함께 %{http_code}\n" "http://127.0.0.1:8800/?k=$K"
+echo "== 앱 8800"; K=$(cat $R/.kit/app.key); curl -s -o /dev/null -w "local 코드없이 %{http_code}\n" http://127.0.0.1:8800/; curl -s -o /dev/null -w "local 코드와함께 %{http_code}\n" "http://127.0.0.1:8800/?k=$K"
 ```
 
 | 봐야 할 것 | 정상 | 아니면 |
