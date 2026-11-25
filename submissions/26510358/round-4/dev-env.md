@@ -25,10 +25,91 @@ MacBook (앱 개발)                     GitHub origin/round-4               smc
 | 6. goal REVIEW 규칙 | O 완료 | `notes.md`에 REVIEW 줄. 시각을 `15:xx`로 뭉개 적어 1시간 만에 다시 돔(참고 C) |
 | 7. Mac 저장소·미리보기 | O 완료 | Mac commit merge(`caa5c3e8`), `preview_app.py` 응답 |
 | 8. Mac에서 실제 가게 | O 완료 | `ssh -L` 터널로 웹 앱·시뮬레이터가 붙고 에이전트가 답함(15:49) |
-| 9. 고정 앱 주소 (Cloudflare + hermes-market.shop) | △ 진행 | 도메인 구매 완료(가비아). DNS 미반영(NXDOMAIN) → **9-1부터** |
+| 9. 고정 앱 주소 (Cloudflare + hermes-market.shop) | △ 진행 | 11-25 17시대: 가비아 Active, 네임서버를 `daisy`/`michael.ns.cloudflare.com`으로 변경, DNSSEC 없음. Cloudflare "이름 서버 전파 대기 중". **아래 "금요일에 이어서 하기"의 F1부터** |
 | 10. 실제 아이폰에 앱 설치 | △ 진행 | Xcode 서명 Team 선택까지. 아이폰 연결부터 남음 |
 | 세팅 끝. 웹 앱 한 바퀴 | O 완료 | Mac `8e87a978`(표시 추가) → 서버가 재시작 없이 표시를 내줌 → Mac `70980208`(revert) → 서버 pull 뒤 표시 사라짐 |
 | 정리 대상 | - | `shop-ngrok`(월 20,000요청 한도), `shop-tailscaled`(개인 Tailscale, 쓰지 않기로 함)는 9-7에서 끈다 |
+
+### 금요일(11-27)에 이어서 하기
+
+11-25에 9단계 중 가비아 쪽(9-1, 9-2의 네임서버 변경)까지 했다. 금요일에는 **F0 → F5 순서로 위에서부터** 붙여 넣는다.
+F0에서 1~8단계가 그대로 살아 있는지 한 번에 보고, F1에서 도메인이 Cloudflare로 넘어갔는지 확인한 뒤 9-3부터 진행한다.
+
+#### F0. 🖥️ 서버 터미널 — 1~8단계 건강 검진 (한 블록)
+
+```bash
+cd ~/ai-agent-engineering-101 && R=submissions/26510358/round-4
+hostname                                                     # hai-SYS-740GP-TNRT 여야 한다 (Mac이면 ssh smc-gpu-server 부터)
+echo "== 서비스";  for u in shop-kit shop-sync.timer shop-tunnel shop-ngrok shop-tailscaled; do printf "%-16s %-9s %s\n" $u "$(systemctl --user is-active $u)" "$(systemctl --user is-enabled $u 2>/dev/null)"; done
+echo "== 가게";    $R/ops/run_server.sh status | head -12
+echo "== git";     git fetch -q origin; git status -sb | head -1; git --no-pager log --oneline -3 | cut -c1-90
+echo "== 타이머";  journalctl --user -u shop-sync --since "-3h" --no-pager | grep -cE "Finished"; journalctl --user -u shop-sync --since "-3h" --no-pager | grep -E "Failed|error" | tail -2
+echo "== REVIEW";  grep -o "REVIEW 20[^ ]* [^ ]*" $R/notes.md | tail -3
+echo "== 앱 8800"; K=$(cat $R/.kit/app.key); curl -s -o /dev/null -w "local 코드없이 %{http_code} / 코드 %{http_code}\n" http://127.0.0.1:8800/; curl -s -o /dev/null -w "local 코드와함께 %{http_code}\n" "http://127.0.0.1:8800/?k=$K"
+```
+
+| 봐야 할 것 | 정상 | 아니면 |
+|---|---|---|
+| `shop-kit`, `shop-sync.timer` | `active enabled` | `run_server.sh up` (2단계) / 5단계 블록 |
+| `run_server.sh status` | `shop-kit active`, 최근 `[mind]` 줄 | `tail -50 $R/.kit/kit.log`로 원인 |
+| git | `## round-4...origin/round-4` (ahead/behind 없음) | `git pull --no-edit origin round-4 && git push origin round-4` |
+| 타이머 | `Finished`가 2 이상, 오류 없음 | `journalctl --user -u shop-sync -n 30` (참고 E) |
+| 앱 8800 | 코드없이 `401`, 코드와함께 `303` | kit이 꺼져 있거나 재시작 중 |
+
+`shop-tunnel`은 아직 없으니 `inactive`가 정상이다(9-4에서 만든다).
+
+#### F1. 💻 Mac 터미널 — 도메인이 Cloudflare로 넘어갔는지
+
+```bash
+dig +short NS hermes-market.shop
+```
+
+- `daisy.ns.cloudflare.com.` / `michael.ns.cloudflare.com.` 두 줄 → 🌐 Cloudflare 대시보드 `hermes-market.shop` 개요가 **활성(Active)**인지 보고 F2로.
+  "전파 대기 중"이면 그 화면의 **이름 서버 확인(Check nameservers)**을 한 번 누른다.
+- 빈 칸 또는 `ns.gabia…` → 🌐 가비아 도메인 상세 → 네임서버/DNS호스트/DNSSEC 탭의 1차·2차가 `daisy…`, `michael…`인지
+  다시 확인(아니면 **설정** 버튼으로 적용). 맞는데도 48시간이 지나도 그대로면 가비아 고객센터.
+
+#### F2. 9-3 → 9-4 (서버) — 아래 9단계 본문의 블록을 그대로
+
+1. 🖥️ 9-3: `cloudflared tunnel login` → 출력된 주소를 🌐 Mac 브라우저에서 열고 `hermes-market.shop` **Authorize** → 나머지 세 줄.
+2. 🖥️ 9-4: 블록 통째로. 끝에 `active`와 1 이상의 숫자.
+
+#### F3. 💻 Mac 터미널 — 9-5 보안 확인
+
+9-5 블록을 그대로. **401 / 401 / 401 / 303**이고 마지막 줄에 `아이폰에 넣을 주소: https://app.hermes-market.shop/?k=…`가 나오면 성공.
+
+#### F4. 📱 앱에서 작동 확인 (이것이 최종 확인)
+
+| 순서 | 어디서 | 할 일 | 성공 기준 |
+|---|---|---|---|
+| 1 | 🌐 Mac 브라우저 | F3 마지막 줄의 주소를 연다 | Hermes Shop 웹 앱이 뜨고 "시장에서 거래 중" |
+| 2 | 🌐 같은 화면 | **지금 잔고와 순위는?** 버튼 | 1~2분 안에 에이전트가 숫자로 답함 |
+| 3 | 💻 Mac 시뮬레이터 | 아래 명령 (ssh 터널 없이 공개 주소로) | 싸다싸 가게 앱이 연결되고 대화가 보임 |
+| 4 | 📱 실제 아이폰 | 앱(10단계로 설치) → **링크 붙여넣기** → 같은 주소 → **연결** | 대화 화면, 질문에 답이 옴 |
+| 5 | 📱 실제 아이폰 | **와이파이 끄고 LTE**로 다시 | 그래도 붙음 (= 밖에서도 됨) |
+| 6 | 🖥️ 서버 | `run_server.sh restart` → 3분 뒤 아이폰 앱 새로고침 | 주소를 다시 넣지 않아도 다시 붙음 (= 고정 주소) |
+
+3번 명령 (💻 **Mac 터미널**):
+
+```bash
+K=$(ssh smc-gpu-server 'cat ~/ai-agent-engineering-101/submissions/26510358/round-4/.kit/app.key')
+cd ~/Desktop/ai-agent-engineering-101/submissions/26510358/round-4/ios
+DEVICE="iPhone 18 Pro" ./run-simulator.sh "https://app.hermes-market.shop/?k=$K"
+```
+
+서버에서 앱이 실제로 붙었는지 보기 (🖥️ **서버 터미널**, 아이폰 앱을 켜 둔 채로):
+
+```bash
+journalctl --user -u shop-tunnel --since "-5min" --no-pager | tail -5     # 오류 없으면 됨
+grep -E "\[mind\] reply" ~/ai-agent-engineering-101/submissions/26510358/round-4/.kit/kit.log | tail -3   # 방금 질문에 대한 에이전트 답
+```
+
+4번에서 앱이 아직 폰에 없으면 10단계(Xcode로 설치)를 먼저 한다.
+
+#### F5. 정리
+
+1. 🖥️ 9-7: `systemctl --user disable --now shop-ngrok shop-tailscaled` (예전 시험 주소 끄기).
+2. 이 문서의 진행 상황 표에서 9단계(와 10단계)를 O로 바꾸고 commit·push.
 
 ### 어느 터미널에서 치나
 
