@@ -28,6 +28,7 @@ MacBook (앱 개발)                     GitHub origin/round-4               smc
 | 8. Mac에서 실제 가게 | O 완료 | `ssh -L` 터널로 웹 앱·시뮬레이터가 붙고 에이전트가 답함(15:49) |
 | 9. 고정 앱 주소 (개인 Tailscale) | △ 진행 | 서버 `shop-tailscaled` active, **로그인(9-2)부터 남음** |
 | 10. 실제 아이폰에 앱 설치 | △ 진행 | Xcode 서명 Team 선택까지. 아이폰 연결부터 남음 |
+| 세팅 끝. 웹 앱 한 바퀴 | O 완료 | Mac `8e87a978`(표시 추가) → 서버가 재시작 없이 표시를 내줌 → Mac `70980208`(revert) → 서버 pull 뒤 표시 사라짐 |
 | 예비. ngrok 고정 주소 | O 완료 | `shop-ngrok` active. 월 20,000요청 한도라 9단계가 되면 끈다(9-6) |
 
 ### 어느 터미널에서 치나
