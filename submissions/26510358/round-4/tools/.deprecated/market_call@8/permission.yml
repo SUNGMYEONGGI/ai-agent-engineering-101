@@ -1,0 +1,12 @@
+name: market_call
+description: 시장 API 호출 또는 매출·수요 집계. HTTP args: path(시장 상대 경로), method=GET/POST, auth=none/shop, body(JSON), url(선택, 시장 origin); 응답 {status:200,body:...}, 공급 402/429도 전달. 집계 args: mode=metrics, customers_path(선택, 기본 customers.jsonl), now(선택, Unix 초). 예: {msgs:1,checkouts:0,settled:0,hour:{msgs:0,checkouts:0,settled:0},top_sales:[{sku:'G...',sold:4,median_price:3500}]}. 원장은 최근 500건만 집계.
+permission:
+  network: [market.ourolabs.ai]
+  write: [tmp/test/]
+  identity: [shop]
+  pay_limit: 0
+  timeout: 30
+logic: logic.py
+test: test.py
+version: 8
+replaces: market_call@7

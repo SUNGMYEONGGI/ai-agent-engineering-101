@@ -1,11 +1,11 @@
 name: stock_and_price
-description: 실재고 SKU·등급별 unit과 유통기한을 catalog에 발행. args: prices [{sku,grade,price,warranty_hours}], catalog_path 선택; 테스트에서만 inventory 지정. 예: {count:2,items:[...]}
+description: 실재고 SKU·현재 등급별 판매 목록을 공시한다. args: prices=[{sku,grade,price(정수 credits),warranty_hours(시간, 선택)}], catalog_path(선택, 기본 public/catalog.json); inventory는 테스트 전용. 지정하지 않은 항목은 기존 같은 SKU/등급 가격·보증을 유지하고 새 등급은 정가·보증 0시간으로 시작한다. 예: {ok:true,count:2,items:[{sku:'G…',grade:'B',price:6700,units:['u-…']}]}
 permission:
   network: [market.ourolabs.ai]
-  write: [public/catalog.json, tmp/test/]
+  write: [public/catalog.json, public/catalog.json.next, tmp/test/]
   identity: [shop]
   timeout: 30
 logic: logic.py
 test: test.py
-version: 4
-replaces: stock_and_price@3
+version: 5
+replaces: stock_and_price@4

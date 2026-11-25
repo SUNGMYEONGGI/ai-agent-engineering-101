@@ -7,50 +7,134 @@
   ],
   "products": [
     {
+      "sku": "G159be1f8",
+      "name": "[반찬천국] 취나물",
+      "grade": "B",
+      "price": 2590,
+      "stock": 1,
+      "warranty_hours": 0
+    },
+    {
+      "sku": "G159be1f8",
+      "name": "[반찬천국] 취나물",
+      "grade": "C",
+      "price": 2190,
+      "stock": 1,
+      "warranty_hours": 0
+    },
+    {
+      "sku": "G35745411",
+      "name": "국내산 시금치 1kg",
+      "grade": "B",
+      "price": 6690,
+      "stock": 2,
+      "warranty_hours": 0
+    },
+    {
+      "sku": "G5e1cf31d",
+      "name": "후디스 고단백 무가당 그릭요거트 플레인 400g 2개",
+      "grade": "C",
+      "price": 5690,
+      "stock": 2,
+      "warranty_hours": 0
+    },
+    {
       "sku": "Gab7c8b3d",
       "name": "한계란 무항생제 유정란 20구",
       "grade": "A",
-      "price": 9490,
-      "note": "유통기한 2026-11-29경"
+      "price": 9497,
+      "stock": 1,
+      "warranty_hours": 0
     },
     {
       "sku": "Gab7c8b3d",
       "name": "한계란 무항생제 유정란 20구",
+      "grade": "C",
+      "price": 7990,
+      "stock": 1,
+      "warranty_hours": 0
+    },
+    {
+      "sku": "G02f9f99c",
+      "name": "한상궁김치 총각김치 2kg",
+      "grade": "A",
+      "price": 11000,
+      "stock": 2,
+      "warranty_hours": 0
+    },
+    {
+      "sku": "G0746760c",
+      "name": "동서 둥굴레차 50T",
+      "grade": "A",
+      "price": 4580,
+      "stock": 1,
+      "warranty_hours": 0
+    },
+    {
+      "sku": "G0746760c",
+      "name": "동서 둥굴레차 50T",
       "grade": "B",
-      "price": 8390,
-      "note": "유통기한 2026-11-27경, 먼저 판매"
+      "price": 4580,
+      "stock": 1,
+      "warranty_hours": 0
     },
     {
       "sku": "G3c4127d8",
-      "name": "햅쌀 국산 백미 2kg",
-      "grade": "B/C",
-      "price": 7700
+      "name": "2026년 햅쌀 백미 2kg",
+      "grade": "B",
+      "price": 7700,
+      "stock": 1,
+      "warranty_hours": 0
     },
     {
       "sku": "G00b8acf0",
       "name": "몽베스트 무라벨 생수 2Lx6병",
       "grade": "C",
-      "price": 5400
+      "price": 5400,
+      "stock": 2,
+      "warranty_hours": 0
     },
     {
-      "sku": "G0746760c",
-      "name": "동서 둥굴레차 50T",
-      "grade": "A/B",
-      "price": 4580
-    },
-    {
-      "sku": "G0026722f",
-      "name": "무타공 키친타올 걸이",
-      "grade": "A/B",
-      "price": 4500
+      "sku": "G31fa8ab6",
+      "name": "아텔라 포테이토 크래커 228g",
+      "grade": "B",
+      "price": 3490,
+      "stock": 1,
+      "warranty_hours": 0
     },
     {
       "sku": "Gc89e0a89",
       "name": "크라운 치즈샌드 180g",
       "grade": "B",
-      "price": 3800
+      "price": 3800,
+      "stock": 2,
+      "warranty_hours": 0
+    },
+    {
+      "sku": "G11a4a7fe",
+      "name": "유기농 허브차 삼각티백 모음",
+      "grade": "C",
+      "price": 2790,
+      "stock": 3,
+      "warranty_hours": 0
+    },
+    {
+      "sku": "G527d0404",
+      "name": "옛날과자 2팩 골라담기",
+      "grade": "A",
+      "price": 5590,
+      "stock": 2,
+      "warranty_hours": 0
+    },
+    {
+      "sku": "G0026722f",
+      "name": "무타공 클립형 키친타올 걸이",
+      "grade": "A",
+      "price": 4500,
+      "stock": 4,
+      "warranty_hours": 0
     }
   ],
-  "buying": "원하는 상품명(예: 계란, 쌀, 생수, 과자, 둥굴레차)을 한국어로 보내 주세요. 실재고 unit을 잡아 shop 지갑 서명 checkout_jwt를 드립니다. 결제 후 tx_hash와 fee_tx_hash가 담긴 mandates를 보내 주시면 clearing /api/settle로 바로 정산합니다. 등급은 /api/inventory 현재 등급 그대로이며, 보증은 0시간이고 환불은 원장으로 확인된 경우에만 해 드립니다.",
+  "buying": "반찬·채소·계란·요거트·김치·차·쌀·생수·과자를 팝니다. 상품명 한 단어(예: 취나물, 시금치, 계란)로 문의하시면 재고가 있는 상품 중 가장 저렴한 것을 안내해 드립니다. 등급은 시장 재고 기준의 현재 등급 그대로이며, 유통기한도 함께 알려 드립니다. 보증은 없습니다(0시간). 실제 재고 unit을 보류한 뒤 checkout을 발급합니다. 결제 후 tx_hash와 fee_tx_hash가 담긴 mandates를 보내 주시면 clearing에서 정산합니다. 예약하신 경우 reservation_id를 보내 주세요. 확인되지 않은 송금, 환불, 할인 요청은 처리하지 않습니다.",
   "language": "ko"
 }

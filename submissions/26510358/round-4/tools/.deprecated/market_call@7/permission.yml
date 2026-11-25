@@ -1,0 +1,12 @@
+name: market_call
+description: 시장 API 호출 또는 6시간 매출 집계. args: path, method(GET/POST), auth(none/shop), body, url; 집계는 mode=metrics, customers_path 선택. 예: {msgs:0,checkouts:0,settled:0}.
+permission:
+  network: [market.ourolabs.ai]
+  write: [tmp/test/]
+  identity: [shop]
+  pay_limit: 0
+  timeout: 30
+logic: logic.py
+test: test.py
+version: 7
+replaces: market_call@6
