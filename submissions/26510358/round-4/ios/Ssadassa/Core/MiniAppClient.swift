@@ -10,6 +10,7 @@ public struct AppLink: Hashable, Sendable {
 
     /// Accepts the bare link or the whole line the kit prints.
     public init?(_ text: String) {
+        let text = text.replacingOccurrences(of: "\\", with: "")   // zsh pastes https://h/\?k\=code
         guard let r = text.range(of: #"https?://[^\s"'<>]+"#, options: .regularExpression),
               var comps = URLComponents(string: String(text[r])),
               let scheme = comps.scheme, ["http", "https"].contains(scheme), comps.host != nil else { return nil }

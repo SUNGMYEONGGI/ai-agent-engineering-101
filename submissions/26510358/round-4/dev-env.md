@@ -407,6 +407,16 @@ echo "아이폰에 넣을 주소: https://app.hermes-market.shop/?k=$K"
 2. 싸다싸 가게 앱 → **링크 붙여넣기** → **연결**. (Safari로 열면 가게 웹 앱이 열린다.)
 3. 와이파이를 끄고 LTE로도 붙는지 본다.
 
+**QR로 넣기** (앱에 `ssadassa://` 링크 처리가 들어간 빌드부터, 11-25 추가): 💻 Mac 터미널에서
+
+```bash
+cd ~/Desktop/ai-agent-engineering-101/submissions/26510358/round-4/ios
+./qr.sh        # ssadassa://app.hermes-market.shop/?k=… → 아이폰 카메라 "싸다싸 가게에서 열기" → 바로 연결
+./qr.sh web    # https://… → Safari 웹 앱(app/index.html)
+```
+
+QR에는 접근 코드가 들어 있다. 캡처하거나 공유하지 않는다. 시뮬레이터에서는 `xcrun simctl openurl booted "ssadassa://app.hermes-market.shop/?k=$K"`로 같은 동작을 시험한다.
+
 이후 kit 재시작·goal 수정·서버 재부팅 뒤에도 주소를 다시 넣을 필요가 없다.
 
 ### 9-7. 🖥️ 서버: 이전에 시험한 주소 정리 (9-6이 된 뒤)

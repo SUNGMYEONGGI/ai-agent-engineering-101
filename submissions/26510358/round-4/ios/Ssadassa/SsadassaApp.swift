@@ -7,6 +7,9 @@ import SwiftUI
 ///
 /// Launch arguments (ios/run-simulator.sh uses them): `-demo` opens demo mode, `-link <url>` connects at once,
 /// `-tab 0|1|2` opens on 대화/활동/나 (for simulator screenshots, which cannot tap).
+///
+/// QR / deep link: `ssadassa://<host>/?k=<code>` opens the app and connects to `https://<host>/?k=<code>`
+/// (the iPhone camera offers "싸다싸 가게에서 열기" for it; the scheme is registered in Info.plist).
 @main
 struct SsadassaApp: App {
     var body: some Scene {
@@ -21,6 +24,22 @@ struct RootView: View {
     @State private var mode: Mode = RootView.initialMode()
 
     var body: some View {
+        content.onOpenURL { url in
+            guard let link = RootView.link(from: url) else { return }
+            LinkKeychain.save(link.base.absoluteString + (link.accessCode.map { "/?k=\($0)" } ?? ""))
+            mode = .live(link)
+        }
+    }
+
+    /// `ssadassa://app.example.com/?k=CODE` -> the https link it stands for.
+    static func link(from url: URL) -> AppLink? {
+        guard url.scheme == "ssadassa", var comps = URLComponents(url: url, resolvingAgainstBaseURL: false),
+              comps.host != nil else { return nil }
+        comps.scheme = "https"
+        return comps.url.flatMap { AppLink($0.absoluteString) }
+    }
+
+    @ViewBuilder private var content: some View {
         switch mode {
         case .link:
             LinkView(connect: { new in
