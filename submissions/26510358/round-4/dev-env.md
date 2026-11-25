@@ -22,7 +22,7 @@ MacBook (앱)                         GitHub origin/round-4                 smc-
 | 4. 에이전트 기록 첫 commit | O 완료 (11-25 15:05) | `95fa125e`: 에이전트 파일 6개, 키·`.kit/`·`.env` 없음. 이후 쌓이는 로그는 5단계 타이머가 맡음 |
 | 5. 자동 commit 타이머 | O 완료 (11-25 15:06) | `shop-sync.timer` enabled, 매 정시. 첫 실행 success → `4229c2f8` push |
 | 6. goal REVIEW 규칙 | △ 진행 | goal에 `REVIEW EVERY 6 HOURS` 문단 작성·commit 완료(`EVERY RUN` 바로 뒤). **`restart` → `link`가 남음** |
-| 7. Mac 저장소·미리보기 | △ 진행 | 11-25 15:09 Mac `git pull`이 Mac에 남은 에이전트 파일 때문에 멈춤 → 7-1 |
+| 7. Mac 저장소·미리보기 | △ 진행 | git 부분 O: 남은 파일 stash, Mac commit `9d54bdd7`을 merge(`caa5c3e8`, agent.json은 서버 쪽), Mac·서버·origin 일치. **venv와 `preview_app.py` 확인이 남음** |
 | 8. Mac `ssh -L` | ? 진행 | Mac에서 확인 필요 (5~6단계 뒤에) |
 
 각 단계 끝의 **확인**이 통과해야 다음 단계로 간다.
