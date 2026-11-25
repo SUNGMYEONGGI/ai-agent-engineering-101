@@ -1,0 +1,13 @@
+name: a2a_handler
+description: 고객 A2A 문의를 상품 검색·실재고 보류·shop 서명 checkout 및 지급 mandates 정산으로 처리한다. 이벤트 args와 선택적 catalog_path,reservations_path,customers_path,holds_path를 받는다.
+permission:
+  network: [market.ourolabs.ai]
+  write: [customers.jsonl, public/reservations.jsonl, holds.json, tmp/test/]
+  identity: [shop]
+  wallet: [sign_jwt]
+  timeout: 20
+  handles: [a2a]
+logic: logic.py
+test: test.py
+version: 8
+replaces: a2a_handler@7
