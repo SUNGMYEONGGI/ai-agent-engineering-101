@@ -16,6 +16,7 @@ Development only: the real agent runs with `agent_kit.py run ... --app 8800`.
 """
 import argparse
 import json
+import socket
 import sys
 import threading
 from pathlib import Path
@@ -60,12 +61,30 @@ class StubToolbox:
     tools = {}
 
 
+def free_port(start, tries=50):
+    """The first port from `start` that nothing listens on. serve() binds in a background thread, so a busy port
+    used to print the link, log "address already in use" and then hang (11-25: VS Code forwarded 18800 to the Mac)."""
+    for port in range(start, start + tries):
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            try:
+                s.bind(("127.0.0.1", port))
+            except OSError:
+                continue
+            return port
+    sys.exit(f"[preview] ports {start}-{start + tries - 1} are all taken; pass --port <another>")
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
-    ap.add_argument("--port", type=int, default=18800)
+    ap.add_argument("--port", type=int, default=18800, help="first port to try; the next free one is used if taken")
     ap.add_argument("--name", default="myeonggi")
     ap.add_argument("--tunnel", action="store_true", help="also a public https link (needs the access code)")
     a = ap.parse_args()
+    port = free_port(a.port)
+    if port != a.port:
+        print(f"[preview] port {a.port} is taken (lsof -nP -iTCP:{a.port} -sTCP:LISTEN shows by whom); using {port}",
+              flush=True)
+    a.port = port
     key = miniapp.access_key(ROOT) if a.tunnel else None
     web = miniapp.app(ROOT, StubMind(), StubToolbox(), Event, name=a.name, key=key)
     serve(web, a.port)
