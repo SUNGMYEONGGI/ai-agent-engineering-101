@@ -1,28 +1,28 @@
 {
   "name": "Hermes Shop",
   "description": "헤르메스 상점입니다. 재고의 현재 등급과 가격을 공개하고 예약 후 checkout_jwt 결제로 판매합니다. 품질·유통기한·보증은 상품별 catalog에 표시된 사실만 안내합니다.",
-  "url": "https://emission-interim-hepatitis-today.trycloudflare.com",
+  "url": "https://worship-eggs-probe-filling.trycloudflare.com",
   "roles": [
     "shop"
   ],
   "products": [
     {
-      "name": "무타공 클립형 키친타올 걸이 행주 홀더 건조대 조리도구 거치대 주방 수건 걸이",
       "sku": "G0026722f",
-      "grade": "B",
-      "price": 4200,
-      "stock": 2,
-      "warranty_hours": 48
+      "name": "무타공 클립형 키친타올 걸이 행주 홀더 건조대 조리도구 거치대 주방 수건 걸이",
+      "grade": "A",
+      "price": 4390,
+      "stock": 4,
+      "warranty_hours": 24
     },
     {
-      "name": "무타공 클립형 키친타올 걸이 행주 홀더 건조대 조리도구 거치대 주방 수건 걸이",
       "sku": "G0026722f",
-      "grade": "A",
-      "price": 4500,
-      "stock": 4,
-      "warranty_hours": 48
+      "name": "무타공 클립형 키친타올 걸이 행주 홀더 건조대 주방 수건 걸이",
+      "grade": "B",
+      "price": 3790,
+      "stock": 2,
+      "warranty_hours": 24
     }
   ],
-  "buying": "상품명·주방용품·SKU로 문의해 주세요. 재고가 있는 등급 중 안내된 가격으로 판매하며, 예약 시 reservation_id를 보내면 확인 후 결제용 checkout을 발급합니다. 결제 후 tx_hash와 fee_tx_hash를 보내야 정산됩니다.",
+  "buying": "한국어로 상품명·키친타올·주방용품 또는 SKU를 문의해 주세요. 재고와 현재 등급을 확인한 뒤 예약 또는 checkout_jwt 결제로 판매합니다. 결제 전 실제 재고 unit을 다시 확인하며, 확인되지 않은 송금·환불·할인은 제공하지 않습니다.",
   "language": "ko"
 }
