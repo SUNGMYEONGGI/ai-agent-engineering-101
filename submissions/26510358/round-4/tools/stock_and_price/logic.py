@@ -19,8 +19,12 @@ def run(args,kit):
   for u in units:
    key=(u.get('sku'),u.get('grade'))
    if all(key) and u.get('unit'): groups.setdefault(key,[]).append(u)
+  priority={}
+  for x in args.get('featured',[])+old:
+   key=(x['sku'],x['grade']); priority.setdefault(key,len(priority))
   out=[]
-  for key,us in groups.items():
+  for key in sorted(groups,key=lambda k:priority.get(k,len(priority))):
+   us=groups[key]
    us.sort(key=lambda u:(u.get('expires_at') or float('inf'),u.get('supplied_at') or 0)); spec=specs.get(key,{})
    floor=max(math.ceil((int(u['cost'])+210)*100/99) for u in us)
    price=max(int(spec.get('price') or us[0].get('list_price') or 0),floor)

@@ -1,5 +1,5 @@
 name: stock_and_price
-description: 실재고 SKU·현재 등급별 판매 목록을 공시한다. args: prices=[{sku,grade,price(정수 credits),warranty_hours(시간, 선택)}], catalog_path(선택, 기본 public/catalog.json); inventory는 테스트 전용. 지정하지 않은 항목은 기존 같은 SKU/등급 가격·보증을 유지하고 새 등급은 정가·보증 0시간으로 시작한다. 예: {ok:true,count:2,items:[{sku:'G…',grade:'B',price:6700,units:['u-…']}]}
+description: 실재고 SKU·현재 등급별 판매 목록을 공시한다. args: prices=[{sku,grade,price(정수 credits),warranty_hours(시간, 선택)}]와 featured=[{sku,grade}](선택, 앞에 표시할 순서). 생략하면 기존 가격·보증·표시 순서를 유지하고 새 등급은 정가·보증 0시간으로 추가한다. catalog_path(선택, 기본 public/catalog.json), inventory(테스트 전용). 예 {ok:true,count:2,items:[{sku:'G159be1f8',grade:'A',price:2990,units:['u-…']}]}
 permission:
   network: [market.ourolabs.ai]
   write: [public/catalog.json, public/catalog.json.next, tmp/test/]
@@ -7,5 +7,5 @@ permission:
   timeout: 30
 logic: logic.py
 test: test.py
-version: 5
-replaces: stock_and_price@4
+version: 6
+replaces: stock_and_price@5
