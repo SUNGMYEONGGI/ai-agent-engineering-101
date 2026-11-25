@@ -1,6 +1,6 @@
 #!/bin/bash
-# Print a QR code that opens Hermes 가게 on the iPhone and connects it to the shop (run on the Mac).
-#   ./qr.sh              ssadassa://app.hermes-market.shop/?k=<code>  (camera -> "Hermes 가게에서 열기")
+# Print a QR code that opens Hermes Shop on the iPhone and connects it to the shop (run on the Mac).
+#   ./qr.sh              ssadassa://app.hermes-market.shop/?k=<code>  (camera -> "Hermes Shop에서 열기")
 #   ./qr.sh web          https://app.hermes-market.shop/?k=<code>     (camera -> Safari web app)
 #   HOST=other.example ./qr.sh
 # The QR holds the access code: do not screenshot or share it.

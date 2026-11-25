@@ -25,7 +25,7 @@ struct LinkView: View {
                 .frame(maxWidth: .infinity)
                 .padding(.top, 52)
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("Hermes 가게").font(Theme.rounded(.largeTitle, .bold))
+                    Text("Hermes Shop").font(Theme.rounded(.largeTitle, .bold))
                     Text("가게 운영 에이전트 호가가 시장에서 대신 사고팔아요.")
                         .font(Theme.rounded(.subheadline)).foregroundStyle(Theme.mute)
                 }

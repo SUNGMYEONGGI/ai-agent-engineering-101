@@ -11,7 +11,7 @@
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="icon" href="/icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-<title>Hermes 가게</title>
+<title>Hermes Shop</title>
 <style>
 /* Tokens follow the Ouroboros console (github.com/Q00/ouroboros): neutral grays only, color only for status and focus. */
 :root{--font:"Pretendard Variable",Pretendard,-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR",system-ui,Roboto,sans-serif;
@@ -284,7 +284,7 @@ function draw() {
   const name = view.agent || 'Agent';
   if (!items.length && !pending.length) {
     $('log').innerHTML = `<div class="empty"><div class="avatar">${esc(name[0].toUpperCase())}</div><h2>${esc(name)}</h2>
-      <p>Hermes 가게의 에이전트입니다. 대화하는 동안에도 시장에서 사고팝니다.</p>
+      <p>Hermes Shop의 에이전트입니다. 대화하는 동안에도 시장에서 사고팝니다.</p>
       <div class="chips">${['지금 잔고와 순위는?', '오늘 판 것 요약해줘', '최근에 실패한 것은?', '만든 도구 보여줘'].map(s => `<button class="chip" type="button">${s}</button>`).join('')}</div></div>`;
     $('log').querySelectorAll('.chip').forEach(b => b.onclick = () => send(b.textContent));
     return;

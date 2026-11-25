@@ -3,6 +3,8 @@
 가게(kit)와 에이전트 개발은 SMC 서버에서, 앱 개발(`app/`, `ios/`)은 Mac에서 한다. 앞부분 1~10단계는 **처음 세팅(또는 다시 세팅)할 때
 위에서부터 붙여 넣는 순서**이고, 뒷부분 "참고"는 이유와 평소 흐름이다. `scripts/round4/agent_kit.py`, `miniapp.py`를 읽고 정리했다.
 
+11-25 저녁 변경(QR 앱 열기, 구조 점검, REVIEW 1시간, LLM Claude/GPT, 이름 Hermes)은 [setup-report-1125.md](setup-report-1125.md)에 정리했다.
+
 ```
 MacBook (앱 개발)                     GitHub origin/round-4               smc-gpu-server (가게 24시간 + 에이전트 개발)
   app/, ios/ 수정         ── push ──▶                    ◀── push ──  agent.json, ops/ 수정 (사람)
@@ -50,7 +52,7 @@ echo "== 앱 8800"; K=$(cat $R/.kit/app.key); curl -s -o /dev/null -w "local 코
 
 | 봐야 할 것 | 정상 | 아니면 |
 |---|---|---|
-| `shop-kit`, `shop-sync.timer` | `active enabled` | `run_server.sh up` (2단계) / 5단계 블록 |
+| `shop-kit`, `shop-sync.timer` | `active enabled` | `LLM=claude run_server.sh up` (2단계) / 5단계 블록 |
 | `run_server.sh status` | `shop-kit active`, 최근 `[mind]` 줄 | `tail -50 $R/.kit/kit.log`로 원인 |
 | git | `## round-4...origin/round-4` (ahead/behind 없음) | `git pull --no-edit origin round-4 && git push origin round-4` |
 | 타이머 | `Finished`가 2 이상, 오류 없음 | `journalctl --user -u shop-sync -n 30` (참고 E) |
@@ -84,7 +86,7 @@ dig +short NS hermes-market.shop
 |---|---|---|---|
 | 1 | 🌐 Mac 브라우저 | F3 마지막 줄의 주소를 연다 | Hermes Shop 웹 앱이 뜨고 "시장에서 거래 중" |
 | 2 | 🌐 같은 화면 | **지금 잔고와 순위는?** 버튼 | 1~2분 안에 에이전트가 숫자로 답함 |
-| 3 | 💻 Mac 시뮬레이터 | 아래 명령 (ssh 터널 없이 공개 주소로) | 싸다싸 가게 앱이 연결되고 대화가 보임 |
+| 3 | 💻 Mac 시뮬레이터 | 아래 명령 (ssh 터널 없이 공개 주소로) | Hermes Shop 앱이 연결되고 대화가 보임 |
 | 4 | 📱 실제 아이폰 | 앱(10단계로 설치) → **링크 붙여넣기** → 같은 주소 → **연결** | 대화 화면, 질문에 답이 옴 |
 | 5 | 📱 실제 아이폰 | **와이파이 끄고 LTE**로 다시 | 그래도 붙음 (= 밖에서도 됨) |
 | 6 | 🖥️ 서버 | `run_server.sh restart` → 3분 뒤 아이폰 앱 새로고침 | 주소를 다시 넣지 않아도 다시 붙음 (= 고정 주소) |
@@ -155,7 +157,7 @@ git checkout round-4
 ls $R/*_wallet.key $R/.kit/owner.env             # 둘 다 있어야 한다(없으면 Mac에서 옮겨 온다. 지갑 키가 곧 가게)
 command -v cloudflared && ~/.venvs/round4/bin/python --version
 loginctl show-user $USER -p Linger               # Linger=yes 여야 로그아웃·재부팅 뒤에도 돈다
-$R/ops/run_server.sh up                          # 이미 떠 있으면 "already up"
+LLM=claude $R/ops/run_server.sh up               # 이미 떠 있으면 "already up". 두뇌: Claude Opus 5.5 medium(claude -p), 실패 시 gpt-6.2-sol high. LLM=own 이면 GPT만, 생략하면 시장 model desk
 $R/ops/run_server.sh status                      # shop-kit active
 ```
 
@@ -404,14 +406,14 @@ echo "아이폰에 넣을 주소: https://app.hermes-market.shop/?k=$K"
 ### 9-6. 📱 아이폰에 넣기
 
 1. 마지막 줄의 주소를 아이폰으로 보낸다(같은 Apple ID면 Mac에서 복사 → 아이폰에서 붙여넣기).
-2. 싸다싸 가게 앱 → **링크 붙여넣기** → **연결**. (Safari로 열면 가게 웹 앱이 열린다.)
+2. Hermes Shop 앱 → **링크 붙여넣기** → **연결**. (Safari로 열면 가게 웹 앱이 열린다.)
 3. 와이파이를 끄고 LTE로도 붙는지 본다.
 
 **QR로 넣기** (앱에 `ssadassa://` 링크 처리가 들어간 빌드부터, 11-25 추가): 💻 Mac 터미널에서
 
 ```bash
 cd ~/Desktop/ai-agent-engineering-101/submissions/26510358/round-4/ios
-./qr.sh        # ssadassa://app.hermes-market.shop/?k=… → 아이폰 카메라 "싸다싸 가게에서 열기" → 바로 연결
+./qr.sh        # ssadassa://app.hermes-market.shop/?k=… → 아이폰 카메라 "Hermes Shop에서 열기" → 바로 연결
 ./qr.sh web    # https://… → Safari 웹 앱(app/index.html)
 ```
 
@@ -543,7 +545,7 @@ tail -20 $R/logs/forge.jsonl | cut -c1-200
 | iOS 앱 수정 | 💻 Mac | `git pull` → 수정 → 시뮬레이터(8단계) → 실제 폰(10단계) → commit → push |
 | 에이전트 기록 commit | 🖥️ 서버(자동) | `shop-sync.timer`, 바로 하려면 `systemctl --user start shop-sync` |
 | 상태 보기 | 🖥️ 서버 | `run_server.sh status`, `tail -f round-4/.kit/kit.log` |
-| 밖에서 가게 보기 | 📱 아이폰 | 싸다싸 가게 앱 또는 Safari: `https://app.hermes-market.shop/?k=…` |
+| 밖에서 가게 보기 | 📱 아이폰 | Hermes Shop 앱 또는 Safari: `https://app.hermes-market.shop/?k=…` |
 
 하지 않는 것:
 

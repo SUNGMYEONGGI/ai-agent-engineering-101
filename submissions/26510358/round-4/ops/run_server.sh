@@ -6,7 +6,9 @@
 #   ops/run_server.sh restart   restart the kit (after git pull); "restart shim" for the shim
 #   ops/run_server.sh down      stop and disable everything
 #   ops/run_server.sh status    services alive, recent kit events, model failures, today's tokens, disk
-# Env: LLM=market (default) uses the market's model desk (no shim, no key), LLM=own the shim, KIT_FLAGS="--with-buyer" adds kit flags.
+# Env: LLM=market (default) uses the market's model desk (no shim, no key), LLM=own the shim to OpenAI (agent.json llm.model,
+#      AGENT_REASONING_EFFORT in .env), LLM=claude the shim to `claude -p` Opus 5.5 medium with OpenAI as fallback,
+#      KIT_FLAGS="--with-buyer" adds kit flags. The mode is baked into the units at `up`: switch with down, then LLM=... up.
 # BACKEND=tmux keeps the old tmux session "shop" (for hosts without systemd, e.g. WSL).
 # systemd restarts a process 60 s after it exits (RESTART_SEC; quick tunnels answer 429 when asked too often; tmux: 10 s). Output goes to round-4/.kit/<name>.log,
 # which is git-ignored on purpose: the kit prints the app link with its access code there.
@@ -17,7 +19,7 @@ ROOT=$(cd "$R/../../.." && pwd)                 # repository root
 S=$ROOT/submissions/26510358
 PY=${PY:-$HOME/.venvs/round4/bin/python}
 NAME=${NAME:-Hermes Shop}
-LLM=${LLM:-market}                              # market = the model desk; LLM=own uses ops/llm_shim.py and the key in .env
+LLM=${LLM:-market}                              # market = the model desk; own/claude use ops/llm_shim.py and the key in .env
 MARKET=${MARKET:-https://market.ourolabs.ai}
 SESSION=${SESSION:-shop}
 UNITS=$HOME/.config/systemd/user
@@ -69,7 +71,7 @@ if [ "$BACKEND" = systemd ]; then case "${1:-}" in
     if sd is-active -q shop-kit; then echo "already up: $SELF status"; exit 0; fi
     rm -f "$UNITS"/shop-{shim,kit,mesh}.service
     U="shop-kit"
-    if [ "$LLM" != market ]; then unit shim "PY=$PY"; U="shop-shim $U"; AFTER=shop-shim.service; fi
+    if [ "$LLM" != market ]; then RESTART_SEC=10 unit shim "PY=$PY" "LLM=$LLM"; U="shop-shim $U"; AFTER=shop-shim.service; fi
     unit kit "LLM=$LLM" "NAME=$NAME" "MARKET=$MARKET" "PY=$PY" "APP_FLAGS=${APP[*]}" "KIT_FLAGS=${EXTRA[*]:-}"
     AFTER=
     if ss -ltn 2>/dev/null | grep -q ':18765 '; then echo "mesh: port 18765 is already served by another process, no shop-mesh"
@@ -103,6 +105,7 @@ case "${1:-}" in
     echo "up. watch: tmux attach -t $SESSION   app link (after ~1 min): $SELF link" ;;
   shim)
     set -a; . "$S/.env"; set +a
+    [ "${LLM:-}" = claude ] && export SHIM_BACKEND=claude
     forever shim "$PY" "$R/ops/llm_shim.py" ;;
   mesh)
     export PORT=18765; cd "$HOME/meshkit/meshkit-py" && forever mesh "$PY" -I examples/miniapp_server.py ;;

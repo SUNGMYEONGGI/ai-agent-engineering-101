@@ -1,28 +1,28 @@
 import json, os, time, httpx
 
-def run(args, kit):
-    role=args.get('role','shop')
-    if role != 'shop': return {'ok':False,'error':'role_not_permitted'}
-    credits=int(args.get('credits',0)); to=args.get('to'); data=args.get('data_hex','0x')
-    if credits<=0 or credits>20000: return {'ok':False,'error':'amount_or_call_limit'}
-    lim=args.get('app_owner_limits') or {}
-    if credits>int(lim.get('per_call',10**18)): return {'ok':False,'error':'owner_call_limit'}
-    if kit.testing:
-        wei=1000000000000000; fee=420; bps=100
-    else:
-        try:
-            r=httpx.get(kit.market+'/api/chain',timeout=10).json()['result']['summary']
-            wei=int(r['credit_wei']); fee=int(r.get('network_fee_credits',0)); bps=int(r.get('market_fee_bps',0))
-        except Exception:
-            return {'ok':False,'error':'chain_unavailable'}
-    path='pay_log.json'; logs=[]
-    if os.path.exists(path):
-        try: logs=json.load(open(path))
-        except Exception: logs=[]
-    now=time.time(); logs=[x for x in logs if now-x.get('ts',0)<86400]
-    if sum(int(x.get('credits',0)) for x in logs)+credits>int(lim.get('per_day',10**18)):
-        return {'ok':False,'error':'daily_limit'}
-    if kit.testing: return {'ok':True,'tx_hash':'0x'+'0'*64,'credits':credits,'credit_wei':wei,'network_fee_credits':fee,'market_fee_bps':bps}
-    tx=kit.pay(to,credits*wei,data,role='shop')
-    logs.append({'ts':now,'credits':credits,'to':to}); json.dump(logs,open(path,'w'))
-    return {'ok':True,'tx_hash':tx,'credits':credits,'credit_wei':wei,'network_fee_credits':fee,'market_fee_bps':bps}
+def run(args,kit):
+ if args.get('role','shop')!='shop': return {'ok':False,'error':'role_not_permitted'}
+ try: n=int(args.get('credits',0))
+ except (ValueError,TypeError): return {'ok':False,'error':'invalid_amount'}
+ lim=args.get('app_owner_limits') or {}; call=int(lim.get('max_pay_per_call',20000)); day=int(lim.get('max_pay_per_day',200000))
+ if n<=0 or n>min(20000,call): return {'ok':False,'error':'call_limit'}
+ try:
+  c=args['chain'] if kit.testing else httpx.get(kit.market.rstrip('/')+'/api/chain',timeout=10).json()
+  wei=int(c['credit_wei']); fee=int(c['network_fee_credits']); bps=int(c['market_fee_bps']); assert wei>0 and fee>=0 and bps>=0
+ except Exception: return {'ok':False,'error':'chain_unavailable'}
+ p=args.get('log_path','pay_log.json'); now=time.time()
+ try:
+  with open(p) as f: logs=json.load(f)
+ except FileNotFoundError: logs=[]
+ except Exception: return {'ok':False,'error':'log_unreadable'}
+ logs=[x for x in logs if now-x.get('ts',0)<86400]
+ if sum(int(x['credits']) for x in logs)+n>day: return {'ok':False,'error':'daily_limit'}
+ entry={'ts':now,'credits':n,'to':args.get('to'),'data_hex':args.get('data_hex','0x'),'state':'pending'}
+ if any(x.get('state')=='pending' and x.get('to')==entry['to'] and x.get('data_hex')==entry['data_hex'] for x in logs): return {'ok':False,'error':'pending_duplicate'}
+ logs.append(entry); os.makedirs(os.path.dirname(p) or '.',exist_ok=True)
+ with open(p,'w') as f: json.dump(logs,f)
+ try: tx=kit.pay(entry['to'],n*wei,entry['data_hex'],role='shop')
+ except Exception as e: return {'ok':False,'error':'payment_uncertain','detail':str(e)[:200]}
+ entry.update(state='sent',tx_hash=tx)
+ with open(p,'w') as f: json.dump(logs,f)
+ return {'ok':True,'tx_hash':tx,'credits':n,'credit_wei':wei,'network_fee_credits':fee,'market_fee_bps':bps}

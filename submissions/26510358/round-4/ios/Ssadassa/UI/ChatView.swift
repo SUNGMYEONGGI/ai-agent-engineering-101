@@ -105,7 +105,7 @@ struct ChatView: View {
         VStack(spacing: 18) {
             VStack(spacing: 6) {
                 Text("안녕하세요, \(model.character.name)예요").font(Theme.rounded(.title2, .bold))
-                Text("Hermes 가게를 대신 운영하고 있어요.\n궁금한 걸 물어보거나 아래에서 골라 주세요.")
+                Text("Hermes Shop을 대신 운영하고 있어요.\n궁금한 걸 물어보거나 아래에서 골라 주세요.")
                     .font(Theme.rounded(.subheadline)).foregroundStyle(Theme.mute).multilineTextAlignment(.center)
             }
             LazyVGrid(columns: [GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10)], spacing: 10) {

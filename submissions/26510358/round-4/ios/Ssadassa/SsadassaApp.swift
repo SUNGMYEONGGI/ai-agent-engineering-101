@@ -1,7 +1,7 @@
 import Security
 import SwiftUI
 
-/// Hermes 가게: the native iOS app of the Round 4 agent. The agent and its mini app server run on the computer
+/// Hermes Shop: the native iOS app of the Round 4 agent. The agent and its mini app server run on the computer
 /// (agent_kit.py run ... --app 8800); this app talks to the same API the kit's web page uses (Core/), and answers
 /// the owner tools (app_show_card, app_owner_limits, app_ask_owner) and MeshKit consents natively.
 ///
@@ -9,7 +9,7 @@ import SwiftUI
 /// `-tab 0|1|2` opens on 대화/활동/나 (for simulator screenshots, which cannot tap).
 ///
 /// QR / deep link: `ssadassa://<host>/?k=<code>` opens the app and connects to `https://<host>/?k=<code>`
-/// (the iPhone camera offers "Hermes 가게에서 열기" for it; the scheme is registered in Info.plist).
+/// (the iPhone camera offers "Hermes Shop에서 열기" for it; the scheme is registered in Info.plist).
 @main
 struct SsadassaApp: App {
     var body: some Scene {

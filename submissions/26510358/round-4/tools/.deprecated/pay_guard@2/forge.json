@@ -1,0 +1,11 @@
+{
+ "tool": "pay_guard",
+ "version": 2,
+ "forged_at": 1795540400,
+ "kit": "v5.1",
+ "sha256": {
+  "permission.yml": "afe804f4d580552dfd88e1dfdd0b14ea0fcf39f9ab73ec4c76829b32715154c6",
+  "logic.py": "52a8fa277283adbb074ff03e9e4a60e426bc1bfc3ae0326169dbf38ac748b778",
+  "test.py": "4d6d3151d3f95f46a73a911f2de9e70c0e032c3b1b14caf8d3618546e9702124"
+ }
+}

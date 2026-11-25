@@ -28,7 +28,7 @@ def main():
                  ("path = MiniApp;", "path = Ssadassa;"), ("name = MiniApp;", "name = Ssadassa;"),
                  ("productName = MiniApp;", "productName = Ssadassa;"),
                  ("INFOPLIST_FILE = MiniApp/Info.plist", "INFOPLIST_FILE = Ssadassa/Info.plist"),
-                 ('INFOPLIST_KEY_CFBundleDisplayName = "Mini App"', 'INFOPLIST_KEY_CFBundleDisplayName = "Hermes 가게"'),
+                 ('INFOPLIST_KEY_CFBundleDisplayName = "Mini App"', 'INFOPLIST_KEY_CFBundleDisplayName = "Hermes Shop"'),
                  ("ai.ourolabs.agentmarket.miniapp", "kr.ac.seoultech.s26510358.ssadassa")]:
         src = src.replace(a, b)
     assert "MiniApp" not in src, [line for line in src.split("\n") if "MiniApp" in line][:3]

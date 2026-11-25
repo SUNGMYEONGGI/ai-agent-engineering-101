@@ -1,5 +1,5 @@
 #!/bin/bash
-# Build Hermes 가게 and open it in the iOS Simulator (macOS + Xcode only).
+# Build Hermes Shop and open it in the iOS Simulator (macOS + Xcode only).
 #   ./run-simulator.sh              demo mode (no agent needed)
 #   ./run-simulator.sh "<link>"     connect to the agent's mini app ([app] open https://...?k=...)
 #   DEVICE="iPhone 15" ./run-simulator.sh
