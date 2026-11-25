@@ -22,7 +22,7 @@ MacBook (앱)                         GitHub origin/round-4                 smc-
 | 4. 에이전트 기록 첫 commit | O 완료 (11-25 15:05) | `95fa125e`: 에이전트 파일 6개, 키·`.kit/`·`.env` 없음. 이후 쌓이는 로그는 5단계 타이머가 맡음 |
 | 5. 자동 commit 타이머 | O 완료 (11-25 15:06) | `shop-sync.timer` enabled, 매 정시. 첫 실행 success → `4229c2f8` push |
 | 6. goal REVIEW 규칙 | O 완료 (11-25 15:23) | 15:10:49 재시작, 15:13 시장 재입장, 첫 실행에서 notes.md NOW에 `REVIEW 2026-11-25 15:xx credits=4982123 settled6h=0 fails=stock_and_price:1 …` 기록. 시각이 `15:xx`로 뭉개짐(6시간 판단이 흐려질 수 있음, 지켜볼 것) |
-| 7. Mac 저장소·미리보기 | △ 진행 | git 부분 O: 남은 파일 stash, Mac commit `9d54bdd7`을 merge(`caa5c3e8`, agent.json은 서버 쪽), Mac·서버·origin 일치. **venv와 `preview_app.py` 확인이 남음** |
+| 7. Mac 저장소·미리보기 | O 완료 (11-25 15:2x) | Mac commit `9d54bdd7`을 merge(`caa5c3e8`), Mac·서버·origin 일치. venv(Python 3.12.16), `preview_app.py`가 18802로 떠서 브라우저 채팅에 도구 목록 응답 |
 | 8. Mac `ssh -L` | ? 진행 | Mac에서 확인 필요 (5~6단계 뒤에) |
 
 각 단계 끝의 **확인**이 통과해야 다음 단계로 간다.
@@ -189,7 +189,7 @@ git log --oneline -3 origin/round-4                  # "agent records" commit (�
 **확인**: 재시작 뒤 첫 run에서 `notes.md` 끝에 `REVIEW` 줄이 생긴다(`grep REVIEW $R/notes.md`).
 6시간은 시작값이다. 하루 뒤 `logs/forge.jsonl`의 re-forge 수와 credits 변화를 보고 조정한다.
 
-## 7단계. [Mac] 저장소와 미리보기 환경 — ? 진행 (Mac에서 확인)
+## 7단계. [Mac] 저장소와 미리보기 환경 — O 완료
 
 ▶ 실행 위치: 💻 **Mac 터미널**
 
@@ -239,13 +239,19 @@ VIRTUAL_ENV=~/.venvs/round4 uv pip install "a2a-sdk[http-server]" uvicorn httpx 
 ▶ 실행 위치: 💻 **Mac 터미널** → 브라우저도 **Mac**에서 연다
 
 ```bash
-~/.venvs/round4/bin/python submissions/26510358/round-4/ops/preview_app.py --port 18800
-# 브라우저 http://127.0.0.1:18800 → 채팅을 보내면 앱이 넘긴 도구 목록이 돌아온다
+~/.venvs/round4/bin/python submissions/26510358/round-4/ops/preview_app.py
+# 출력된 주소(18800이 쓰이고 있으면 다음 빈 포트)를 브라우저로 연다 → 채팅을 보내면 앱이 넘긴 도구 목록이 돌아온다
+# VSCode Remote-SSH가 서버 포트를 Mac으로 자동 전달하므로 18800, 18801이 이미 쓰이고 있을 수 있다(11-25 Mac에서는 18802)
 ```
 
 ## 8단계. [Mac] 실제 가게에 붙는 길 확인 — ? 진행 (Mac에서 확인)
 
 서버의 앱 포트 8800을 Mac으로 당겨 온다. quick tunnel 주소가 바뀌어도 이 주소는 그대로다.
+
+**VSCode Remote-SSH로 서버에 붙어 있으면 이미 당겨져 있을 수 있다.** VSCode가 서버에서 열린 포트를 Mac으로 자동 전달한다
+(VSCode 아래 패널의 "포트" 탭). 그 탭에 8800이 있으면 아래 `ssh -L` 줄은 건너뛰고(치면 "Address already in use"),
+Mac 브라우저에서 바로 `http://127.0.0.1:8800/?k=<코드>`를 연다. 탭에 적힌 로컬 주소가 8800이 아니면 그 번호를 쓴다.
+이 길은 VSCode 창이 서버에 연결되어 있는 동안만 열린다.
 
 ▶ 실행 위치: 💻 **Mac 터미널** (Mac이 서버로 ssh하는 명령. 첫 줄은 **켜 둔 채로** 두므로 별도 탭에서 쳐도 된다)
 
