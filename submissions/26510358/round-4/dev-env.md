@@ -43,7 +43,7 @@ Host smc-gpu-server
 
 **확인**: `ssh smc-gpu-server 'hostname'`이 서버 이름을 출력한다.
 
-## 2단계. [서버] 가게가 돌고 있는지 확인
+## 2단계. [서버] 가게가 돌고 있는지 확인 — O 완료
 
 ```bash
 cd ~/ai-agent-engineering-101
@@ -69,7 +69,7 @@ git push --dry-run origin round-4
 
 **확인**: `git push --dry-run`이 인증 오류 없이 끝난다.
 
-## 4단계. [서버] 지금까지 쌓인 에이전트 기록을 한 번 commit
+## 4단계. [서버] 지금까지 쌓인 에이전트 기록을 한 번 commit — X 진행
 
 타이머(5단계)를 켜기 전에 지금 working tree에 쌓인 에이전트 파일을 손으로 한 번 commit한다.
 그래야 첫 자동 commit이 며칠 치를 한꺼번에 담지 않는다.
@@ -160,7 +160,7 @@ git log --oneline -3 origin/round-4                  # "agent records" commit (�
 **확인**: 재시작 뒤 첫 run에서 `notes.md` 끝에 `REVIEW` 줄이 생긴다(`grep REVIEW $R/notes.md`).
 6시간은 시작값이다. 하루 뒤 `logs/forge.jsonl`의 re-forge 수와 credits 변화를 보고 조정한다.
 
-## 7단계. [Mac] 저장소와 미리보기 환경
+## 7단계. [Mac] 저장소와 미리보기 환경 — ? 진행 (Mac에서 확인)
 
 ```bash
 cd ~/Desktop/ai-agent-engineering-101
@@ -188,7 +188,7 @@ VIRTUAL_ENV=~/.venvs/round4 uv pip install "a2a-sdk[http-server]" uvicorn httpx 
 # 브라우저 http://127.0.0.1:18800 → 채팅을 보내면 앱이 넘긴 도구 목록이 돌아온다
 ```
 
-## 8단계. [Mac] 실제 가게에 붙는 길 확인
+## 8단계. [Mac] 실제 가게에 붙는 길 확인 — ? 진행 (Mac에서 확인)
 
 서버의 앱 포트 8800을 Mac으로 당겨 온다. quick tunnel 주소가 바뀌어도 이 주소는 그대로다.
 
