@@ -23,7 +23,8 @@ MacBook (앱)                         GitHub origin/round-4                 smc-
 | 5. 자동 commit 타이머 | O 완료 (11-25 15:06) | `shop-sync.timer` enabled, 매 정시. 첫 실행 success → `4229c2f8` push |
 | 6. goal REVIEW 규칙 | O 완료 (11-25 15:23) | 15:10:49 재시작, 15:13 시장 재입장, 첫 실행에서 notes.md NOW에 `REVIEW 2026-11-25 15:xx credits=4982123 settled6h=0 fails=stock_and_price:1 …` 기록. 시각이 `15:xx`로 뭉개짐(6시간 판단이 흐려질 수 있음, 지켜볼 것) |
 | 7. Mac 저장소·미리보기 | O 완료 (11-25 15:2x) | Mac commit `9d54bdd7`을 merge(`caa5c3e8`), Mac·서버·origin 일치. venv(Python 3.12.16), `preview_app.py`가 18802로 떠서 브라우저 채팅에 도구 목록 응답 |
-| 8. Mac `ssh -L` | ? 진행 | Mac에서 확인 필요 (5~6단계 뒤에) |
+| 8. Mac `ssh -L` | △ 진행 | `ssh -N -L 8800…` 터널로 Mac 브라우저에 Hermes Shop 웹 앱이 열림(VSCode 포트 전달은 없었음). 실제 에이전트 답변 확인이 남음 |
+| 9. 고정 앱 주소 | X 진행 | Cloudflare에 둘 도메인이 필요(9-1). 서버에 `cloudflared` 2026.10.0 있음 |
 
 각 단계 끝의 **확인**이 통과해야 다음 단계로 간다.
 
@@ -273,6 +274,116 @@ cd submissions/26510358/round-4/ios
 실제 아이폰은 https만 되므로 서버의 `run_server.sh link` 주소를 쓴다. 접근 코드가 든 주소는 채팅방이나 commit에 올리지 않는다.
 
 **확인**: 브라우저와 시뮬레이터에서 가게 에이전트와 대화가 된다.
+
+## 9단계. [서버] 고정 앱 주소 (Cloudflare named tunnel) — X 진행 (도메인 필요)
+
+kit의 `--app-tunnel`(quick tunnel)은 kit이 재시작할 때마다 주소가 바뀐다. Cloudflare에 내 도메인을 두고 named tunnel을
+하나 더 붙이면 `https://shop.<내도메인>/?k=<코드>`가 재시작·재부팅 뒤에도 그대로다. 접근 코드는 `.kit/app.key`에 저장돼 있어 바뀌지 않는다.
+
+```
+아이폰·Mac 브라우저 ──https──▶ Cloudflare (shop.<내도메인>) ──named tunnel──▶ 서버 cloudflared(shop-tunnel) ──▶ 127.0.0.1:8800 kit
+```
+
+**`--app-tunnel`은 끄지 않는다.** kit은 `--app-tunnel`이나 `--app-host 0.0.0.0`일 때만 접근 코드를 켠다
+(`scripts/round4/agent_kit.py` 846–847행). 둘 다 없이 named tunnel만 붙이면 코드 없이 누구나 에이전트에게 지시할 수 있다.
+`run_server.sh`의 기본 `APP_FLAGS`(`--app 8800 --app-tunnel`)를 그대로 두면 된다(quick tunnel 주소도 같이 살아 있지만 해는 없다).
+
+### 9-1. 도메인을 Cloudflare에 두기 (한 번)
+
+▶ 실행 위치: 🌐 **Mac 브라우저** (dash.cloudflare.com)
+
+1. 도메인이 없으면 Cloudflare 대시보드 → Domain Registration에서 산다(가장 간단. 산 도메인은 바로 Cloudflare에 들어간다).
+   다른 곳에서 산 도메인이면 Add a domain → 무료 플랜 → 안내된 네임서버 2개를 도메인을 산 곳에 입력한다.
+2. 대시보드에서 도메인 상태가 **Active**가 될 때까지 기다린다(네임서버 변경은 몇 분~몇 시간).
+
+**확인**: 대시보드의 도메인 옆에 Active.
+
+### 9-2. 서버에서 tunnel 만들기 (한 번)
+
+▶ 실행 위치: 🖥️ **서버 터미널** (첫 줄은 URL을 출력한다. 그 URL을 💻 **Mac 브라우저**에서 열어 도메인을 고르고 Authorize)
+
+```bash
+cloudflared tunnel login                                   # ~/.cloudflared/cert.pem 생성
+cloudflared tunnel create hermes-shop                      # ~/.cloudflared/<UUID>.json 생성 (tunnel 비밀키)
+cloudflared tunnel route dns hermes-shop shop.<내도메인>    # Cloudflare DNS에 shop.<내도메인> CNAME 생성
+cloudflared tunnel list                                    # hermes-shop과 UUID 확인
+```
+
+- `~/.cloudflared/`의 `cert.pem`, `<UUID>.json`은 비밀이다. 저장소 밖에 있으니 git에 올라가지 않는다. 지우지 않는다.
+
+**확인**: `cloudflared tunnel list`에 `hermes-shop`이 있고, 대시보드 DNS에 `shop` CNAME(`<UUID>.cfargotunnel.com`)이 보인다.
+
+### 9-3. 설정 파일과 앞에서 띄워 보기
+
+▶ 실행 위치: 🖥️ **서버 터미널** (`<UUID>`, `<내도메인>`은 9-2 결과로 바꿔서)
+
+```bash
+cat > ~/.cloudflared/hermes-shop.yml <<'EOF'
+tunnel: hermes-shop
+credentials-file: /home/myeonggi/.cloudflared/<UUID>.json
+ingress:
+  - hostname: shop.<내도메인>
+    service: http://127.0.0.1:8800
+  - service: http_status:404
+EOF
+cloudflared tunnel --config ~/.cloudflared/hermes-shop.yml ingress validate
+cloudflared tunnel --config ~/.cloudflared/hermes-shop.yml run     # 앞에서 실행. 확인 뒤 Ctrl-c
+```
+
+`run`을 켜 둔 채로 다른 터미널(또는 Mac)에서 확인한다.
+
+▶ 실행 위치: 💻 **Mac 터미널** 또는 🖥️ 서버의 다른 터미널
+
+```bash
+curl -s -o /dev/null -w "%{http_code}\n" https://shop.<내도메인>/              # 401 이어야 한다(코드 없으면 거절)
+curl -s -o /dev/null -w "%{http_code}\n" "https://shop.<내도메인>/?k=<코드>"   # 303 (코드 확인 뒤 앱으로 이동)
+```
+
+**확인**: 코드 없이 401, 코드와 함께 303. **코드 없이 200이 나오면 즉시 `Ctrl-c`로 끄고** kit이 `--app-tunnel`로 떠 있는지 본다.
+
+### 9-4. 상시 실행 (systemd 서비스)
+
+▶ 실행 위치: 🖥️ **서버 터미널** (9-3의 `run`은 `Ctrl-c`로 끈 뒤)
+
+```bash
+cat > ~/.config/systemd/user/shop-tunnel.service <<'EOF'
+[Unit]
+Description=round-4: fixed https address for the shop app (Cloudflare named tunnel to 127.0.0.1:8800)
+After=network-online.target
+StartLimitIntervalSec=0
+[Service]
+ExecStart=%h/.local/bin/cloudflared tunnel --no-autoupdate --config %h/.cloudflared/hermes-shop.yml run
+Restart=always
+RestartSec=10
+[Install]
+WantedBy=default.target
+EOF
+systemctl --user daemon-reload && systemctl --user enable --now shop-tunnel
+```
+
+- `run_server.sh up/down/restart`는 `shop-kit` 등만 다루고 이 서비스는 건드리지 않는다. kit이 재시작하는 1~3분 동안은 이 주소가 502를 낸다(정상).
+- 끄려면 `systemctl --user disable --now shop-tunnel`.
+
+**확인**:
+
+```bash
+systemctl --user status shop-tunnel --no-pager | head -5          # active (running)
+journalctl --user -u shop-tunnel -n 20 --no-pager | grep -i "registered tunnel connection"   # 연결 4개 안팎
+```
+
+9-3의 `curl` 두 줄을 다시 쳐서 401, 303. 그 뒤 `run_server.sh restart`를 한 번 해 보고, 2~3분 뒤 같은 주소가 다시 열리는지 본다.
+
+### 9-5. 앱에 고정 주소 넣기
+
+▶ 실행 위치: 📱 **아이폰 앱**과 💻 **Mac 브라우저**
+
+- 주소: `https://shop.<내도메인>/?k=<코드>` (코드는 `ssh smc-gpu-server 'cat ~/ai-agent-engineering-101/submissions/26510358/round-4/.kit/app.key'`)
+- 아이폰 앱 첫 화면 입력칸에 통째로 붙여 넣는다. https라 iOS 앱에서 그대로 열린다.
+- 이제 `run_server.sh link`로 주소를 다시 받을 필요가 없다. Mac에서 개발할 때의 `ssh -L`(8단계)도 그대로 쓸 수 있다.
+- 이 주소는 접근 코드가 든 열쇠다. 채팅방, 이슈, commit에 올리지 않는다. 새어 나갔으면 서버에서 `.kit/app.key`를 지우고
+  `run_server.sh restart`(새 코드가 생긴다) → 앱에 새 주소를 넣는다.
+
+**확인**: 아이폰 앱이 고정 주소로 붙고, `run_server.sh restart` 뒤에도 주소를 바꾸지 않고 다시 붙는다.
 
 ## 세팅 끝: 한 바퀴 돌려 보기
 
