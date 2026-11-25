@@ -25,14 +25,29 @@ MacBook (앱)                         GitHub origin/round-4                 smc-
 | 7. Mac 저장소·미리보기 | ? 진행 | Mac에서 확인 필요 |
 | 8. Mac `ssh -L` | ? 진행 | Mac에서 확인 필요 (5~6단계 뒤에) |
 
-각 단계 끝의 **확인**이 통과해야 다음 단계로 간다. `[서버]`는 SSH로 들어간 서버, `[Mac]`은 Mac 터미널에서 친다.
-서버의 저장소 경로는 `~/ai-agent-engineering-101`, Mac은 `~/Desktop/ai-agent-engineering-101`로 적었다. 다르면 바꿔서 친다.
+각 단계 끝의 **확인**이 통과해야 다음 단계로 간다.
+
+### 어느 터미널에서 치나
+
+모든 명령 블록 위에 `▶ 실행 위치`를 적었다. 터미널은 두 가지뿐이다.
+
+| 표시 | 무엇 | 여는 법 | 프롬프트로 구분 |
+|---|---|---|---|
+| 🖥️ **서버 터미널** | smc-gpu-server 안의 셸 | Mac에서 `ssh smc-gpu-server`, 또는 VSCode Remote-SSH의 터미널, 또는 서버에서 돌리는 Claude Code | `hostname`이 `hai-SYS-740GP-TNRT` |
+| 💻 **Mac 터미널** | MacBook의 Terminal/iTerm (SSH로 들어가지 않은 상태) | Mac에서 새 터미널 창 | `hostname`이 Mac 이름 |
+
+- 헷갈리면 먼저 `hostname`을 친다. 서버 명령을 Mac에서 치면 `run_server.sh`, `systemctl --user`가 Mac에서 실패하거나 엉뚱한 곳을 건드린다.
+- 8단계처럼 **Mac 터미널에서 `ssh …`로 서버에 명령을 보내는 것**은 Mac 터미널 명령이다(서버에 들어가서 치는 것이 아니다).
+- 명령은 bash 문법이다(`R=…`, `$R`). 서버에서 fish를 쓰고 있다면 먼저 `bash`를 쳐서 들어간 뒤 붙여 넣는다.
+- 서버의 저장소 경로는 `~/ai-agent-engineering-101`, Mac은 `~/Desktop/ai-agent-engineering-101`로 적었다. 다르면 바꿔서 친다.
 
 ---
 
 ## 1단계. [Mac] 서버에 SSH 별칭 만들기 — O 완료
 
 이후 명령은 모두 `smc-gpu-server`라는 이름으로 서버에 들어간다고 가정한다. `~/.ssh/config`에 없으면 추가한다.
+
+▶ 실행 위치: 💻 **Mac**에서 `~/.ssh/config` 파일을 편집기로 연다 (터미널 명령 아님)
 
 ```sshconfig
 Host smc-gpu-server
@@ -44,6 +59,8 @@ Host smc-gpu-server
 **확인**: `ssh smc-gpu-server 'hostname'`이 서버 이름을 출력한다.
 
 ## 2단계. [서버] 가게가 돌고 있는지 확인 — O 완료
+
+▶ 실행 위치: 🖥️ **서버 터미널**
 
 ```bash
 cd ~/ai-agent-engineering-101
@@ -59,6 +76,8 @@ submissions/26510358/round-4/ops/run_server.sh status       # shop-kit active
 
 서버도 GitHub에 push해야 한다(에이전트 기록을 Mac과 PR로 보내기 위해).
 
+▶ 실행 위치: 🖥️ **서버 터미널** (`gh auth login`은 브라우저 인증을 묻는 대화형 명령이라 직접 친다)
+
 ```bash
 cd ~/ai-agent-engineering-101
 git config pull.rebase false                 # pull은 merge로. push된 commit을 다시 쓰지 않는다(AGENTS.md)
@@ -73,6 +92,8 @@ git push --dry-run origin round-4
 
 타이머(5단계)를 켜기 전에 지금 working tree에 쌓인 에이전트 파일을 손으로 한 번 commit한다.
 그래야 첫 자동 commit이 며칠 치를 한꺼번에 담지 않는다.
+
+▶ 실행 위치: 🖥️ **서버 터미널**
 
 ```bash
 cd ~/ai-agent-engineering-101 && R=submissions/26510358/round-4
@@ -92,6 +113,8 @@ git pull --no-edit origin round-4 && git push origin round-4
 ## 5단계. [서버] 에이전트 기록 자동 commit 타이머 — X 진행
 
 1시간마다 에이전트가 쓰는 경로만 commit하고, pull(Mac의 앱 변경을 받음) 후 push한다.
+
+▶ 실행 위치: 🖥️ **서버 터미널** (블록 전체를 한 번에 붙여 넣어도 된다)
 
 ```bash
 mkdir -p ~/.config/systemd/user
@@ -123,6 +146,8 @@ systemctl --user start shop-sync             # 한 번 바로 돌려 본다
 
 **확인**:
 
+▶ 실행 위치: 🖥️ **서버 터미널**
+
 ```bash
 systemctl --user list-timers shop-sync.timer        # NEXT에 다음 정시가 보인다
 journalctl --user -u shop-sync -n 20 --no-pager      # 오류 없음
@@ -134,6 +159,8 @@ git log --oneline -3 origin/round-4                  # "agent records" commit (�
 에이전트는 이미 최대 120초마다 깨어나 도구를 forge하고 고친다. 빠진 "n시간마다 돌아보기"를 goal에 넣는다.
 
 1. `submissions/26510358/round-4/agent.json`의 `goal` 문자열 끝에 아래 문단을 붙인다(JSON이라 줄바꿈은 `\n`).
+
+   ▶ 실행 위치: 🖥️ **서버**의 `agent.json`을 편집기로 연다 (VSCode Remote-SSH 또는 서버 터미널에서 `vim`/`nano`)
 
    ```text
    REVIEW every 6 hours (check the REVIEW line in notes.md; if it is older than 6 h, do this before anything else):
@@ -147,6 +174,8 @@ git log --oneline -3 origin/round-4                  # "agent records" commit (�
    ```
 
 2. 반영하고 commit한다. goal은 kit이 시작할 때만 읽으므로 재시작이 필요하고, 재시작하면 앱 주소가 바뀐다.
+
+   ▶ 실행 위치: 🖥️ **서버 터미널**
 
    ```bash
    cd ~/ai-agent-engineering-101 && R=submissions/26510358/round-4
@@ -162,6 +191,8 @@ git log --oneline -3 origin/round-4                  # "agent records" commit (�
 
 ## 7단계. [Mac] 저장소와 미리보기 환경 — ? 진행 (Mac에서 확인)
 
+▶ 실행 위치: 💻 **Mac 터미널**
+
 ```bash
 cd ~/Desktop/ai-agent-engineering-101
 pkill -f agent_kit.py; pgrep -fl agent_kit.py   # Mac에서 kit이 돌고 있지 않아야 한다(같은 지갑으로 가게가 둘이 된다)
@@ -175,6 +206,8 @@ Mac working tree에 `app/`, `ios/` 밖의 수정(`tools/`, `logs/`, `notes.md` �
 
 미리보기(`ops/preview_app.py`)는 kit 모듈을 그대로 불러오므로 서버와 같은 패키지가 필요하다.
 
+▶ 실행 위치: 💻 **Mac 터미널** (venv는 Mac에 새로 만든다. 서버의 venv와 별개)
+
 ```bash
 curl -LsSf https://astral.sh/uv/install.sh | sh          # uv가 없을 때만
 uv venv --python 3.12 ~/.venvs/round4
@@ -182,6 +215,8 @@ VIRTUAL_ENV=~/.venvs/round4 uv pip install "a2a-sdk[http-server]" uvicorn httpx 
 ```
 
 **확인**: `git log --oneline -3`에 5·6단계의 서버 commit이 보이고, 아래가 뜬다(Ctrl-c로 끈다).
+
+▶ 실행 위치: 💻 **Mac 터미널** → 브라우저도 **Mac**에서 연다
 
 ```bash
 ~/.venvs/round4/bin/python submissions/26510358/round-4/ops/preview_app.py --port 18800
@@ -192,6 +227,8 @@ VIRTUAL_ENV=~/.venvs/round4 uv pip install "a2a-sdk[http-server]" uvicorn httpx 
 
 서버의 앱 포트 8800을 Mac으로 당겨 온다. quick tunnel 주소가 바뀌어도 이 주소는 그대로다.
 
+▶ 실행 위치: 💻 **Mac 터미널** (Mac이 서버로 ssh하는 명령. 첫 줄은 **켜 둔 채로** 두므로 별도 탭에서 쳐도 된다)
+
 ```bash
 ssh -N -L 8800:127.0.0.1:8800 smc-gpu-server &           # 끌 때: kill %1
 ssh smc-gpu-server 'cat ~/ai-agent-engineering-101/submissions/26510358/round-4/.kit/app.key'
@@ -199,6 +236,8 @@ ssh smc-gpu-server 'cat ~/ai-agent-engineering-101/submissions/26510358/round-4/
 ```
 
 iOS 시뮬레이터도 같은 주소로 붙는다(Mac의 127.0.0.1을 그대로 쓴다):
+
+▶ 실행 위치: 💻 **Mac 터미널** (위의 `ssh -L`이 켜져 있어야 한다)
 
 ```bash
 cd submissions/26510358/round-4/ios
@@ -258,6 +297,8 @@ cd submissions/26510358/round-4/ios
   (`logs/forge.jsonl`에 버전과 테스트 결과가 남는다). 6단계의 REVIEW 규칙이 이것을 6시간마다 의식적으로 하게 만든다.
 - **사람(하루 1~2번, 서버)**: 에이전트는 goal을 못 고친다. 기록을 보고 사람이 고친다.
 
+  ▶ 실행 위치: 🖥️ **서버 터미널**
+
   ```bash
   cd ~/ai-agent-engineering-101 && R=submissions/26510358/round-4
   $R/ops/run_server.sh status
@@ -286,10 +327,10 @@ cd submissions/26510358/round-4/ios
 
 ## E. 안 될 때
 
-| 증상 | 확인 |
-|---|---|
-| `shop-sync`가 실패 | `journalctl --user -u shop-sync -n 30`. 인증이면 3단계, merge 충돌이면 A의 표를 어긴 파일을 찾는다 |
-| 앱 변경이 안 보임 | 서버에서 `git log -1 -- submissions/26510358/round-4/app`가 Mac의 commit인지, 브라우저 캐시(강력 새로고침) |
-| goal 변경이 안 먹힘 | `restart`를 했는지. kit은 시작 때만 `agent.json`을 읽는다 |
-| `ssh -L`이 "Address already in use" | Mac에서 8800을 쓰는 프로세스(`lsof -i :8800`). 다른 포트로 `-L 18801:127.0.0.1:8800` |
-| 앱이 "연결 실패" | kit이 재시작돼 tunnel 주소가 바뀜. `run_server.sh link` (ssh -L 주소는 영향 없음) |
+| 증상 | 어디서 | 확인 |
+|---|---|---|
+| `shop-sync`가 실패 | 🖥️ 서버 | `journalctl --user -u shop-sync -n 30`. 인증이면 3단계, merge 충돌이면 A의 표를 어긴 파일을 찾는다 |
+| 앱 변경이 안 보임 | 🖥️ 서버 → 💻 Mac | 서버에서 `git log -1 -- submissions/26510358/round-4/app`가 Mac의 commit인지, Mac 브라우저에서 강력 새로고침 |
+| goal 변경이 안 먹힘 | 🖥️ 서버 | `restart`를 했는지. kit은 시작 때만 `agent.json`을 읽는다 |
+| `ssh -L`이 "Address already in use" | 💻 Mac | 8800을 쓰는 프로세스(`lsof -i :8800`). 다른 포트로 `-L 18801:127.0.0.1:8800` |
+| 앱이 "연결 실패" | 🖥️ 서버 | kit이 재시작돼 tunnel 주소가 바뀜. `run_server.sh link` (ssh -L 주소는 영향 없음) |
