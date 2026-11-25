@@ -23,7 +23,7 @@ MacBook (앱)                         GitHub origin/round-4                 smc-
 | 5. 자동 commit 타이머 | O 완료 (11-25 15:06) | `shop-sync.timer` enabled, 매 정시. 첫 실행 success → `4229c2f8` push |
 | 6. goal REVIEW 규칙 | O 완료 (11-25 15:23) | 15:10:49 재시작, 15:13 시장 재입장, 첫 실행에서 notes.md NOW에 `REVIEW 2026-11-25 15:xx credits=4982123 settled6h=0 fails=stock_and_price:1 …` 기록. 시각이 `15:xx`로 뭉개짐(6시간 판단이 흐려질 수 있음, 지켜볼 것) |
 | 7. Mac 저장소·미리보기 | O 완료 (11-25 15:2x) | Mac commit `9d54bdd7`을 merge(`caa5c3e8`), Mac·서버·origin 일치. venv(Python 3.12.16), `preview_app.py`가 18802로 떠서 브라우저 채팅에 도구 목록 응답 |
-| 8. Mac `ssh -L` | △ 진행 | `ssh -N -L 8800…` 터널로 Mac 브라우저에 Hermes Shop 웹 앱이 열림(VSCode 포트 전달은 없었음). 실제 에이전트 답변 확인이 남음 |
+| 8. Mac `ssh -L` | O 완료 (11-25 15:49) | `ssh -N -L 8800…` 터널로 웹 앱·iOS 시뮬레이터가 가게에 붙음. 주인 질문에 에이전트가 답함(잔고 4,982,123, 순위 6위) |
 | 9. 고정 앱 주소 | X 진행 | Cloudflare에 둘 도메인이 필요(9-1). 서버에 `cloudflared` 2026.10.0 있음 |
 
 각 단계 끝의 **확인**이 통과해야 다음 단계로 간다.
@@ -245,7 +245,7 @@ VIRTUAL_ENV=~/.venvs/round4 uv pip install "a2a-sdk[http-server]" uvicorn httpx 
 # VSCode Remote-SSH가 서버 포트를 Mac으로 자동 전달하므로 18800, 18801이 이미 쓰이고 있을 수 있다(11-25 Mac에서는 18802)
 ```
 
-## 8단계. [Mac] 실제 가게에 붙는 길 확인 — ? 진행 (Mac에서 확인)
+## 8단계. [Mac] 실제 가게에 붙는 길 확인 — O 완료
 
 서버의 앱 포트 8800을 Mac으로 당겨 온다. quick tunnel 주소가 바뀌어도 이 주소는 그대로다.
 
@@ -268,7 +268,8 @@ iOS 시뮬레이터도 같은 주소로 붙는다(Mac의 127.0.0.1을 그대로 
 
 ```bash
 cd submissions/26510358/round-4/ios
-./run-simulator.sh "http://127.0.0.1:8800/?k=<코드>"
+DEVICE="iPhone 16 Pro" ./run-simulator.sh "http://127.0.0.1:8800/?k=$(ssh smc-gpu-server 'cat ~/ai-agent-engineering-101/submissions/26510358/round-4/.kit/app.key')"
+# DEVICE를 빼면 가장 최신 iPhone 시뮬레이터. 목록: xcrun simctl list devices available | grep iPhone
 ```
 
 실제 아이폰은 https만 되므로 서버의 `run_server.sh link` 주소를 쓴다. 접근 코드가 든 주소는 채팅방이나 commit에 올리지 않는다.
