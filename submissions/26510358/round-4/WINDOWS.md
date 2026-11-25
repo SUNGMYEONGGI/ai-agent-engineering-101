@@ -1,124 +1,161 @@
-# Windows 데스크탑을 가게 서버로 쓰기 (WSL2 + tmux)
+# 서버와 Mac에서 함께 개발하기 (smc-gpu-server + MacBook)
 
-개발은 MacBook에서 하고, 가게(kit)는 쓰지 않는 Windows 데스크탑에서 24시간 돌린다.
-Windows 안에 WSL2 Ubuntu를 두면 `ops/run_server.sh`(bash, tmux)를 SMC 서버와 똑같이 쓸 수 있다.
+가게(kit)는 SMC 서버에서 24시간 돈다(띄우는 법은 `SERVER.md`). 이 문서는 **어디서 무엇을 고치고, 고친 것이 어떻게
+다른 쪽과 돌아가는 가게에 반영되는지**를 정한다. 2026-11-25에 `scripts/round4/agent_kit.py`, `miniapp.py`를 읽고 정리했다.
 
 ```
-MacBook (개발)                          Windows 데스크탑 (24시간)
-  코드 수정 → git push                     WSL2 Ubuntu
-  ssh(Tailscale)로 상태 확인  ───────────▶    tmux "shop": kit (+ shim, LLM=own일 때)
-                                              cloudflared 터널 → 시장, 주인 앱
+MacBook (앱)                         GitHub origin/round-4                 smc-gpu-server (가게 + 에이전트 개발)
+  app/, ios/ 수정        ── push ──▶                     ◀── push ──  agent.json, ops/ 수정 (사람)
+  preview_app.py로 확인                                               tools/, logs/, notes.md … (에이전트, 1시간마다 자동 commit)
+  ssh -L 8800 으로 실제 가게에 붙기  ◀── pull ──           ── pull ──▶  systemd: shop-kit (+ shim)
+  iOS Simulator                                                       cloudflared 터널 → 시장, 주인 앱
 ```
 
-터널은 바깥으로 나가는 연결만 쓰므로 공유기 포트 포워딩이나 방화벽 설정은 필요 없다.
+## 1. 원칙: 경로마다 쓰는 곳은 한 군데
 
-## 1. Windows 설정 (한 번)
+두 곳이 같은 파일을 고치지 않으면 `git pull`이 충돌하지 않는다. 아래 표가 전부다.
 
-꺼지거나 재시작되면 가게가 닫힌다. 아래를 먼저 막는다.
-
-| 항목 | 위치 | 값 |
+| 경로 (`round-4/` 기준) | 쓰는 쪽 | 비고 |
 |---|---|---|
-| 절전 | 설정 > 시스템 > 전원 | 화면 끄기는 자유, **절전 모드: 안 함** |
-| 최대 절전 | 관리자 PowerShell | `powercfg /hibernate off` |
-| 업데이트 재시작 | 설정 > Windows 업데이트 > 고급 옵션 | 사용 시간을 넓게 잡고, 필요하면 업데이트 일시 중지 |
-| 자동 로그인 | `netplwiz` 또는 설정 > 계정 > 로그인 옵션 | 재부팅 뒤 자동으로 로그인되게(2번의 작업이 로그인 때 시작됨) |
-| 정전 후 켜짐 | BIOS/UEFI | "Restore on AC power loss: Power On"이 있으면 켠다 |
+| `app/`, `ios/` | **Mac** | 서버는 pull만 한다. 서버에서 앱을 고치고 싶으면 Mac에서 한다 |
+| `agent.json`(persona, goal, llm), `ops/`, `PLAYBOOK.md`, `SERVER.md`, 이 문서 | **서버**(사람, Claude Code) | Mac은 pull만 한다 |
+| `tools/`, `logs/`, `notes.md`, `card.json`, `customers.jsonl`, `stock.json`, `sales.jsonl`, `pay_log.json`, `public/` | **서버**(에이전트) | 사람이 손으로 고치지 않는다. kit은 forge 기록(`forge.json`의 sha256)과 맞지 않는 도구를 로드하지 않는다 |
+| `*_wallet.key`, `.kit/`(owner.env, app.key, *.log), `submissions/26510358/.env` | 서버에만, git 밖 | `.gitignore`가 막는다. Mac에 남은 사본은 kit을 띄우지 않는 한 쓰이지 않는다 |
 
-## 2. WSL2와 Ubuntu
+- **kit은 서버에서만 띄운다.** 지갑 키가 곧 가게라서 Mac에서 `agent_kit.py run`을 하면 같은 가게가 둘이 된다.
+- 둘 다 `git config pull.rebase false`(merge)로 둔다. 이미 push된 commit을 다시 쓰지 않는다(AGENTS.md: history rewrite 금지).
+- 경로가 겹치지 않으므로 merge commit이 생겨도 충돌은 없다. 충돌이 났다면 표를 어긴 것이니 누가 그 파일을 고쳤는지부터 본다.
 
-관리자 PowerShell:
+## 2. 고친 것이 돌아가는 가게에 언제 반영되나
 
-```powershell
-wsl --install -d Ubuntu-24.04
+kit이 각 파일을 언제 읽는지에 따라 다르다.
+
+| 바꾼 것 | 반영 시점 | 서버에서 할 일 |
+|---|---|---|
+| `app/index.html`과 그 옆 파일(js, css, 이미지) | **요청마다 디스크에서 읽음**(`miniapp.py`의 `index`) | `git pull`만. 앱 새로고침 |
+| `ios/` (SwiftUI 앱) | 서버와 무관. 폰·시뮬레이터에 설치된 빌드가 앱 주소로 붙음 | 없음. Mac에서 빌드 |
+| `agent.json`(goal, persona, `run_minutes`, `max_steps`) | **kit 시작 때 한 번 읽음** | `run_server.sh restart` |
+| `tools/` | 시작 때 로드. 에이전트가 run 중 forge하면 바로 추가·교체됨 | 사람은 건드리지 않음 |
+| `notes.md` | run마다 마지막 3000자를 읽음 | 사람은 건드리지 않음 |
+| `ops/run_server.sh`, `llm_shim.py` | 다음 시작 때 | `restart`(shim은 `restart shim`), 유닛 설정이 바뀌면 `down` 후 `up` |
+
+`restart`하면 quick tunnel 주소가 바뀐다(`SERVER.md` 6절). 재시작 뒤 `run_server.sh link`로 새 주소를 앱에 넣는다.
+goal을 자주 바꿀수록 앱 주소도 자주 바뀌므로, goal 수정은 모아서 한 번에 한다.
+
+## 3. 24시간 스스로 개선하기
+
+### 3-1. 에이전트가 스스로 하는 것 (이미 kit에 있음)
+
+kit은 에이전트를 메시지가 오거나 타이머가 끝날 때 깨운다. 한 run은 최대 `run_minutes`(8분) 동안 모델 호출 `max_steps`(40)번이고,
+`sleep`을 고르지 않으면 120초 뒤에 다시 깬다. 에이전트는 `forge_tool`로 도구를 새로 만들거나 **같은 이름으로 다시 forge해서
+코드와 description을 고친다**(버전이 오르고 `logs/forge.jsonl`에 남는다). 그러니 별도 스케줄러 없이도 24시간 돈다.
+빠진 것은 "n시간마다 멈춰서 돌아보기"인데, 이것은 goal에 규칙으로 넣는다. kit은 goal을 매 run 프롬프트에 그대로 넣는다.
+
+goal에 붙일 문단(예시, 서버에서 `agent.json`에 넣고 `restart`):
+
+```text
+REVIEW every 6 hours (check the REVIEW line in notes.md; if it is older than 6 h, do this before anything else):
+1. Read tools/index.json (uses, fails per tool) and the last forge results in logs/forge.jsonl.
+2. A tool with fails > 0 since the last review: read its code with read_tool and re-forge it under the same name.
+3. A tool you called with wrong args or misread: rewrite its description so the args and the result are unambiguous.
+4. Something you did by hand three times in the last 6 h: forge one tool for it. Reuse before you forge.
+5. Compare credits now with the last REVIEW line. Write one line in notes.md:
+   REVIEW <time> credits=<n> (<+/- since last>) changed=<tools or none> next=<one thing to try>.
+Change one thing per review, so the next review can tell whether it helped.
 ```
 
-재부팅 후 Ubuntu 창에서 사용자 이름과 비밀번호를 정한다. 이후 명령은 모두 Ubuntu 안에서 친다.
+- `notes.md`는 마지막 3000자만 보이므로 REVIEW 줄을 맨 뒤에 남기라고 쓴다. 너무 길어지면 에이전트가 정리한다.
+- 6시간은 시작값이다. 하루 동안 `logs/forge.jsonl`의 re-forge 수와 credits 변화를 보고 줄이거나 늘린다.
+
+### 3-2. 사람(+ Claude Code)이 서버에서 하는 것: 하루 1~2번
+
+에이전트는 goal을 고칠 수 없다. goal은 사람이 기록을 보고 고친다.
 
 ```bash
-sudo apt update && sudo apt install -y git tmux curl
-curl -L https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb -o /tmp/cf.deb && sudo apt install -y /tmp/cf.deb
-curl -LsSf https://astral.sh/uv/install.sh | sh && . ~/.local/bin/env
-uv venv --python 3.12 ~/.venvs/round4
-VIRTUAL_ENV=~/.venvs/round4 uv pip install "a2a-sdk[http-server]" uvicorn httpx eth-account coincurve
+cd ~/ai-agent-engineering-101 && R=submissions/26510358/round-4
+$R/ops/run_server.sh status                                   # 살아 있는지, 모델 실패, 오늘 토큰
+grep REVIEW $R/notes.md | tail -5                             # 에이전트의 자기 점검 기록
+tail -20 $R/logs/forge.jsonl | cut -c1-200                    # 최근 forge와 테스트 결과
 ```
 
-저장소 받기(push도 할 것이므로 GitHub 인증이 필요하다. `gh auth login` 또는 토큰):
+goal을 고쳤으면 commit 메시지에 무엇을 왜 바꿨는지 한 줄로 쓰고(채점이 과정을 본다) push한 뒤 `run_server.sh restart`.
+
+## 4. 에이전트 기록을 자동으로 commit하기 (서버)
+
+에이전트가 쓴 파일은 사람이 commit하지 않으면 서버 working tree에만 쌓이고, Mac이나 PR에서는 안 보인다.
+1시간마다 그 경로만 commit하고 push하는 systemd 타이머를 둔다(서버에서 한 번).
 
 ```bash
-git clone https://github.com/SUNGMYEONGGI/ai-agent-engineering-101.git ~/ai-agent-engineering-101
-cd ~/ai-agent-engineering-101 && git checkout round-4
-git config user.name "<Mac과 같은 이름>" && git config user.email "<Mac과 같은 메일>"
+mkdir -p ~/.config/systemd/user
+cat > ~/.config/systemd/user/shop-sync.service <<'EOF'
+[Unit]
+Description=round-4: commit and push the agent's records
+[Service]
+Type=oneshot
+WorkingDirectory=%h/ai-agent-engineering-101
+ExecStart=/bin/bash -c 'R=submissions/26510358/round-4; \
+  git add $$R/tools $$R/logs $$R/notes.md $$R/card.json $$R/customers.jsonl $$R/stock.json $$R/sales.jsonl $$R/pay_log.json $$R/public; \
+  git diff --cached --quiet || git commit -q -m "round-4: agent records $$(date "+%%m-%%d %%H:%%M")"; \
+  git pull -q --no-rebase --no-edit origin round-4 && git push -q origin round-4'
+EOF
+cat > ~/.config/systemd/user/shop-sync.timer <<'EOF'
+[Timer]
+OnCalendar=hourly
+Persistent=true
+[Install]
+WantedBy=timers.target
+EOF
+systemctl --user daemon-reload && systemctl --user enable --now shop-sync.timer
 ```
 
-## 3. Mac에서 옮겨 올 것
+- systemd는 유닛 파일 안의 `$`와 `%`를 먼저 해석하므로 `$$`, `%%`로 적었다.
+- `git add`는 위 경로만 받는다. 지갑 키와 `.kit/`는 `.gitignore`가 막지만 `git add -A`는 쓰지 않는다.
+- 서버의 `git push`는 GitHub 인증(토큰 또는 `gh auth`)이 저장돼 있어야 한다. 실패는 `journalctl --user -u shop-sync -n 20`에 남는다.
+- 사람이 서버에서 `agent.json`이나 `ops/`를 고치는 중이어도 타이머는 그 파일을 add하지 않으므로 섞이지 않는다.
+- 이 타이머는 `app/`, `ios/`를 고치지 않고 pull만 하므로 Mac의 앱 변경이 1시간 안에 서버로 들어온다. 급하면 서버에서 직접 `git pull`.
 
-지갑 키가 곧 가게다. 같은 키로 두 곳에서 동시에 돌리면 안 되므로 **Mac의 kit을 먼저 멈춘다.**
+## 5. Mac에서 앱 개발하기
 
-Mac에서:
+Mac은 `app/`, `ios/`만 고친다. 시작 전에 항상 `git pull`(서버의 에이전트 기록과 goal 변경을 받는다).
 
-```bash
-pkill -f agent_kit.py
-cd ~/Desktop/ai-agent-engineering-101
-git add submissions/26510358/round-4/logs submissions/26510358/round-4/tools && git commit -m "round-4: logs and tools from the Mac run" && git push
-tar czf ~/r4-state.tgz -C submissions/26510358 --exclude 'round-4/ios' --exclude 'round-4/.kit/*.log' round-4
-```
+### 5-1. 웹 앱(`app/index.html`)
 
-`r4-state.tgz`에는 git에 없는 파일이 다 들어 있다: `shop_wallet.key`, `buyer_wallet.key`, `.kit/owner.env`(claim code), `.kit/app.key`(앱 접속 코드), 에이전트가 쓴 `notes.md`, `customers.jsonl`, `pay_log.json` 같은 상태 파일.
-USB나 4번의 scp로 데스크탑에 옮긴 뒤 Ubuntu에서:
+1. **가짜 에이전트로 화면 확인**: 시장과 모델 없이 kit의 `miniapp`을 그대로 띄운다. 지갑을 쓰지 않으므로 Mac에서 돌려도 된다.
 
-```bash
-cd ~/ai-agent-engineering-101 && git pull
-tar xzf /mnt/c/Users/<윈도우사용자>/r4-state.tgz -C submissions/26510358
-ls submissions/26510358/round-4/*_wallet.key submissions/26510358/round-4/.kit/owner.env
-rm /mnt/c/Users/<윈도우사용자>/r4-state.tgz
-```
+   ```bash
+   ~/.venvs/round4/bin/python submissions/26510358/round-4/ops/preview_app.py --port 18800
+   ```
 
-`r4-state.tgz`에는 지갑 키가 평문으로 들어 있다. 옮긴 뒤 Mac과 Windows 양쪽에서 지운다.
+   채팅을 보내면 앱이 넘긴 도구 목록이 돌아오고, `/tool <이름> {json}`으로 앱 도구를 직접 불러 볼 수 있다.
+2. **진짜 가게에 붙여 보기**: 서버의 앱 포트를 Mac으로 당겨 온다. 서버는 서버에 pull된 `app/`을 내주므로, 이 단계는 push 뒤에 한다.
 
-## 4. Mac에서 원격으로 들어가기 (Tailscale + OpenSSH)
+   ```bash
+   ssh -N -L 8800:127.0.0.1:8800 smc-gpu-server
+   # 브라우저: http://127.0.0.1:8800/?k=<서버 .kit/app.key 내용>
+   ```
 
-1. Mac과 Windows 둘 다 Tailscale을 설치하고 같은 계정으로 로그인한다.
-2. Windows 관리자 PowerShell에서 OpenSSH 서버를 켠다.
+   quick tunnel 주소가 바뀌어도 이 주소는 그대로다.
+3. 확인이 끝나면 commit → push → 서버에서 `git pull`(또는 타이머를 기다림) → 앱 새로고침. kit 재시작은 필요 없다.
 
-```powershell
-Add-WindowsCapability -Online -Name OpenSSH.Server~~~~0.0.1.0
-Start-Service sshd; Set-Service sshd -StartupType Automatic
-```
+### 5-2. iOS 앱(`ios/`)
 
-3. Mac에서 `ssh <윈도우사용자>@<데스크탑의 Tailscale 이름>`으로 들어간 뒤 `wsl`을 치면 Ubuntu다.
-   파일 복사는 `scp ~/r4-state.tgz <윈도우사용자>@<데스크탑>:`(Windows 홈으로 감).
+- 빌드와 시뮬레이터는 Mac에서만 된다(서버에는 Xcode가 없다. 서버에서는 `ios/Ssadassa/Core`의 CoreCheck만 빌드된다).
+- 시뮬레이터는 5-1의 `ssh -L` 주소(`http://127.0.0.1:8800/?k=…`)에 붙는다(Info.plist의 로컬 네트워크 예외). 실제 아이폰은 https만 되므로 `run_server.sh link`의 주소를 쓴다.
+- iOS 앱은 서버에 배포할 것이 없다. commit은 기록용이다.
 
-## 5. 가게 띄우기와 자동 시작
-
-처음 한 번 Ubuntu에서 직접 띄워 본다. 모델은 기본값이 시장 model desk다(키 불필요).
-
-```bash
-cd ~/ai-agent-engineering-101
-submissions/26510358/round-4/ops/run_server.sh up
-submissions/26510358/round-4/ops/run_server.sh status     # 1~2분 뒤: shop joined as Hermes Shop
-submissions/26510358/round-4/ops/run_server.sh link       # 주인 앱 링크(접속 코드 포함, 나만 본다)
-```
-
-WSL은 Windows 쪽에서 붙잡는 프로세스가 없으면 몇 초 뒤 Ubuntu를 멈춘다. 로그인할 때 `up`을 하고 `sleep infinity`로 붙잡아 두는 작업을 등록한다(관리자 PowerShell, 한 번):
-
-```powershell
-$a = New-ScheduledTaskAction -Execute "wsl.exe" -Argument '-d Ubuntu-24.04 -- bash -lc "cd ~/ai-agent-engineering-101 && submissions/26510358/round-4/ops/run_server.sh up; exec sleep infinity"'
-$t = New-ScheduledTaskTrigger -AtLogOn
-$s = New-ScheduledTaskSettingsSet -ExecutionTimeLimit 0 -RestartCount 999 -RestartInterval (New-TimeSpan -Minutes 1) -AllowStartIfOnBatteries
-Register-ScheduledTask -TaskName "HermesShop" -Action $a -Trigger $t -Settings $s
-```
-
-재부팅해서 자동 로그인 뒤 `status`가 살아 있는지 확인한다. `up`은 이미 떠 있으면 아무것도 하지 않으므로 여러 번 불려도 된다.
-
-## 6. 평소 흐름
+## 6. 평소 흐름 한눈에
 
 | 할 일 | 어디서 | 명령 |
 |---|---|---|
-| goal, 앱, 스크립트 수정 | Mac | 수정 → commit → push |
-| 반영 | 데스크탑(ssh → wsl) | `git pull && submissions/26510358/round-4/ops/run_server.sh restart` |
-| 상태 보기 | 데스크탑 | `run_server.sh status`, `tmux attach -t shop`(나올 때 Ctrl-b d) |
-| 에이전트 기록 commit | **데스크탑만** | `git add .../round-4/logs .../round-4/tools .../round-4/notes.md && git commit && git push` |
+| goal, persona, 스크립트 수정 | 서버 | 수정 → commit → push → `run_server.sh restart` → `link` |
+| 웹 앱 수정 | Mac | `git pull` → 수정 → `preview_app.py` → commit → push → 서버 `git pull` |
+| iOS 앱 수정 | Mac | `git pull` → 수정 → 시뮬레이터(`ssh -L`) → commit → push |
+| 에이전트 기록 commit | 서버(자동) | `shop-sync.timer`, 수동이면 `systemctl --user start shop-sync` |
+| 상태 보기 | 서버 | `run_server.sh status`, `tail -f round-4/.kit/kit.log` |
+| 개선 점검 | 서버 | `grep REVIEW round-4/notes.md`, `logs/forge.jsonl` |
 
-- `logs/`, `tools/`, `notes.md`는 데스크탑에서만 commit한다. Mac은 그 파일을 고치지 않고 pull만 한다. 그래야 두 곳의 commit이 같은 파일에서 부딪치지 않는다.
-- Mac에서 kit을 다시 띄우지 않는다. 띄우면 같은 지갑으로 가게가 둘이 된다.
-- 내 OpenAI 키로 바꿀 때(`LLM=own`)는 데스크탑 `submissions/26510358/.env`에 키를 넣고 `run_server.sh down` 후 `LLM=own run_server.sh up`. 자동 시작 작업의 명령에도 `LLM=own`을 붙인다.
+하지 않는 것:
+
+- Mac에서 kit 실행(가게가 둘이 된다). 시험은 `preview_app.py`로.
+- Mac에서 `tools/`, `logs/`, `notes.md` 등 에이전트 파일 수정, 서버에서 `app/`, `ios/` 수정.
+- 서버의 앱 파일을 scp로 덮어써서 미리 보기. working tree가 더러워져 다음 pull이 막힌다.
