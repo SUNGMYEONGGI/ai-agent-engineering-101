@@ -20,7 +20,7 @@ MacBook (앱)                         GitHub origin/round-4                 smc-
 | 2. 가게 동작 | O 완료 | `shop-kit active since 11-25 14:53`. 다만 최근 500줄에 `model call failed` 10건(TimeoutError) |
 | 3. git 설정·push 인증 | O 완료 (11-25 15:05) | `pull.rebase=false`, gh 로그인(scope `repo`), push 성공 `48db7a68..95fa125e` |
 | 4. 에이전트 기록 첫 commit | O 완료 (11-25 15:05) | `95fa125e`: 에이전트 파일 6개, 키·`.kit/`·`.env` 없음. 이후 쌓이는 로그는 5단계 타이머가 맡음 |
-| 5. 자동 commit 타이머 | X 진행 | `shop-sync.timer` 없음 |
+| 5. 자동 commit 타이머 | O 완료 (11-25 15:06) | `shop-sync.timer` enabled, 매 정시. 첫 실행 success → `4229c2f8` push |
 | 6. goal REVIEW 규칙 | X 진행 | `agent.json`에 `REVIEW` 없음 |
 | 7. Mac 저장소·미리보기 | ? 진행 | Mac에서 확인 필요 |
 | 8. Mac `ssh -L` | ? 진행 | Mac에서 확인 필요 (5~6단계 뒤에) |
@@ -110,7 +110,7 @@ git pull --no-edit origin round-4 && git push origin round-4
 
 **확인**: `git status --short $R`에 남은 것이 없거나, 남은 것이 git에 올리지 않을 파일뿐이다.
 
-## 5단계. [서버] 에이전트 기록 자동 commit 타이머 — X 진행
+## 5단계. [서버] 에이전트 기록 자동 commit 타이머 — O 완료
 
 1시간마다 에이전트가 쓰는 경로만 commit하고, pull(Mac의 앱 변경을 받음) 후 push한다.
 
