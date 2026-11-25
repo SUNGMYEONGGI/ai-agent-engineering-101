@@ -24,7 +24,7 @@ MacBook (앱)                         GitHub origin/round-4                 smc-
 | 6. goal REVIEW 규칙 | O 완료 (11-25 15:23) | 15:10:49 재시작, 15:13 시장 재입장, 첫 실행에서 notes.md NOW에 `REVIEW 2026-11-25 15:xx credits=4982123 settled6h=0 fails=stock_and_price:1 …` 기록. 시각이 `15:xx`로 뭉개짐(6시간 판단이 흐려질 수 있음, 지켜볼 것) |
 | 7. Mac 저장소·미리보기 | O 완료 (11-25 15:2x) | Mac commit `9d54bdd7`을 merge(`caa5c3e8`), Mac·서버·origin 일치. venv(Python 3.12.16), `preview_app.py`가 18802로 떠서 브라우저 채팅에 도구 목록 응답 |
 | 8. Mac `ssh -L` | O 완료 (11-25 15:49) | `ssh -N -L 8800…` 터널로 웹 앱·iOS 시뮬레이터가 가게에 붙음. 주인 질문에 에이전트가 답함(잔고 4,982,123, 순위 6위) |
-| 9. 고정 앱 주소 | X 진행 | Cloudflare에 둘 도메인이 필요(9-1). 서버에 `cloudflared` 2026.10.0 있음 |
+| 9. 고정 앱 주소 (선택) | X 진행 | 둘 중 하나: 9 Cloudflare(도메인 필요, 한도 없음) 또는 9-B ngrok 무료(월 20,000요청: iOS 앱 약 8시간 분량) |
 
 각 단계 끝의 **확인**이 통과해야 다음 단계로 간다.
 
@@ -385,6 +385,109 @@ journalctl --user -u shop-tunnel -n 20 --no-pager | grep -i "registered tunnel c
   `run_server.sh restart`(새 코드가 생긴다) → 앱에 새 주소를 넣는다.
 
 **확인**: 아이폰 앱이 고정 주소로 붙고, `run_server.sh restart` 뒤에도 주소를 바꾸지 않고 다시 붙는다.
+
+## 9-B단계. [서버] 고정 앱 주소, 무료판 (ngrok dev domain) — X 진행
+
+도메인 없이 고정 주소를 얻는 방법. ngrok 무료 계정은 바뀌지 않는 dev domain 1개(`<이름>.ngrok-free.app` 또는 `.ngrok-free.dev`)를 준다.
+9단계(Cloudflare)와 둘 중 하나만 한다. 2026-11-25 ngrok 문서(docs/gateway/domains, pricing-limits/free-plan-limits, agent/install) 기준.
+
+**무료 한도가 작다.** HTTP 요청 월 20,000건, 전송 월 1 GB. 앱은 켜져 있는 동안 계속 상태를 묻는다.
+
+| 앱 | 묻는 주기 | 1시간 켜 두면 | 20,000건이면 |
+|---|---|---|---|
+| 웹 앱 (`app/index.html` 1초 + kit `miniapp.js` 1초) | 초당 약 2건 | 약 7,200건 | 약 3시간 |
+| iOS 앱 (`MiniAppSession` 1.5초) | 1.5초에 1건 | 약 2,400건 | 약 8시간 |
+
+밖에서 잠깐씩 확인하는 용도로만 쓰고, 다 보면 앱을 닫는다. 한도를 넘으면 그달 남은 기간 이 주소가 막힌다(사용량: dashboard.ngrok.com의 Usage).
+오래 켜 둘 일이 많으면 9단계(도메인)나, Mac에서는 8단계 `ssh -L`(한도 없음)을 쓴다.
+
+**`--app-tunnel`은 그대로 둔다**(9단계와 같은 이유: 접근 코드가 켜지는 조건).
+
+### 9B-1. ngrok 가입과 토큰·주소 확인
+
+▶ 실행 위치: 🌐 **Mac 브라우저** (dashboard.ngrok.com)
+
+1. 가입(무료) 후 로그인.
+2. **Your Authtoken** 화면에서 토큰을 복사해 둔다. 비밀번호와 같다. 채팅방·commit에 올리지 않는다.
+3. **Domains** 화면에 자동으로 배정된 dev domain(`xxxx.ngrok-free.app` 또는 `.ngrok-free.dev`)을 적어 둔다. 이름은 바꿀 수 없다.
+
+### 9B-2. 서버에 ngrok 설치와 토큰 등록
+
+▶ 실행 위치: 🖥️ **서버 터미널** (`<토큰>`을 9B-1의 토큰으로 바꿔서)
+
+```bash
+mkdir -p ~/.local/bin
+curl -fsSL https://bin.ngrok.com/c/bNyj1mQVY4c/ngrok-v3-stable-linux-amd64.tgz | tar -xz -C ~/.local/bin
+~/.local/bin/ngrok version
+~/.local/bin/ngrok config add-authtoken "<토큰>"           # ~/.config/ngrok/ngrok.yml 에 저장(저장소 밖)
+~/.local/bin/ngrok config check
+```
+
+**확인**: `ngrok version`이 버전을 출력하고, `config check`가 `Valid configuration file`.
+
+### 9B-3. 앞에서 띄워 보기와 보안 확인
+
+▶ 실행 위치: 🖥️ **서버 터미널 A** (`xxxx.ngrok-free.app`을 9B-1의 주소로 바꿔서)
+
+```bash
+NGROK_URL=xxxx.ngrok-free.app
+~/.local/bin/ngrok http 8800 --url https://$NGROK_URL
+```
+
+켜 둔 채로 다른 터미널에서 확인한다.
+
+▶ 실행 위치: 🖥️ **서버 터미널 B**
+
+```bash
+NGROK_URL=xxxx.ngrok-free.app
+K=$(cat ~/ai-agent-engineering-101/submissions/26510358/round-4/.kit/app.key)
+curl -s -o /dev/null -w "코드 없이: %{http_code} (401이어야 함)\n" https://$NGROK_URL/
+curl -s -o /dev/null -w "코드와 함께: %{http_code} (303이어야 함)\n" "https://$NGROK_URL/?k=$K"
+```
+
+**확인**: 401과 303. **코드 없이 200이면 터미널 A를 즉시 `Ctrl-c`로 끄고** kit이 `--app-tunnel`로 떠 있는지 본다. 확인되면 터미널 A를 `Ctrl-c`.
+
+### 9B-4. 상시 실행 (systemd 서비스)
+
+▶ 실행 위치: 🖥️ **서버 터미널**
+
+```bash
+NGROK_URL=xxxx.ngrok-free.app
+cat > ~/.config/systemd/user/shop-ngrok.service <<EOF
+[Unit]
+Description=round-4: fixed https address for the shop app (ngrok dev domain to 127.0.0.1:8800)
+After=network-online.target
+StartLimitIntervalSec=0
+[Service]
+ExecStart=%h/.local/bin/ngrok http 8800 --url https://$NGROK_URL --log stdout --log-format logfmt
+Restart=always
+RestartSec=10
+[Install]
+WantedBy=default.target
+EOF
+systemctl --user daemon-reload && systemctl --user enable --now shop-ngrok
+sleep 5; systemctl --user is-active shop-ngrok
+```
+
+- `run_server.sh`는 이 서비스를 건드리지 않는다. kit이 재시작하는 1~3분 동안은 이 주소가 오류 페이지를 낸다(정상).
+- 끄려면 `systemctl --user disable --now shop-ngrok`.
+
+**확인**: `active`, 그리고 9B-3의 터미널 B 명령을 다시 쳐서 401, 303.
+
+### 9B-5. 앱에 넣기
+
+▶ 실행 위치: 🖥️ **서버 터미널**에서 주소를 만들고 📱 **아이폰 앱**에 넣는다
+
+```bash
+NGROK_URL=xxxx.ngrok-free.app
+echo "https://$NGROK_URL/?k=$(cat ~/ai-agent-engineering-101/submissions/26510358/round-4/.kit/app.key)"
+```
+
+- 아이폰 앱 첫 화면 입력칸에 붙여 넣는다. 앱의 요청은 브라우저가 아니라서 ngrok 경고 페이지가 뜨지 않는다(문서: 브라우저 User-Agent의 GET에만 뜸).
+- 브라우저로 처음 열면 ngrok 경고 페이지가 한 번 뜬다. **Visit Site**를 누르면 7일 동안 다시 뜨지 않는다.
+- 이 주소는 접근 코드가 든 열쇠다. 어디에도 올리지 않는다.
+
+**확인**: 아이폰 앱이 붙어 주인 질문에 답이 오고, `run_server.sh restart` 뒤에도 같은 주소로 다시 붙는다.
 
 ## 세팅 끝: 한 바퀴 돌려 보기
 
