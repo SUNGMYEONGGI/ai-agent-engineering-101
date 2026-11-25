@@ -19,6 +19,6 @@
 		<true/>
 	</dict>
 	<key>NSLocalNetworkUsageDescription</key>
-	<string>같은 와이파이에 있는 컴퓨터에서 돌고 있는 싸다싸 가게 에이전트에 연결합니다.</string>
+	<string>같은 와이파이에 있는 컴퓨터에서 돌고 있는 Hermes 가게 에이전트에 연결합니다.</string>
 </dict>
 </plist>

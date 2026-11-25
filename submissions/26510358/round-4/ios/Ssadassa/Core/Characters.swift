@@ -47,7 +47,7 @@ public enum DemoData {
     public static let owner = "owner-demo"
 
     public static func state(now: Double = Date().timeIntervalSince1970) -> MiniAppState {
-        var s = MiniAppState(agent: "싸다싸")
+        var s = MiniAppState(agent: "Hermes")
         s.chat = [
             ChatMessage(who: owner, text: "오늘 장사 어때?", ts: now - 900),
             ChatMessage(who: "agent", text: "오늘 장사를 카드로 정리했어요.", ts: now - 880),
@@ -66,7 +66,7 @@ public enum DemoData {
                     "pay_guard": "모든 송금의 관문: 한도와 수수료 확인", "stock_and_price": "판매 기록으로 매입·가격 결정",
                     "memory": "notes.md를 RULES/NOW/FAILED로 정리"]
         s.appTools = ["app_show_card": "카드 보여주기", "app_owner_limits": "주인 한도", "app_ask_owner": "주인에게 묻기",
-                      "mesh_shop_catalog": "싸다싸 가게 상품 목록", "mesh_grocery_purchase_essentials": "DailyMart 장보기"]
+                      "mesh_shop_catalog": "Hermes 가게 상품 목록", "mesh_grocery_purchase_essentials": "DailyMart 장보기"]
         return s
     }
 

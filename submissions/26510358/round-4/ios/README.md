@@ -1,4 +1,4 @@
-# 싸다싸 가게 iOS 앱 (SwiftUI)
+# Hermes 가게 iOS 앱 (SwiftUI)
 
 Round 4 에이전트의 네이티브 iOS 앱. 에이전트와 kit의 미니앱 서버는 컴퓨터에서 돌고(`agent_kit.py run ... --app 8800`),
 이 앱은 kit의 웹 페이지(`app/index.html`)가 쓰는 것과 같은 API(`/api/state`, `/api/chat`, `/api/offer`, `/api/answer`)로 붙는다.
