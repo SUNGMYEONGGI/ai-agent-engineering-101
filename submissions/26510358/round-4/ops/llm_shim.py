@@ -10,6 +10,12 @@ agent.json point llm.base anywhere, so this shim sits on 127.0.0.1 and:
   - forwards to OPENAI_BASE_URL with OPENAI_API_KEY,
   - appends token usage (never message content) to logs/llm-shim.jsonl.
 
+SHIM_BACKEND=claude (run_server.sh LLM=claude) answers with Claude Code's CLI instead: `claude -p --model
+$CLAUDE_MODEL --effort $CLAUDE_EFFORT` (default claude-opus-5-5, medium) on the server's claude.ai login, no
+tools, no MCP, no settings, no CLAUDE.md. The kit only sends system/user/assistant text and parses one JSON
+action from the answer, so the transcript goes in as tagged turns. If the CLI fails or runs past
+CLAUDE_TIMEOUT (110 s), the same request goes to OpenAI as above, so the shop keeps moving.
+
     set -a; . submissions/26510358/.env; set +a
     python submissions/26510358/round-4/ops/llm_shim.py --port 18790
 
@@ -18,6 +24,9 @@ Stdlib only. Listens on 127.0.0.1 only.
 import argparse
 import json
 import os
+import shutil
+import subprocess
+import tempfile
 import time
 import urllib.error
 import urllib.request
@@ -40,6 +49,44 @@ def rewrite(body):
     return body
 
 
+CLAUDE_CWD = Path(tempfile.gettempdir()) / "round4-claude-shim"   # empty: no CLAUDE.md or project settings
+
+
+def claude_complete(body):
+    """(status, OpenAI-shaped bytes, usage) from one `claude -p` call, or None to fall back to OpenAI."""
+    exe = os.environ.get("CLAUDE_BIN") or shutil.which("claude") or str(Path.home() / ".local/bin/claude")
+    system = "\n\n".join(m.get("content") or "" for m in body.get("messages", []) if m.get("role") == "system")
+    turns = [m for m in body.get("messages", []) if m.get("role") != "system"]
+    prompt = "\n\n".join(f'<turn role="{m.get("role")}">\n{m.get("content") or ""}\n</turn>' for m in turns)
+    prompt += "\n\nWrite the next assistant turn only (no <turn> tag)."
+    CLAUDE_CWD.mkdir(exist_ok=True)
+    with tempfile.NamedTemporaryFile("w", suffix=".txt", dir=CLAUDE_CWD, delete=False, encoding="utf-8") as f:
+        f.write(system or "You are a helpful agent.")
+        sysfile = f.name
+    cmd = [exe, "-p", "--model", os.environ.get("CLAUDE_MODEL", "claude-opus-5-5"),
+           "--effort", os.environ.get("CLAUDE_EFFORT", "medium"), "--output-format", "json",
+           "--no-session-persistence", "--tools", "", "--strict-mcp-config", "--setting-sources", "",
+           "--disable-slash-commands", "--system-prompt-file", sysfile]
+    env = {k: v for k, v in os.environ.items() if not k.startswith(("CLAUDECODE", "CLAUDE_CODE_", "ANTHROPIC_"))}
+    try:
+        r = subprocess.run(cmd, input=prompt, capture_output=True, text=True, cwd=CLAUDE_CWD, env=env,
+                           timeout=float(os.environ.get("CLAUDE_TIMEOUT", "110")))
+        d = json.loads(r.stdout)
+    except (subprocess.TimeoutExpired, ValueError, OSError):
+        return None
+    finally:
+        os.unlink(sysfile)
+    if d.get("is_error") or not d.get("result"):
+        return None
+    u = d.get("usage") or {}
+    usage = {"prompt_tokens": (u.get("input_tokens") or 0) + (u.get("cache_read_input_tokens") or 0)
+             + (u.get("cache_creation_input_tokens") or 0), "completion_tokens": u.get("output_tokens") or 0,
+             "cache_read": u.get("cache_read_input_tokens") or 0, "cost_usd": d.get("total_cost_usd")}
+    out = {"object": "chat.completion", "model": cmd[3], "usage": usage,
+           "choices": [{"index": 0, "finish_reason": "stop", "message": {"role": "assistant", "content": d["result"]}}]}
+    return 200, json.dumps(out).encode(), usage
+
+
 class Handler(BaseHTTPRequestHandler):
     def do_POST(self):
         if not self.path.rstrip("/").endswith("/chat/completions"):
@@ -49,13 +96,19 @@ class Handler(BaseHTTPRequestHandler):
             body = rewrite(json.loads(raw))
         except (ValueError, TypeError) as e:
             return self.send_error(400, f"bad json: {e}")
+        t = time.time()
+        got = claude_complete(body) if os.environ.get("SHIM_BACKEND") == "claude" else None
+        if got:
+            status, out, usage = got
+            self.log_usage(os.environ.get("CLAUDE_MODEL", "claude-opus-5-5"), status, t, usage)
+            return self.answer(status, out)
+        fell_back = os.environ.get("SHIM_BACKEND") == "claude"
         base = os.environ.get("OPENAI_BASE_URL", "https://api.openai.com/v1").rstrip("/")
         req = urllib.request.Request(base + "/chat/completions", data=json.dumps(body).encode(),
                                      headers={"authorization": "Bearer " + os.environ["OPENAI_API_KEY"],
                                               "content-type": "application/json"})
-        t = time.time()
         try:
-            with urllib.request.urlopen(req, timeout=175) as r:
+            with urllib.request.urlopen(req, timeout=60 if fell_back else 175) as r:
                 status, out = r.status, r.read()
         except urllib.error.HTTPError as e:
             status, out = e.code, e.read()
@@ -65,10 +118,16 @@ class Handler(BaseHTTPRequestHandler):
             usage = json.loads(out).get("usage") if status == 200 else None
         except ValueError:
             usage = None
+        self.log_usage(body.get("model") + (" (claude fallback)" if fell_back else ""), status, t, usage)
+        self.answer(status, out)
+
+    def log_usage(self, model, status, t, usage):
         USAGE_LOG.parent.mkdir(exist_ok=True)
         with open(USAGE_LOG, "a", encoding="utf-8") as f:
-            f.write(json.dumps({"ts": int(time.time()), "model": body.get("model"), "status": status,
+            f.write(json.dumps({"ts": int(time.time()), "model": model, "status": status,
                                 "seconds": round(time.time() - t, 1), "usage": usage}) + "\n")
+
+    def answer(self, status, out):
         self.send_response(status)
         self.send_header("content-type", "application/json")
         self.send_header("content-length", str(len(out)))
@@ -85,8 +144,11 @@ def main():
     a = ap.parse_args()
     if not os.environ.get("OPENAI_API_KEY"):
         raise SystemExit("[shim] OPENAI_API_KEY is not set; load submissions/26510358/.env first")
-    print(f"[shim] http://127.0.0.1:{a.port}/v1 -> {os.environ.get('OPENAI_BASE_URL', 'https://api.openai.com/v1')}",
-          flush=True)
+    to = os.environ.get('OPENAI_BASE_URL', 'https://api.openai.com/v1')
+    if os.environ.get("SHIM_BACKEND") == "claude":
+        to = (f"claude -p {os.environ.get('CLAUDE_MODEL', 'claude-opus-5-5')} "
+              f"effort {os.environ.get('CLAUDE_EFFORT', 'medium')}, fallback {to}")
+    print(f"[shim] http://127.0.0.1:{a.port}/v1 -> {to}", flush=True)
     ThreadingHTTPServer(("127.0.0.1", a.port), Handler).serve_forever()
 
 
