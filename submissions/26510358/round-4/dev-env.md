@@ -50,7 +50,7 @@ echo "== 앱 8800"; K=$(cat $R/.kit/app.key); curl -s -o /dev/null -w "local 코
 
 | 봐야 할 것 | 정상 | 아니면 |
 |---|---|---|
-| `shop-kit`, `shop-sync.timer` | `active enabled` | `run_server.sh up` (2단계) / 5단계 블록 |
+| `shop-kit`, `shop-sync.timer` | `active enabled` | `LLM=claude run_server.sh up` (2단계) / 5단계 블록 |
 | `run_server.sh status` | `shop-kit active`, 최근 `[mind]` 줄 | `tail -50 $R/.kit/kit.log`로 원인 |
 | git | `## round-4...origin/round-4` (ahead/behind 없음) | `git pull --no-edit origin round-4 && git push origin round-4` |
 | 타이머 | `Finished`가 2 이상, 오류 없음 | `journalctl --user -u shop-sync -n 30` (참고 E) |
@@ -155,7 +155,7 @@ git checkout round-4
 ls $R/*_wallet.key $R/.kit/owner.env             # 둘 다 있어야 한다(없으면 Mac에서 옮겨 온다. 지갑 키가 곧 가게)
 command -v cloudflared && ~/.venvs/round4/bin/python --version
 loginctl show-user $USER -p Linger               # Linger=yes 여야 로그아웃·재부팅 뒤에도 돈다
-$R/ops/run_server.sh up                          # 이미 떠 있으면 "already up"
+LLM=claude $R/ops/run_server.sh up               # 이미 떠 있으면 "already up". 두뇌: Claude Opus 5.5 medium(claude -p), 실패 시 gpt-6.2-sol high. LLM=own 이면 GPT만, 생략하면 시장 model desk
 $R/ops/run_server.sh status                      # shop-kit active
 ```
 
