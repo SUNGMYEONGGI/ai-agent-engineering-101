@@ -50,6 +50,7 @@ def rewrite(body):
 
 
 CLAUDE_CWD = Path(tempfile.gettempdir()) / "round4-claude-shim"   # empty: no CLAUDE.md or project settings
+LAST_CLAUDE_ERROR = {"why": ""}                                       # logged with the fallback answer
 
 
 def claude_complete(body):
@@ -72,11 +73,13 @@ def claude_complete(body):
         r = subprocess.run(cmd, input=prompt, capture_output=True, text=True, cwd=CLAUDE_CWD, env=env,
                            timeout=float(os.environ.get("CLAUDE_TIMEOUT", "110")))
         d = json.loads(r.stdout)
-    except (subprocess.TimeoutExpired, ValueError, OSError):
+    except (subprocess.TimeoutExpired, ValueError, OSError) as e:
+        LAST_CLAUDE_ERROR["why"] = (f"{type(e).__name__}: {e}"[:120] + " | " + (locals().get("r") and r.stderr or "")[-200:]).strip()
         return None
     finally:
         os.unlink(sysfile)
     if d.get("is_error") or not d.get("result"):
+        LAST_CLAUDE_ERROR["why"] = f"is_error {d.get('subtype', '')}: {str(d.get('result', ''))[:200]}"
         return None
     u = d.get("usage") or {}
     usage = {"prompt_tokens": (u.get("input_tokens") or 0) + (u.get("cache_read_input_tokens") or 0)
@@ -118,7 +121,8 @@ class Handler(BaseHTTPRequestHandler):
             usage = json.loads(out).get("usage") if status == 200 else None
         except ValueError:
             usage = None
-        self.log_usage(body.get("model") + (" (claude fallback)" if fell_back else ""), status, t, usage)
+        tag = f" (claude fallback: {LAST_CLAUDE_ERROR['why']})" if fell_back else ""
+        self.log_usage(body.get("model") + tag, status, t, usage)
         self.answer(status, out)
 
     def log_usage(self, model, status, t, usage):
