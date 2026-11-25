@@ -18,8 +18,8 @@ MacBook (앱)                         GitHub origin/round-4                 smc-
 |---|---|---|
 | 1. SSH 별칭 | O 완료 | 지금 이 서버에 SSH로 들어와 개발 중 |
 | 2. 가게 동작 | O 완료 | `shop-kit active since 11-25 14:53`. 다만 최근 500줄에 `model call failed` 10건(TimeoutError) |
-| 3. git 설정·push 인증 | △ 진행 | gh 로그인 O, `git push --dry-run` O, `pull.rebase` 미설정 X |
-| 4. 에이전트 기록 첫 commit | X 진행 | `card.json`, `logs/agent-kit.log`, `logs/react.jsonl`, `notes.md`, `public/catalog.json`, `tools/index.json`이 commit 안 됨 |
+| 3. git 설정·push 인증 | O 완료 (11-25 15:05) | `pull.rebase=false`, gh 로그인(scope `repo`), push 성공 `48db7a68..95fa125e` |
+| 4. 에이전트 기록 첫 commit | O 완료 (11-25 15:05) | `95fa125e`: 에이전트 파일 6개, 키·`.kit/`·`.env` 없음. 이후 쌓이는 로그는 5단계 타이머가 맡음 |
 | 5. 자동 commit 타이머 | X 진행 | `shop-sync.timer` 없음 |
 | 6. goal REVIEW 규칙 | X 진행 | `agent.json`에 `REVIEW` 없음 |
 | 7. Mac 저장소·미리보기 | ? 진행 | Mac에서 확인 필요 |
@@ -72,7 +72,7 @@ submissions/26510358/round-4/ops/run_server.sh status       # shop-kit active
 
 **확인**: `status`에 `shop-kit active`가 나오고, `--- recent kit events`에 오류가 반복되지 않는다.
 
-## 3단계. [서버] git 설정과 push 인증 — △ 진행 (pull.rebase만 남음)
+## 3단계. [서버] git 설정과 push 인증 — O 완료
 
 서버도 GitHub에 push해야 한다(에이전트 기록을 Mac과 PR로 보내기 위해).
 
@@ -88,7 +88,7 @@ git push --dry-run origin round-4
 
 **확인**: `git push --dry-run`이 인증 오류 없이 끝난다.
 
-## 4단계. [서버] 지금까지 쌓인 에이전트 기록을 한 번 commit — X 진행
+## 4단계. [서버] 지금까지 쌓인 에이전트 기록을 한 번 commit — O 완료
 
 타이머(5단계)를 켜기 전에 지금 working tree에 쌓인 에이전트 파일을 손으로 한 번 commit한다.
 그래야 첫 자동 commit이 며칠 치를 한꺼번에 담지 않는다.
