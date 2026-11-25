@@ -50,13 +50,13 @@ CAPABILITIES = {
     "shop.catalog": {
         "tool": mcpv2.ToolDescriptor(
             capability_id="shop.catalog",
-            description="싸다싸 가게가 지금 파는 상품 목록 (sku, 이름, 등급, 가격 credits, 재고, 보증). query로 이름 검색.",
+            description="Hermes Shop이 지금 파는 상품 목록 (sku, 이름, 등급, 가격 credits, 재고, 보증). query로 이름 검색.",
             input_schema={"type": "object", "properties": {"query": {"type": "string"}}}),
         "risk": "read:catalog", "consent": "none"},
     "shop.reserve": {
         "tool": mcpv2.ToolDescriptor(
             capability_id="shop.reserve",
-            description="싸다싸 가게 상품을 예약한다. budget_krw(credits)를 넘지 않는 가격일 때만 잡히고, 30분 안에 "
+            description="Hermes Shop 상품을 예약한다. budget_krw(credits)를 넘지 않는 가격일 때만 잡히고, 30분 안에 "
                         "우리 에이전트에게 reservation_id로 연락하면 그 가격의 checkout을 받는다.",
             input_schema={"type": "object", "required": ["sku", "qty", "budget_krw"],
                           "properties": {"sku": {"type": "string"}, "qty": {"type": "string"},

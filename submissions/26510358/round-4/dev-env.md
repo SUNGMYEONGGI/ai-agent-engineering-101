@@ -84,7 +84,7 @@ dig +short NS hermes-market.shop
 |---|---|---|---|
 | 1 | 🌐 Mac 브라우저 | F3 마지막 줄의 주소를 연다 | Hermes Shop 웹 앱이 뜨고 "시장에서 거래 중" |
 | 2 | 🌐 같은 화면 | **지금 잔고와 순위는?** 버튼 | 1~2분 안에 에이전트가 숫자로 답함 |
-| 3 | 💻 Mac 시뮬레이터 | 아래 명령 (ssh 터널 없이 공개 주소로) | 싸다싸 가게 앱이 연결되고 대화가 보임 |
+| 3 | 💻 Mac 시뮬레이터 | 아래 명령 (ssh 터널 없이 공개 주소로) | Hermes Shop 앱이 연결되고 대화가 보임 |
 | 4 | 📱 실제 아이폰 | 앱(10단계로 설치) → **링크 붙여넣기** → 같은 주소 → **연결** | 대화 화면, 질문에 답이 옴 |
 | 5 | 📱 실제 아이폰 | **와이파이 끄고 LTE**로 다시 | 그래도 붙음 (= 밖에서도 됨) |
 | 6 | 🖥️ 서버 | `run_server.sh restart` → 3분 뒤 아이폰 앱 새로고침 | 주소를 다시 넣지 않아도 다시 붙음 (= 고정 주소) |
@@ -404,14 +404,14 @@ echo "아이폰에 넣을 주소: https://app.hermes-market.shop/?k=$K"
 ### 9-6. 📱 아이폰에 넣기
 
 1. 마지막 줄의 주소를 아이폰으로 보낸다(같은 Apple ID면 Mac에서 복사 → 아이폰에서 붙여넣기).
-2. 싸다싸 가게 앱 → **링크 붙여넣기** → **연결**. (Safari로 열면 가게 웹 앱이 열린다.)
+2. Hermes Shop 앱 → **링크 붙여넣기** → **연결**. (Safari로 열면 가게 웹 앱이 열린다.)
 3. 와이파이를 끄고 LTE로도 붙는지 본다.
 
 **QR로 넣기** (앱에 `ssadassa://` 링크 처리가 들어간 빌드부터, 11-25 추가): 💻 Mac 터미널에서
 
 ```bash
 cd ~/Desktop/ai-agent-engineering-101/submissions/26510358/round-4/ios
-./qr.sh        # ssadassa://app.hermes-market.shop/?k=… → 아이폰 카메라 "싸다싸 가게에서 열기" → 바로 연결
+./qr.sh        # ssadassa://app.hermes-market.shop/?k=… → 아이폰 카메라 "Hermes Shop에서 열기" → 바로 연결
 ./qr.sh web    # https://… → Safari 웹 앱(app/index.html)
 ```
 
@@ -543,7 +543,7 @@ tail -20 $R/logs/forge.jsonl | cut -c1-200
 | iOS 앱 수정 | 💻 Mac | `git pull` → 수정 → 시뮬레이터(8단계) → 실제 폰(10단계) → commit → push |
 | 에이전트 기록 commit | 🖥️ 서버(자동) | `shop-sync.timer`, 바로 하려면 `systemctl --user start shop-sync` |
 | 상태 보기 | 🖥️ 서버 | `run_server.sh status`, `tail -f round-4/.kit/kit.log` |
-| 밖에서 가게 보기 | 📱 아이폰 | 싸다싸 가게 앱 또는 Safari: `https://app.hermes-market.shop/?k=…` |
+| 밖에서 가게 보기 | 📱 아이폰 | Hermes Shop 앱 또는 Safari: `https://app.hermes-market.shop/?k=…` |
 
 하지 않는 것:
 

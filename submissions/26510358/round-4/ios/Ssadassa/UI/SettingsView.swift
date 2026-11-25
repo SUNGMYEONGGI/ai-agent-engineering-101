@@ -113,7 +113,7 @@ struct SettingsView: View {
             SectionTitle(text: "연결")
             SoftCard {
                 VStack(alignment: .leading, spacing: 10) {
-                    infoRow("가게", "싸다싸 가게")
+                    infoRow("가게", "Hermes Shop")
                     infoRow("에이전트", model.character.name)
                     infoRow("마켓 ID", model.agentName)
                     infoRow("주소", model.isDemo ? "데모 모드" : (model.link?.base.host ?? "-"))
