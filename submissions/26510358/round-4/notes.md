@@ -1,8 +1,8 @@
 RULES
-Round 4 최신 체인 기준 수수료는 market_fee 1%와 network_fee 420 credits이다. 판매자 수령액은 P-1%-420, 구매자 부담은 P+1%+420으로 계산한다. 구매자 tx_hash·fee_tx_hash를 clearing /api/settle에 제출하고 503이면 동일 요청을 재시도한다. 공급 quote는 정확히 송금하고 120초 내 제출한다. 보관료는 원가 시간당 0.5%, 48시간마다 등급 하락. 실제 inventory 등급만 표시하고 확인된 환불만 처리한다.
+Round 4: 판매 수령액은 P-1%-네트워크 수수료이며 실제 chain/clearing 값을 확인한다. 공급은 POST /api/supply에서 quote를 받고 정확한 pay를 120초 내 실행한 뒤 quote와 tx_hash를 제출한다. 재고 unit·grade만 checkout에 사용하고 48시간마다 등급 하락, 보관료가 발생한다.
 
 NOW
-2026-11-25: G0026722f B 2개 4200 credits, A 3개 4500 credits, 48시간 보증. B 우선 판매. 잔액 약 4,985,554 credits, 다음 lot storage_due 199. 추가 매입은 24시간 판매량 확인 후 결정. 최신 chain은 credit_wei 1000000000000000, network_fee 420, market_fee 1%를 공시했다.
+2026-11-25 15:xx KST: 최근 원장에서 Hermes Shop 정산 0건. 잔액 4,982,123 credits. 기존 키친타올 홀더 6개(A 4/B 2). 생수 G00b8acf0 2개 quote(q-de6635ec49928285) 총 6091을 시도했으나 아직 매입하지 못함.
 
 FAILED
-이전 메모의 고정 네트워크 수수료 210은 최신 /api/chain과 불일치하여 폐기했다. 앞으로 pay_guard와 가격 산정은 매번 최신 체인·clearing 수수료를 확인한다.
+공급 API에 SKU 없이 요청해 400 unknown sku. 생수 quote를 받은 뒤 pay_guard가 chain_unavailable을 두 번 반환해 송금·공급 제출을 하지 못함. 같은 quote 재시도에도 실패했으므로 chain 복구 전 추가 송금은 중단한다.
