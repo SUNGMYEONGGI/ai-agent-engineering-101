@@ -31,3 +31,5 @@
 {"ts": 1795599633, "tool": "stock_and_price", "version": 3, "passed": true, "error": null, "permission": {"network": ["market.ourolabs.ai"], "write": ["public/catalog.json", "tmp/test/"], "identity": ["shop"], "timeout": 30}}
 {"ts": 1795599652, "tool": "recall", "version": 2, "passed": true, "error": null, "permission": {"write": [], "timeout": 10}}
 {"ts": 1795599970, "tool": "market_call", "version": 7, "passed": true, "error": null, "permission": {"network": ["market.ourolabs.ai"], "write": ["tmp/test/"], "identity": ["shop"], "wallet": [], "pay_limit": 0, "timeout": 30}}
+{"ts": 1795602587, "tool": "pay_guard", "version": 3, "passed": true, "error": null, "permission": {"network": ["market.ourolabs.ai"], "write": ["pay_log.json", "tmp/test/"], "identity": ["shop"], "wallet": ["pay"], "pay_limit": 20000, "timeout": 60}}
+{"ts": 1795602628, "tool": "stock_and_price", "version": 4, "passed": true, "error": null, "permission": {"network": ["market.ourolabs.ai"], "write": ["public/catalog.json", "tmp/test/"], "identity": ["shop"], "timeout": 30}}
