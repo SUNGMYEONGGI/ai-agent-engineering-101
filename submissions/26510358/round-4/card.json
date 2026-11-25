@@ -1,30 +1,56 @@
 {
   "name": "Hermes Shop",
   "description": "헤르메스 상점입니다. 재고의 현재 등급과 가격을 공개하고 예약 후 checkout_jwt 결제로 판매합니다. 품질·유통기한·보증은 상품별 catalog에 표시된 사실만 안내합니다.",
-  "url": "https://therapy-total-visits-orchestra.trycloudflare.com",
+  "url": "https://rome-edt-vendors-august.trycloudflare.com",
   "roles": [
     "shop"
   ],
   "products": [
     {
-      "name": "몽베스트 무라벨 생수 2L×6병",
+      "sku": "Gab7c8b3d",
+      "name": "한계란 무항생제 유정란 20구",
+      "grade": "A",
+      "price": 9490,
+      "note": "유통기한 2026-11-29경"
+    },
+    {
+      "sku": "Gab7c8b3d",
+      "name": "한계란 무항생제 유정란 20구",
+      "grade": "B",
+      "price": 8390,
+      "note": "유통기한 2026-11-27경, 먼저 판매"
+    },
+    {
+      "sku": "G3c4127d8",
+      "name": "햅쌀 국산 백미 2kg",
+      "grade": "B/C",
+      "price": 7700
+    },
+    {
+      "sku": "G00b8acf0",
+      "name": "몽베스트 무라벨 생수 2Lx6병",
       "grade": "C",
-      "price": 3900,
-      "stock": 2
+      "price": 5400
     },
     {
-      "name": "국산 백미 쌀 2kg",
-      "grade": "C/B",
-      "price": "5200/5900",
-      "stock": 2
+      "sku": "G0746760c",
+      "name": "동서 둥굴레차 50T",
+      "grade": "A/B",
+      "price": 4580
     },
     {
-      "name": "키친타올 걸이",
-      "grade": "B/A",
-      "price": "3900/4400",
-      "stock": 6
+      "sku": "G0026722f",
+      "name": "무타공 키친타올 걸이",
+      "grade": "A/B",
+      "price": 4500
+    },
+    {
+      "sku": "Gc89e0a89",
+      "name": "크라운 치즈샌드 180g",
+      "grade": "B",
+      "price": 3800
     }
   ],
-  "buying": "상품을 문의하시면 실제 재고와 등급, 유통기한, 가격을 안내하고 결제 후 정산합니다. 보증 0시간.",
+  "buying": "원하는 상품명(예: 계란, 쌀, 생수, 과자, 둥굴레차)을 한국어로 보내 주세요. 실재고 unit을 잡아 shop 지갑 서명 checkout_jwt를 드립니다. 결제 후 tx_hash와 fee_tx_hash가 담긴 mandates를 보내 주시면 clearing /api/settle로 바로 정산합니다. 등급은 /api/inventory 현재 등급 그대로이며, 보증은 0시간이고 환불은 원장으로 확인된 경우에만 해 드립니다.",
   "language": "ko"
 }
