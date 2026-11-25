@@ -12,12 +12,25 @@ MacBook (앱)                         GitHub origin/round-4                 smc-
   iOS Simulator                                                       cloudflared 터널 → 시장, 주인 앱
 ```
 
+### 진행 상황 (2026-11-25 15:0x 서버에서 확인)
+
+| 단계 | 상태 | 근거 |
+|---|---|---|
+| 1. SSH 별칭 | O 완료 | 지금 이 서버에 SSH로 들어와 개발 중 |
+| 2. 가게 동작 | O 완료 | `shop-kit active since 11-25 14:53`. 다만 최근 500줄에 `model call failed` 10건(TimeoutError) |
+| 3. git 설정·push 인증 | △ 진행 | gh 로그인 O, `git push --dry-run` O, `pull.rebase` 미설정 X |
+| 4. 에이전트 기록 첫 commit | X 진행 | `card.json`, `logs/agent-kit.log`, `logs/react.jsonl`, `notes.md`, `public/catalog.json`, `tools/index.json`이 commit 안 됨 |
+| 5. 자동 commit 타이머 | X 진행 | `shop-sync.timer` 없음 |
+| 6. goal REVIEW 규칙 | X 진행 | `agent.json`에 `REVIEW` 없음 |
+| 7. Mac 저장소·미리보기 | ? 진행 | Mac에서 확인 필요 |
+| 8. Mac `ssh -L` | ? 진행 | Mac에서 확인 필요 (5~6단계 뒤에) |
+
 각 단계 끝의 **확인**이 통과해야 다음 단계로 간다. `[서버]`는 SSH로 들어간 서버, `[Mac]`은 Mac 터미널에서 친다.
 서버의 저장소 경로는 `~/ai-agent-engineering-101`, Mac은 `~/Desktop/ai-agent-engineering-101`로 적었다. 다르면 바꿔서 친다.
 
 ---
 
-## 1단계. [Mac] 서버에 SSH 별칭 만들기
+## 1단계. [Mac] 서버에 SSH 별칭 만들기 — O 완료
 
 이후 명령은 모두 `smc-gpu-server`라는 이름으로 서버에 들어간다고 가정한다. `~/.ssh/config`에 없으면 추가한다.
 
@@ -42,7 +55,7 @@ submissions/26510358/round-4/ops/run_server.sh status       # shop-kit active
 
 **확인**: `status`에 `shop-kit active`가 나오고, `--- recent kit events`에 오류가 반복되지 않는다.
 
-## 3단계. [서버] git 설정과 push 인증
+## 3단계. [서버] git 설정과 push 인증 — △ 진행 (pull.rebase만 남음)
 
 서버도 GitHub에 push해야 한다(에이전트 기록을 Mac과 PR로 보내기 위해).
 
@@ -76,7 +89,7 @@ git pull --no-edit origin round-4 && git push origin round-4
 
 **확인**: `git status --short $R`에 남은 것이 없거나, 남은 것이 git에 올리지 않을 파일뿐이다.
 
-## 5단계. [서버] 에이전트 기록 자동 commit 타이머
+## 5단계. [서버] 에이전트 기록 자동 commit 타이머 — X 진행
 
 1시간마다 에이전트가 쓰는 경로만 commit하고, pull(Mac의 앱 변경을 받음) 후 push한다.
 
@@ -116,7 +129,7 @@ journalctl --user -u shop-sync -n 20 --no-pager      # 오류 없음
 git log --oneline -3 origin/round-4                  # "agent records" commit (바뀐 게 있었다면)
 ```
 
-## 6단계. [서버] goal에 6시간 REVIEW 규칙 넣기
+## 6단계. [서버] goal에 6시간 REVIEW 규칙 넣기 — X 진행
 
 에이전트는 이미 최대 120초마다 깨어나 도구를 forge하고 고친다. 빠진 "n시간마다 돌아보기"를 goal에 넣는다.
 
