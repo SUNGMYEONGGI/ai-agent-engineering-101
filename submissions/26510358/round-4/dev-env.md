@@ -9,12 +9,11 @@ MacBook (앱 개발)                     GitHub origin/round-4               smc
   preview_app.py, Xcode                                              tools/, logs/, notes.md … (에이전트, 매시 자동 commit)
   ssh -L 8800 → 실제 가게  ◀── pull ──          ── pull ──▶  systemd --user:
                                                                        shop-kit         가게 (시장 A2A + 앱 8800)
-아이폰 (Tailscale 앱 ON) ──https://hermes-shop.<tailnet>.ts.net──▶     shop-tailscaled  개인 Tailscale → 앱 8800
+아이폰 ──https://app.hermes-market.shop──▶ Cloudflare ──▶          shop-tunnel      Cloudflare named tunnel → 앱 8800
                                                                        shop-sync.timer  매시 에이전트 기록 commit·push
-                                                                       shop-ngrok       (예비) ngrok 고정 주소
 ```
 
-### 진행 상황 (2026-11-25 16:4x 서버에서 확인)
+### 진행 상황 (2026-11-25 16:5x 서버에서 확인)
 
 | 단계 | 상태 | 근거 |
 |---|---|---|
@@ -26,10 +25,10 @@ MacBook (앱 개발)                     GitHub origin/round-4               smc
 | 6. goal REVIEW 규칙 | O 완료 | `notes.md`에 REVIEW 줄. 시각을 `15:xx`로 뭉개 적어 1시간 만에 다시 돔(참고 C) |
 | 7. Mac 저장소·미리보기 | O 완료 | Mac commit merge(`caa5c3e8`), `preview_app.py` 응답 |
 | 8. Mac에서 실제 가게 | O 완료 | `ssh -L` 터널로 웹 앱·시뮬레이터가 붙고 에이전트가 답함(15:49) |
-| 9. 고정 앱 주소 (개인 Tailscale) | △ 진행 | 서버 `shop-tailscaled` active, **로그인(9-2)부터 남음** |
+| 9. 고정 앱 주소 (Cloudflare + hermes-market.shop) | △ 진행 | 도메인 구매 완료(가비아). DNS 미반영(NXDOMAIN) → **9-1부터** |
 | 10. 실제 아이폰에 앱 설치 | △ 진행 | Xcode 서명 Team 선택까지. 아이폰 연결부터 남음 |
 | 세팅 끝. 웹 앱 한 바퀴 | O 완료 | Mac `8e87a978`(표시 추가) → 서버가 재시작 없이 표시를 내줌 → Mac `70980208`(revert) → 서버 pull 뒤 표시 사라짐 |
-| 예비. ngrok 고정 주소 | O 완료 | `shop-ngrok` active. 월 20,000요청 한도라 9단계가 되면 끈다(9-6) |
+| 정리 대상 | - | `shop-ngrok`(월 20,000요청 한도), `shop-tailscaled`(개인 Tailscale, 쓰지 않기로 함)는 9-7에서 끈다 |
 
 ### 어느 터미널에서 치나
 
@@ -157,7 +156,7 @@ $R/ops/run_server.sh restart
 systemctl --user show shop-kit -p ActiveEnterTimestamp     # 시각이 방금으로 바뀌었으면 재시작된 것
 ```
 
-확인: 몇 분 뒤 `grep REVIEW $R/notes.md`. 고정 주소(9단계)로 붙은 앱은 재시작 뒤에도 주소를 바꿀 필요가 없다.
+확인: 몇 분 뒤 `grep REVIEW $R/notes.md`. 아이폰 앱은 `app.hermes-market.shop`(9단계)이라 재시작 뒤에도 주소를 바꿀 필요가 없다.
 
 ## 7단계. 💻 Mac: 저장소와 미리보기 — O 완료
 
@@ -214,89 +213,133 @@ DEVICE="iPhone 18 Pro" ./run-simulator.sh "http://127.0.0.1:8800/?k=$K"  # iOS �
 - 터널을 닫아도 가게에는 영향이 없다. Mac의 `127.0.0.1:8800`만 끊긴다.
 - Xcode 콘솔에 쏟아지는 `UIKBDynamicRenderFactory`, `CHHapticPattern`, `TUIPredictionViewCell` 줄은 시뮬레이터 키보드·햅틱 소음이다(앱 문제 아님).
 
-## 9단계. 고정 앱 주소: 개인 Tailscale (무료, 한도 없음) — △ 진행
+## 9단계. 고정 앱 주소: Cloudflare tunnel + `hermes-market.shop` — △ 진행
 
-아이폰이 어디서든(LTE 포함) `https://hermes-shop.<내-tailnet>.ts.net/?k=<코드>`로 가게 앱에 붙는다. 주소는 kit 재시작·서버 재부팅 뒤에도 그대로.
-연구실 Tailscale(`seoultech.hailab`)은 건드리지 않고, **내 개인 Tailscale을 root 없이 사용자 권한(userspace)으로 하나 더** 띄운다
-(소켓·상태 `~/.local/share/tailscale-personal/`, UDP 포트 자동). 내 계정에 로그인한 기기만 이 주소에 닿는다.
+아이폰이 어디서든(LTE 포함) **`https://app.hermes-market.shop/?k=<코드>`**로 가게 앱에 붙는다. 한도가 없고, kit 재시작·서버 재부팅 뒤에도
+주소가 그대로다. 아이폰에 다른 앱(VPN 등)은 필요 없다.
 
-### 9-1. 🌐 브라우저: 개인 Tailscale 계정 (한 번)
+```
+아이폰 ──https──▶ Cloudflare (app.hermes-market.shop) ──named tunnel──▶ 서버 cloudflared (shop-tunnel) ──▶ 127.0.0.1:8800 kit
+```
 
-1. login.tailscale.com 에서 **개인 계정**(개인 Google/GitHub/Apple)으로 가입·로그인한다. **연구실 계정(seoultech.hailab)이 아니다.**
-2. 관리 콘솔 **DNS** 탭: **MagicDNS**가 켜져 있는지 보고, 아래 **HTTPS Certificates → Enable HTTPS**를 누른다.
-   상단에 보이는 tailnet 이름(`tailXXXX.ts.net`)을 적어 둔다.
+- 도메인: 가비아에서 구매(11-25, 첫해 2,200원). 네임서버만 Cloudflare로 넘긴다.
+- **kit의 `--app-tunnel`은 끄지 않는다.** kit은 `--app-tunnel`이나 `--app-host 0.0.0.0`일 때만 접근 코드를 켠다(`agent_kit.py` 846–847행).
+  `run_server.sh`의 기본 `APP_FLAGS`(`--app 8800 --app-tunnel`)를 그대로 둔다.
 
-### 9-2. 🖥️ 서버: 개인 tailscaled 서비스와 로그인
+### 9-1. 🌐 가비아: 자동 연장 끄기, 개인정보 보호
 
-서비스 파일은 11-25에 만들어 켜 두었다(`shop-tailscaled` active). 다시 세팅할 때는 블록 전체를 붙여 넣는다.
+1. My가비아 → **도메인 관리** → `hermes-market.shop`.
+2. **자동 연장**을 끈다(2년째는 할인 없이 약 65,000원. Round 4는 그 전에 끝난다).
+3. **Whois 정보 보호(개인정보 보호)** 항목이 있으면 켠다. 이름·전화가 공개 조회되지 않게.
+4. **DNSSEC**이 켜져 있으면 끈다(켜져 있으면 9-2의 네임서버 변경이 막힌다).
 
-▶ 🖥️ **서버 터미널**
+### 9-2. 🌐 Cloudflare에 도메인 추가 → 🌐 가비아에서 네임서버 변경
+
+1. dash.cloudflare.com → **도메인 → 도메인 추가(Add a domain)** → `hermes-market.shop` → **Free** 플랜 → DNS 레코드 화면은 **계속(Continue)**.
+2. 마지막 화면의 **Cloudflare 네임서버 2개**(`○○○.ns.cloudflare.com`)를 복사한다.
+3. My가비아 → `hermes-market.shop` → **네임서버 설정** → 1차·2차에 위 2개를 넣고 3차 이하는 비운 뒤 저장.
+4. Cloudflare 대시보드에서 **Check nameservers** → 상태가 **활성(Active)**이 될 때까지 기다린다(몇 분~몇 시간, 메일이 온다).
+
+▶ 💻 **Mac 터미널** — 넘어갔는지 확인 (Cloudflare 네임서버 2개가 나오면 다음으로)
 
 ```bash
-mkdir -p ~/.config/systemd/user ~/.local/share/tailscale-personal
-cat > ~/.config/systemd/user/shop-tailscaled.service <<'EOF'
+dig +short NS hermes-market.shop
+```
+
+아무것도 안 나오면 아직이다. 구매 직후에는 .shop 등록소에 반영되기까지 시간이 걸린다(11-25 16:5x 확인 시 아직 미반영).
+
+### 9-3. 🖥️ 서버: tunnel 만들기 (한 번)
+
+▶ 🖥️ **서버 터미널** — 첫 줄이 출력하는 `https://dash.cloudflare.com/argotunnel?...` 주소를 🌐 **Mac 브라우저**에서 열고
+**`hermes-market.shop`**을 골라 **Authorize**. 그러면 서버 터미널이 저절로 다음 줄로 넘어간다.
+
+```bash
+cloudflared tunnel login                                         # ~/.cloudflared/cert.pem 생성
+cloudflared tunnel create hermes-shop                            # ~/.cloudflared/<UUID>.json 생성 (tunnel 비밀키)
+cloudflared tunnel route dns hermes-shop app.hermes-market.shop  # Cloudflare DNS에 app CNAME 생성
+cloudflared tunnel list
+```
+
+- 목록에 `hermes-shop`이 보이면 성공. Cloudflare 대시보드 **DNS**에 `app` CNAME(`<UUID>.cfargotunnel.com`)이 생긴다.
+- `~/.cloudflared/`의 `cert.pem`, `<UUID>.json`은 비밀이다. 저장소 밖이라 git에 올라가지 않는다. 지우지 않는다.
+- Authorize 화면에 도메인이 안 보이면 9-2의 Active가 아직이다.
+
+### 9-4. 🖥️ 서버: 설정 파일과 상시 실행 서비스
+
+▶ 🖥️ **서버 터미널** (블록 전체)
+
+```bash
+CRED=$(ls ~/.cloudflared/*.json | head -1); echo "credentials: $CRED"
+cat > ~/.cloudflared/hermes-shop.yml <<EOF
+tunnel: hermes-shop
+credentials-file: $CRED
+ingress:
+  - hostname: app.hermes-market.shop
+    service: http://127.0.0.1:8800
+  - service: http_status:404
+EOF
+cloudflared tunnel --config ~/.cloudflared/hermes-shop.yml ingress validate
+
+mkdir -p ~/.config/systemd/user
+cat > ~/.config/systemd/user/shop-tunnel.service <<'EOF'
 [Unit]
-Description=round-4: personal Tailscale (userspace, separate from the lab's tailscaled) serving the shop app at https://<host>.<tailnet>.ts.net
+Description=round-4: https://app.hermes-market.shop for the shop app (Cloudflare named tunnel to 127.0.0.1:8800)
 After=network-online.target
 StartLimitIntervalSec=0
 [Service]
-ExecStartPre=/bin/mkdir -p %h/.local/share/tailscale-personal
-ExecStart=/usr/sbin/tailscaled --tun=userspace-networking --statedir=%h/.local/share/tailscale-personal --socket=%h/.local/share/tailscale-personal/tailscaled.sock --port=0
+ExecStart=%h/.local/bin/cloudflared tunnel --no-autoupdate --config %h/.cloudflared/hermes-shop.yml run
 Restart=always
 RestartSec=10
 [Install]
 WantedBy=default.target
 EOF
-systemctl --user daemon-reload && systemctl --user enable --now shop-tailscaled
-sleep 3; systemctl --user is-active shop-tailscaled
+systemctl --user daemon-reload && systemctl --user enable --now shop-tunnel
+sleep 8; systemctl --user is-active shop-tunnel
+journalctl --user -u shop-tunnel -n 30 --no-pager | grep -c "Registered tunnel connection"   # 1 이상이면 연결됨
 ```
 
-로그인 (출력된 `https://login.tailscale.com/a/…`를 🌐 **Mac 브라우저**에서 열고 **9-1의 개인 계정**으로 Connect):
+- `ingress validate`가 `OK`, `is-active`가 `active`여야 한다.
+- `run_server.sh up/down/restart`는 이 서비스를 건드리지 않는다. kit이 재시작하는 1~3분은 이 주소가 502를 낸다(정상).
+
+### 9-5. 💻 Mac: 보안 확인 (코드 없으면 막히는지)
+
+서버의 로컬 DNS는 새 도메인을 늦게 알 수 있어서(`run_server.sh` 주석 참고) 확인은 Mac에서 한다.
+
+▶ 💻 **Mac 터미널**
 
 ```bash
-TS="tailscale --socket=$HOME/.local/share/tailscale-personal/tailscaled.sock"
-$TS up --hostname=hermes-shop                    # 브라우저에서 승인하면 "Success."가 나오고 끝난다
-$TS status | head -3                             # 100.x.y.z  hermes-shop  <내 계정>  linux
-tailscale status | head -1                       # 연구실 쪽은 그대로 smc-gpu-server  seoultech.hailab@
+K=$(ssh smc-gpu-server 'cat ~/ai-agent-engineering-101/submissions/26510358/round-4/.kit/app.key')
+curl -s -o /dev/null -w "코드 없이:   %{http_code}  (401이어야 함)\n" https://app.hermes-market.shop/
+curl -s -o /dev/null -w "틀린 코드:   %{http_code}  (401이어야 함)\n" "https://app.hermes-market.shop/?k=wrong"
+curl -s -o /dev/null -w "API 코드없이: %{http_code}  (401이어야 함)\n" https://app.hermes-market.shop/api/state
+curl -s -o /dev/null -w "코드와 함께: %{http_code}  (303이어야 함)\n" "https://app.hermes-market.shop/?k=$K"
+echo "아이폰에 넣을 주소: https://app.hermes-market.shop/?k=$K"
 ```
 
-### 9-3. 🖥️ 서버: 가게 앱(8800)을 https로 내보내기
+- **코드 없이 200이 나오면 즉시 서버에서 `systemctl --user disable --now shop-tunnel`** 하고 kit이 `--app-tunnel`로 떠 있는지 본다.
+- `000`이면 DNS가 아직 퍼지는 중이다. 몇 분 뒤 다시.
+- `502`면 kit이 재시작 중이거나 꺼져 있다(서버 `run_server.sh status`).
+
+### 9-6. 📱 아이폰에 넣기
+
+1. 마지막 줄의 주소를 아이폰으로 보낸다(같은 Apple ID면 Mac에서 복사 → 아이폰에서 붙여넣기).
+2. 싸다싸 가게 앱 → **링크 붙여넣기** → **연결**. (Safari로 열면 가게 웹 앱이 열린다.)
+3. 와이파이를 끄고 LTE로도 붙는지 본다.
+
+이후 kit 재시작·goal 수정·서버 재부팅 뒤에도 주소를 다시 넣을 필요가 없다.
+
+### 9-7. 🖥️ 서버: 이전에 시험한 주소 정리 (9-6이 된 뒤)
+
+ngrok(월 20,000요청 한도, 공개 주소)과 로그인하지 않은 개인 Tailscale을 끈다. 파일은 남겨 두어 필요하면 다시 켤 수 있다.
+
+▶ 🖥️ **서버 터미널**
 
 ```bash
-TS="tailscale --socket=$HOME/.local/share/tailscale-personal/tailscaled.sock"
-$TS serve --bg http://127.0.0.1:8800             # "Serve is not enabled…"가 나오면 그 URL을 브라우저에서 열어 허용하고 다시
-$TS serve status                                 # https://hermes-shop.tailXXXX.ts.net (tailnet only) → proxy http://127.0.0.1:8800
-echo "https://$($TS status --json | python3 -c 'import json,sys; print(json.load(sys.stdin)["Self"]["DNSName"].rstrip("."))')/?k=$(cat ~/ai-agent-engineering-101/submissions/26510358/round-4/.kit/app.key)"
+systemctl --user disable --now shop-ngrok shop-tailscaled
+for u in shop-kit shop-tunnel shop-sync.timer shop-ngrok shop-tailscaled; do printf "%-16s %s\n" $u "$(systemctl --user is-active $u)"; done
 ```
 
-- 마지막 줄이 아이폰에 넣을 주소다. `tailnet only`라 인터넷에는 공개되지 않는다(`funnel`은 쓰지 않는다).
-- serve 설정은 tailscaled 상태에 저장돼 재부팅 뒤에도 유지된다.
-- kit은 `--app-tunnel`(기본 `APP_FLAGS`)로 떠 있어야 접근 코드가 켜진다(`agent_kit.py` 846–847행). 이것은 바꾸지 않는다.
-
-### 9-4. 📱 아이폰: Tailscale 앱과 확인
-
-1. App Store에서 **Tailscale** 설치 → **9-1의 개인 계정**으로 로그인 → VPN 구성 허용 → 토글 **켜짐**.
-2. Safari에서 9-3의 주소를 `?k=` **없이** 먼저 연다: 접근 코드를 묻는 잠금 화면(401)이면 정상.
-3. 코드를 붙인 주소 전체로 열면 가게 웹 앱이 열린다.
-4. 와이파이를 끄고 LTE로도 열리는지 본다.
-
-- 아이폰에서 다른 VPN을 쓰는 중이면 Tailscale과 동시에 켤 수 없다.
-- Mac에서도 쓰려면 Mac용 Tailscale에 같은 개인 계정으로 로그인한다(Mac이 연구실 tailnet에 들어가 있으면 계정 전환이 필요. 개발은 8단계 `ssh -L`이면 충분).
-
-### 9-5. 📱 아이폰 앱에 넣기
-
-싸다싸 가게 앱(10단계로 설치) 첫 화면 → **링크 붙여넣기** → 9-3의 주소 → **연결**. 이후 kit이 재시작돼도 다시 넣을 필요가 없다.
-
-### 9-6. 🖥️ 서버: 예비 ngrok 정리 (9-4가 된 뒤)
-
-ngrok 고정 주소(`https://scallion-retiree-unfazed.ngrok-free.dev`)는 인터넷에 공개돼 있고 월 20,000요청 한도가 있다. Tailscale이 되면 끈다.
-
-```bash
-systemctl --user disable --now shop-ngrok
-systemctl --user is-active shop-ngrok            # inactive
-```
-
-다시 필요하면 `systemctl --user enable --now shop-ngrok`(서비스 파일과 `~/.config/ngrok/ngrok.yml`은 남아 있다).
+`shop-kit`, `shop-tunnel`, `shop-sync.timer`이 active, 나머지 둘이 inactive면 끝.
 
 ## 10단계. 💻 Mac + 📱 아이폰: 실제 폰에 앱 설치 (Xcode) — △ 진행
 
@@ -313,7 +356,7 @@ open ~/Desktop/ai-agent-engineering-101/submissions/26510358/round-4/ios/Ssadass
    - `Failed to register bundle identifier`면 Bundle Identifier를 `kr.ac.seoultech.s26510358.ssadassa.myeonggi`로 바꾸고 Try Again.
 5. 아이폰 **설정 → 개인정보 보호 및 보안 → 개발자 모드** 켜기 → 재시작 후 **켜기**.
 6. Xcode **▶ Run**(`Cmd+R`). "신뢰하지 않는 개발자"면 아이폰 **설정 → 일반 → VPN 및 기기 관리 → Apple Development: …** → **신뢰** → 다시 Run.
-7. 앱이 뜨면 9-5대로 주소를 넣는다.
+7. 앱이 뜨면 9-6대로 주소(`https://app.hermes-market.shop/?k=…`)를 넣는다.
 
 - 무료 Apple ID로 설치한 앱은 **7일 뒤 실행이 막힌다**. 아이폰을 연결하고 Run 하면 다시 7일.
 - 케이블 없이: 한 번 연결한 뒤 Xcode **Window → Devices and Simulators** → 아이폰 → **Connect via network**.
@@ -367,7 +410,7 @@ Mac의 `git push`가 `rejected`면 서버 타이머가 그 사이 push한 것이
 | `agent.json`(persona, goal, llm), `ops/`, `PLAYBOOK.md`, 이 문서 | **서버**(사람, Claude Code) | Mac은 pull만 한다 |
 | `tools/`, `logs/`, `notes.md`, `card.json`, `customers.jsonl`, `stock.json`, `sales.jsonl`, `pay_log.json`, `public/` | **서버**(에이전트) | 사람이 손으로 고치지 않는다. kit은 forge 기록(`forge.json`의 sha256)과 맞지 않는 도구를 로드하지 않는다 |
 | `*_wallet.key`, `.kit/`(owner.env, app.key, *.log), `submissions/26510358/.env` | 서버에만, git 밖 | `.gitignore`가 막는다 |
-| `~/.config/systemd/user/shop-*`, `~/.local/share/tailscale-personal/`, `~/.config/ngrok/` | 서버에만, 저장소 밖 | 내용은 이 문서의 블록이 원본 |
+| `~/.config/systemd/user/shop-*`, `~/.cloudflared/`(tunnel 비밀키), `~/.config/ngrok/`, `~/.local/share/tailscale-personal/` | 서버에만, 저장소 밖 | 유닛·설정 내용은 이 문서의 블록이 원본. 비밀키는 지우지 않는다 |
 
 ## B. 고친 것이 돌아가는 가게에 언제 반영되나
 
@@ -380,7 +423,7 @@ Mac의 `git push`가 `rejected`면 서버 타이머가 그 사이 push한 것이
 | `notes.md` | run마다 마지막 3000자 | 사람은 건드리지 않음 |
 | `ops/run_server.sh`, `llm_shim.py` | 다음 시작 때 | `restart`(shim은 `restart shim`), 유닛 설정이 바뀌면 `down` 후 `up` |
 
-kit이 재시작하는 1~3분은 모든 앱 주소가 끊긴다. 고정 주소(9단계, 8단계 `ssh -L`)는 그 뒤 그대로 다시 붙고,
+kit이 재시작하는 1~3분은 모든 앱 주소가 끊긴다. `app.hermes-market.shop`(9단계)과 8단계 `ssh -L`은 그 뒤 그대로 다시 붙고,
 kit 자체의 quick tunnel 주소(`run_server.sh link`)만 바뀐다.
 
 ## C. 24시간 개선의 두 층
@@ -409,14 +452,15 @@ tail -20 $R/logs/forge.jsonl | cut -c1-200
 | iOS 앱 수정 | 💻 Mac | `git pull` → 수정 → 시뮬레이터(8단계) → 실제 폰(10단계) → commit → push |
 | 에이전트 기록 commit | 🖥️ 서버(자동) | `shop-sync.timer`, 바로 하려면 `systemctl --user start shop-sync` |
 | 상태 보기 | 🖥️ 서버 | `run_server.sh status`, `tail -f round-4/.kit/kit.log` |
-| 밖에서 가게 보기 | 📱 아이폰 | Tailscale 켜기 → 싸다싸 가게 앱(9단계 주소) |
+| 밖에서 가게 보기 | 📱 아이폰 | 싸다싸 가게 앱 또는 Safari: `https://app.hermes-market.shop/?k=…` |
 
 하지 않는 것:
 
 - Mac에서 kit 실행(가게가 둘이 된다). 시험은 `preview_app.py`로.
 - Mac에서 에이전트 파일 수정, 서버에서 `app/`, `ios/` 수정.
 - 서버의 앱 파일을 scp로 덮어써서 미리 보기(working tree가 더러워져 pull이 막힌다).
-- 서버의 연구실 Tailscale(`tailscale` 기본 소켓)에 `up`/`serve`/`funnel`. 개인 것은 항상 `--socket=~/.local/share/tailscale-personal/tailscaled.sock`.
+- 서버의 연구실 Tailscale(`tailscale` 명령)에 `up`/`serve`/`funnel`/`set`. 연구실 공용 설정이다.
+- kit을 `--app-tunnel` 없이 띄우기(`APP_FLAGS` 변경). 접근 코드가 꺼져 `app.hermes-market.shop`이 누구에게나 열린다.
 
 ## E. 안 될 때
 
@@ -427,7 +471,9 @@ tail -20 $R/logs/forge.jsonl | cut -c1-200
 | goal 변경이 안 먹힘 | 🖥️ 서버 | `systemctl --user show shop-kit -p ActiveEnterTimestamp`가 수정 뒤인지. 아니면 `run_server.sh restart` |
 | `restart`를 쳤는데 시각이 안 바뀜 | 🖥️ 서버 | Mac에서 쳤거나(`hostname` 확인), systemd 세션이 안 보이는 셸. 서버 터미널에서 다시 |
 | `ssh -L`이 Address already in use | 💻 Mac | `lsof -nP -iTCP:8800 -sTCP:LISTEN`. 다른 포트로 `-L 18880:127.0.0.1:8800` 후 `http://127.0.0.1:18880/?k=…` |
-| 아이폰 앱 "연결 실패"(Tailscale 주소) | 📱 → 🖥️ | 아이폰 Tailscale 토글이 켜져 있는지 → 서버 `systemctl --user is-active shop-tailscaled shop-kit` → `$TS serve status` |
-| Tailscale 주소가 401 화면 | 📱 | 정상(코드 없이 연 것). `?k=` 포함 주소로 다시 |
+| 아이폰 앱 "연결 실패" | 🖥️ 서버 | `systemctl --user is-active shop-kit shop-tunnel` → `journalctl --user -u shop-tunnel -n 30`. kit 재시작 중이면 1~3분 뒤 |
+| `app.hermes-market.shop`이 502 | 🖥️ 서버 | tunnel은 살아 있고 kit(8800)이 응답하지 않음. `run_server.sh status` |
+| `app.hermes-market.shop`이 401 화면 | 📱 | 정상(코드 없이 연 것). `?k=` 포함 주소로 다시 |
+| 주소가 아예 안 열림(`000`, DNS 오류) | 💻 Mac | `dig +short NS hermes-market.shop`이 Cloudflare 네임서버인지(9-2), Cloudflare DNS에 `app` CNAME이 있는지(9-3) |
 | 미리보기가 포트 오류 | 💻 Mac | `preview_app.py`는 빈 포트를 자동으로 고른다. 출력된 주소를 연다 |
-| ngrok 주소가 안 열림 | 📱 | 월 20,000요청 한도 초과일 수 있다(dashboard.ngrok.com Usage). 9단계 Tailscale 주소를 쓴다 |
+| 1년 뒤 도메인 | 🌐 가비아 | 자동 연장을 꺼 두었으면 만료되고 끝(9-1). 계속 쓰려면 약 65,000원 |
