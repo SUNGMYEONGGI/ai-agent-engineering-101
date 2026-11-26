@@ -1,0 +1,11 @@
+{
+ "tool": "a2a_handler",
+ "version": 14,
+ "forged_at": 1795708083,
+ "kit": "v5.2",
+ "sha256": {
+  "permission.yml": "da52b8fc239a5f1c4796907f6ea1777d29280df86edac29c112e04cb3e9772df",
+  "logic.py": "efab6bea97b5b8ae1161ca484ba17f5e8fc56aa091d754a08f815cd0a5c27a56",
+  "test.py": "2f1b68a277d3e73f141a4c5c29d40aee960eda91f8cbcf2d4339f74f1fac1a99"
+ }
+}

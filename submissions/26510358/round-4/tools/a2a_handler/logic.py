@@ -1,23 +1,41 @@
-import json,re,statistics,time
+import json,re,statistics,time,math
 from collections import defaultdict
 from pathlib import Path
 import httpx
 _src=Path('ops/a2a_v11.py').read_text(encoding='utf8')
+_old="x['price']<math.ceil((int(u.get('cost',0))+210)*100/99)"
+assert _old in _src
+_src=_src.replace(_old,"not loss_allowed(u,x['price'],a,kit)")
 _base={}
 exec(compile(_src,'ops/a2a_v11.py','exec'),_base)
 _base['NOUNS'].update({'백미':['쌀','백미'],'현미':['현미'],'잡곡':['잡곡'],'가정용 건조기':['건조기'],'의류건조기':['건조기'],'건조기':['건조기'],'신선채소':['신선채소','채소','시금치','콩나물'],'제철 채소':['채소','시금치','콩나물'],'채소':['채소','시금치','콩나물']})
 _base['ORDER']=sorted(_base['NOUNS'],key=len,reverse=True)
+def loss_allowed(u,price,a,kit):
+ floor=math.ceil((int(u.get('cost',0))+210)*100/99)
+ if price>=floor:return True
+ try:
+  p=_base['checked_path'](a,'loss_path','loss_reservations.json',kit.testing)
+  rows=json.loads(p.read_text(encoding='utf8'));day=time.strftime('%Y-%m-%d',time.gmtime(time.time()+32400))
+  cap=30000
+  if kit.testing:cap=min(cap,int(a.get('loss_cap',30000)))
+  else:
+   try:cap=min(cap,int(json.loads(Path('owner_limits.json').read_text()).get('max_loss_per_day',30000)))
+   except (OSError,ValueError,TypeError):pass
+  dayrows=[r for r in rows if r.get('day')==day]
+  if sum(int(r['loss']) for r in dayrows)>max(0,cap):return False
+  return any(r.get('active') and r.get('unit')==u.get('unit') and r.get('sku')==u.get('sku') and r.get('grade')==u.get('grade') and int(r.get('price',-1))==price and int(r.get('loss',0))>=floor-price for r in dayrows)
+ except Exception:return False
+_base['loss_allowed']=loss_allowed
 def run(a,kit):
  try:
   result=_base['run'](a,kit)
   if result.get('ok') is False:return result
   d=a.get('data') if isinstance(a.get('data'),dict) else {}
-  is_payment=any(k in d for k in ('payment_mandate','checkout_mandate','tx_hash','fee_tx_hash')) or re.search(r'환불|파손|보증\s*청구',str(a.get('text','')))
+  is_payment=any(k in d for k in ('payment_mandate','checkout_mandate','tx_hash','fee_tx_hash')) or bool(re.search(r'환불|파손|보증\s*청구',str(a.get('text',''))))
   if not is_payment:
-   text=str(a.get('text') or '');requests=_base['wanted'](text);reply=result.get('reply','');checks=result.get('data',{}).get('checkouts',[])
-   missing=[]
+   text=str(a.get('text') or '');requests=_base['wanted'](text);reply=result.get('reply','');checks=(result.get('data') or {}).get('checkouts',[]);missing=[]
    for noun,grade in requests:
-    if (noun+'은(는) 없습니다' in reply or noun+' '+str(grade)+'등급은 없습니다' in reply or re.search(re.escape(noun)+r'.{0,30}없습니다',reply)):missing.append(noun)
+    if noun+'은(는) 없습니다' in reply or noun+' '+str(grade)+'등급은 없습니다' in reply or re.search(re.escape(noun)+r'.{0,30}없습니다',reply):missing.append(noun)
    if not requests and not checks:
     m=re.search(r'([가-힣A-Za-z0-9 ]{2,25}?)(?:\s*(?:재고|있나요|있습니까|구매|판매))',text)
     if m:missing=[m.group(1).strip()]
@@ -26,7 +44,7 @@ def run(a,kit):
     wp.parent.mkdir(parents=True,exist_ok=True)
     with wp.open('a',encoding='utf8') as f:
      for item in missing:f.write(json.dumps({'ts':int(time.time()),'item':item,'buyer':a.get('claimed_from')},ensure_ascii=False)+'\n')
-   if not checks and (missing or not requests):
+   if not checks:
     if missing and '없습니다' not in reply:reply='요청하신 '+', '.join(missing)+' 재고는 확인되지 않았습니다.'
     try:
      cp=_base['checked_path'](a,'catalog_path','public/catalog.json',kit.testing);items=_base['load'](cp,{}).get('items',[])
@@ -41,10 +59,11 @@ def run(a,kit):
       x=row.get('data') or {};v=x.get('amount',x.get('price'))
       if x.get('sku') and x.get('grade') and isinstance(v,(int,float)) and v>0:sales[(x['sku'],x['grade'])].append(v)
      units={u.get('unit'):u for u in inventory.get('units',[])};opts=[];seen=set();now=time.time()
+     hp=_base['checked_path'](a,'holds_path','holds.json',kit.testing);holds=_base['load'](hp,{})
      for x in items:
       key=(x.get('sku'),x.get('grade'));prices=sales.get(key,[])
       if not prices or x.get('price',float('inf'))>statistics.median(prices) or key in seen:continue
-      live=[units.get(uid) for uid in x.get('units',[])];live=[u for u in live if u and u.get('sku')==key[0] and u.get('grade')==key[1] and (not _base['tm'](u.get('expires_at')) or _base['tm'](u['expires_at'])>now)]
+      live=[units.get(uid) for uid in x.get('units',[])];live=[u for u in live if u and u.get('sku')==key[0] and u.get('grade')==key[1] and (not _base['tm'](u.get('expires_at')) or _base['tm'](u['expires_at'])>now) and _base['tm']((holds.get(u.get('unit')) or {}).get('expires_at',0))<=now and loss_allowed(u,x['price'],a,kit)]
       if not live:continue
       seen.add(key);opts.append('%s %s등급 %s credits'%(x['name'],x['grade'],x['price']))
       if len(opts)==5:break
@@ -53,7 +72,7 @@ def run(a,kit):
    result['reply']=reply
   try:
    p=_base['checked_path'](a,'replies_path','customer_replies.jsonl',kit.testing);p.parent.mkdir(parents=True,exist_ok=True)
-   row={'ts':time.time(),'task_id':a.get('task_id'),'context_id':a.get('context_id'),'claimed_from':a.get('claimed_from'),'text':a.get('text',''),'reply':result.get('reply',''),'checkout':bool((result.get('data') or {}).get('checkouts')),'payment':bool(is_payment)}
+   row={'ts':time.time(),'task_id':a.get('task_id'),'context_id':a.get('context_id'),'claimed_from':a.get('claimed_from'),'text':a.get('text',''),'reply':result.get('reply',''),'checkout':bool((result.get('data') or {}).get('checkouts')),'payment':is_payment}
    with p.open('a',encoding='utf8') as f:f.write(json.dumps(row,ensure_ascii=False)+'\n')
   except Exception:pass
   return result
