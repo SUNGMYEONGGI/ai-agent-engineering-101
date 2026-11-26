@@ -1,0 +1,13 @@
+name: a2a_handler
+description: 고객 A2A 문의 자동응답(v9). 이벤트 args {text,data,claimed_from,context_id,task_id}와 선택 경로 catalog_path(기본 public/catalog.json), reservations_path, customers_path, holds_path. 2자+ 단어로 상품명·카테고리 검색(조사 1자 제거 허용), 'A등급'/'B급' 또는 data.grade로 등급 지정 시 그 등급만 판매하고 없으면 보유 등급 안내(checkout 없음). 실재고 unit 보류 후 shop 서명 checkout_jwt(data: checkout_jwt, unit, sku, grade, price). mandates 수신 시 /api/settle 전달(503 재전송). 모든 메시지를 customers.jsonl에 기록.
+permission:
+  network: [market.ourolabs.ai]
+  write: [customers.jsonl, public/reservations.jsonl, holds.json, tmp/test/]
+  identity: [shop]
+  wallet: [sign_jwt]
+  timeout: 20
+  handles: [a2a]
+logic: logic.py
+test: test.py
+version: 9
+replaces: a2a_handler@8

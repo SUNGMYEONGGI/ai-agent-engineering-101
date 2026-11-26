@@ -7,6 +7,42 @@
   ],
   "products": [
     {
+      "sku": "G159be1f8",
+      "name": "[반찬천국] 취나물",
+      "grade": "A",
+      "price": 2990,
+      "stock": 1,
+      "warranty_hours": 0,
+      "expires_at": 1796166382.0
+    },
+    {
+      "sku": "G159be1f8",
+      "name": "[반찬천국] 취나물",
+      "grade": "B",
+      "price": 2590,
+      "stock": 2,
+      "warranty_hours": 0,
+      "expires_at": 1796020751.0
+    },
+    {
+      "sku": "G02f9f99c",
+      "name": "한상궁김치 총각김치 2kg/단단한 알타리 무김치",
+      "grade": "B",
+      "price": 9119,
+      "stock": 2,
+      "warranty_hours": 0,
+      "expires_at": 1796107018.0
+    },
+    {
+      "sku": "G0746760c",
+      "name": "동서 둥굴레차 50T 60g",
+      "grade": "B",
+      "price": 3251,
+      "stock": 2,
+      "warranty_hours": 0,
+      "expires_at": 1797581200.0
+    },
+    {
       "sku": "G0026722f",
       "name": "무타공 클립형 키친타올 걸이 행주 홀더 건조대 조리도구 거치대 주방 수건 걸이",
       "grade": "A",
@@ -43,15 +79,6 @@
       "expires_at": 1795712330.0
     },
     {
-      "sku": "G35745411",
-      "name": "국내산 시금치 1kg",
-      "grade": "B",
-      "price": 6690,
-      "stock": 2,
-      "warranty_hours": 0,
-      "expires_at": 1795723285.0
-    },
-    {
       "sku": "Gab7c8b3d",
       "name": "한계란 난각번호 1번 계란 무항생제 유정란 20구",
       "grade": "C",
@@ -70,24 +97,6 @@
       "expires_at": 1795898496.0
     },
     {
-      "sku": "G159be1f8",
-      "name": "[반찬천국] 취나물",
-      "grade": "B",
-      "price": 2590,
-      "stock": 2,
-      "warranty_hours": 0,
-      "expires_at": 1796020751.0
-    },
-    {
-      "sku": "G02f9f99c",
-      "name": "한상궁김치 총각김치 2kg/단단한 알타리 무김치",
-      "grade": "B",
-      "price": 8490,
-      "stock": 1,
-      "warranty_hours": 0,
-      "expires_at": 1796107018.0
-    },
-    {
       "sku": "G31fa8ab6",
       "name": "아텔라 포테이토 크래커 228g x 1팩(12개입) 과자 간식",
       "grade": "C",
@@ -95,24 +104,6 @@
       "stock": 2,
       "warranty_hours": 0,
       "expires_at": 1796121135.0
-    },
-    {
-      "sku": "G02f9f99c",
-      "name": "한상궁김치 총각김치 2kg/단단한 알타리 무김치",
-      "grade": "A",
-      "price": 10670,
-      "stock": 1,
-      "warranty_hours": 0,
-      "expires_at": 1796126682.0
-    },
-    {
-      "sku": "G159be1f8",
-      "name": "[반찬천국] 취나물",
-      "grade": "A",
-      "price": 2990,
-      "stock": 1,
-      "warranty_hours": 0,
-      "expires_at": 1796166382.0
     },
     {
       "sku": "G11a4a7fe",
@@ -155,7 +146,7 @@
       "name": "아텔라 포테이토 크래커 228g x 1팩(12개입) 과자 간식",
       "grade": "B",
       "price": 3490,
-      "stock": 1,
+      "stock": 2,
       "warranty_hours": 0,
       "expires_at": 1797332517.0
     },
@@ -178,15 +169,6 @@
       "expires_at": 1797565497.0
     },
     {
-      "sku": "G0746760c",
-      "name": "동서 둥굴레차 50T 60g",
-      "grade": "B",
-      "price": 2880,
-      "stock": 1,
-      "warranty_hours": 0,
-      "expires_at": 1797581200.0
-    },
-    {
       "sku": "G527d0404",
       "name": "[옛날과자 2팩] 왕소라/ 왕고구마/ 브이콘/ 김스넥 / 생강맛/ 꾀돌이/ 14종 골라담기",
       "grade": "B",
@@ -196,24 +178,6 @@
       "expires_at": 1797590435.0
     },
     {
-      "sku": "G0746760c",
-      "name": "동서 둥굴레차 50T 60g",
-      "grade": "A",
-      "price": 3820,
-      "stock": 1,
-      "warranty_hours": 0,
-      "expires_at": 1797724959.0
-    },
-    {
-      "sku": "G31fa8ab6",
-      "name": "아텔라 포테이토 크래커 228g x 1팩(12개입) 과자 간식",
-      "grade": "A",
-      "price": 3990,
-      "stock": 1,
-      "warranty_hours": 0,
-      "expires_at": 1797734867.0
-    },
-    {
       "sku": "G527d0404",
       "name": "[옛날과자 2팩] 왕소라/ 왕고구마/ 브이콘/ 김스넥 / 생강맛/ 꾀돌이/ 14종 골라담기",
       "grade": "A",
@@ -221,13 +185,22 @@
       "stock": 2,
       "warranty_hours": 0,
       "expires_at": 1798002955.0
+    },
+    {
+      "sku": "G35745411",
+      "name": "국내산 시금치 1kg",
+      "grade": "C",
+      "price": 10900,
+      "stock": 2,
+      "warranty_hours": 0,
+      "expires_at": 1795723285.0
     }
   ],
   "skills": [
     {
       "id": "shop-purchase",
       "name": "헤르메스 상점 상품 검색 및 구매",
-      "description": "취나물·총각김치·시금치를 찾으시면 ‘취나물 A등급’, ‘총각김치 B등급’, ‘시금치 B등급’처럼 짧게 보내 주세요. 예약하셨다면 예약 ID를 함께 알려 주세요. 결제 전 서명된 checkout_jwt와 실제 등급·가격·소비기한·보증을 확인해 주세요. 결제하신 뒤에는 주문(order), checkout_jwt, checkout_mandate, payment_mandate를 이 대화로 보내 주세요. 결제 정보에는 tx_hash와 fee_tx_hash가 필요합니다. 정산 결과를 확인해 답장드립니다.",
+      "description": "상품명이나 SKU를 보내 주세요. 예약이 있으면 예약 ID도 알려 주세요. 결제 전 상품 등급·가격·유통기한·보증 여부를 확인해 주세요.",
       "tags": [
         "장보기",
         "상품 검색",
@@ -245,17 +218,17 @@
         "키친타올"
       ],
       "examples": [
+        "[반찬천국] 취나물 재고와 가격을 알려 주세요.",
+        "한상궁김치 총각김치 2kg/단단한 알타리 무김치 재고와 가격을 알려 주세요.",
+        "동서 둥굴레차 50T 60g 재고와 가격을 알려 주세요.",
         "무타공 클립형 키친타올 걸이 행주 홀더 건조대 조리도구 거치대 주방 수건 걸이 재고와 가격을 알려 주세요.",
         "후디스 고단백 무가당 그릭요거트 플레인 400g 2개 재고와 가격을 알려 주세요.",
-        "[반찬천국] 취나물 재고와 가격을 알려 주세요.",
-        "국내산 시금치 1kg 재고와 가격을 알려 주세요.",
         "한계란 난각번호 1번 계란 무항생제 유정란 20구 재고와 가격을 알려 주세요.",
-        "한상궁김치 총각김치 2kg/단단한 알타리 무김치 재고와 가격을 알려 주세요.",
         "아텔라 포테이토 크래커 228g x 1팩(12개입) 과자 간식 재고와 가격을 알려 주세요.",
         "유기농 허브차 삼각티백 모음/페퍼민트/캐모마일/루이보스 외 재고와 가격을 알려 주세요."
       ]
     }
   ],
-  "buying": "취나물·총각김치·시금치를 찾으시면 ‘취나물 A등급’, ‘총각김치 B등급’, ‘시금치 B등급’처럼 짧게 보내 주세요. 예약하셨다면 예약 ID를 함께 알려 주세요. 결제 전 서명된 checkout_jwt와 실제 등급·가격·소비기한·보증을 확인해 주세요. 결제하신 뒤에는 주문(order), checkout_jwt, checkout_mandate, payment_mandate를 이 대화로 보내 주세요. 결제 정보에는 tx_hash와 fee_tx_hash가 필요합니다. 정산 결과를 확인해 답장드립니다.",
+  "buying": "상품명이나 SKU를 보내 주세요. 예약이 있으면 예약 ID도 알려 주세요. 결제 전 상품 등급·가격·유통기한·보증 여부를 확인해 주세요.",
   "language": "ko"
 }

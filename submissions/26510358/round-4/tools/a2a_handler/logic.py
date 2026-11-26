@@ -1,126 +1,173 @@
-import os,json,time,re,uuid
+import base64, datetime, fcntl, json, os, re, time, uuid
 import httpx
 
-def read(p,d):
- try:
-  with open(p,encoding='utf8') as f:return json.load(f)
- except Exception:return d
+STOP=set('가정용 새제품 제품 상품 배송 설치 최종 가격 조건 판매 가능 확인 부탁 문의 재고 지금 현재 오늘 아침용 아이 대용량 소포장 묶음 소비기한 기한 유효 서명 결제 한정 단단한 국산 국내산 정식수입 상온보관 당일수확 무가당 플레인 고단백 관리 안녕하세요 주세요 찾습니다 있나요 알려주세요 판매가능 쇼핑 냉장 냉동 할인 등급 정품 가정용'.split())
+ALIASES={'계란':('유정란','달걀','계란'),'달걀':('유정란','달걀','계란'),'우유':('우유',),'요거트':('요거트','요구르트'),'두부':('두부','연두부','순두부','멸균두부'),'차':('둥굴레차','보리차','녹차','홍차','우롱차'),'김치':('김치','총각김치','무김치','배추김치'),'냉장고':('냉장고','소형냉장고','양문형냉장고'),'커피':('커피',)}
 
-def lines(p):
- out=[]
- try:
-  with open(p,encoding='utf8') as f:
-   for x in f:
-    if x.strip():
-     try:out.append(json.loads(x))
-     except Exception:pass
- except Exception:pass
- return out
+def words(s):
+    out=set()
+    for w in re.findall(r'[가-힣a-z0-9]+',str(s).lower()):
+        out.add(w)
+        for end in ('으로','에서','에게','부터','까지','하고','이랑','이나','와','과','을','를','은','는','도','이','가','랑'):
+            if w.endswith(end) and len(w)-len(end)>=2:
+                out.add(w[:-len(end)])
+    return {w for w in out if (len(w)>=2 or w in ALIASES) and w not in STOP and not w.isdigit() and not re.fullmatch(r'[abc](?:등급|급)|\d+[a-z가-힣]+',w)}
 
-def save(p,x):
- os.makedirs(os.path.dirname(p) or '.',exist_ok=True)
- with open(p,'w',encoding='utf8') as f:json.dump(x,f,ensure_ascii=False)
+def fields(x):
+    if isinstance(x,dict):
+        for k,v in x.items():
+            if k=='units' and isinstance(v,list):
+                yield from (u for u in v if isinstance(u,dict))
+            elif isinstance(v,(list,dict)):
+                yield from fields(v)
+    elif isinstance(x,list):
+        for v in x: yield from fields(v)
 
-def kst(ts):
- try:return time.strftime('%m월 %d일 %H시',time.gmtime(float(ts)+9*3600))+'(KST)'
- except Exception:return str(ts)
+def load(p,default):
+    try:
+        with open(p,encoding='utf-8') as f: return json.load(f)
+    except FileNotFoundError: return default
 
-STOP={'있나요','있습니까','주세요','얼마','가격','재고','상품','등급','구매','원해요','알려주세요','checkout','credits','안녕하세요'}
+def rows(p):
+    try:
+        with open(p,encoding='utf-8') as f:
+            for line in f:
+                try:
+                    x=json.loads(line)
+                    if isinstance(x,dict): yield x
+                except ValueError: continue
+    except FileNotFoundError: pass
 
-def want_grade(text,data):
- g=str(data.get('grade') or '').upper()
- if g in ('A','B','C'):return g
- m=re.search(r'(?<![A-Za-z])([ABCabc])\s*(등급|급)',text)
- return m.group(1).upper() if m else None
+def stamp(v):
+    if not v: return 0
+    try: return float(v)
+    except (ValueError,TypeError): return datetime.datetime.fromisoformat(str(v).replace('Z','+00:00')).timestamp()
+
+def info(i):
+    expiry=stamp(i.get('expires_at'))
+    when=datetime.datetime.fromtimestamp(expiry,datetime.timezone(datetime.timedelta(hours=9))).strftime('%m월 %d일 %H:%M KST') if expiry else '표시 없음'
+    return f"{i['name']} / {i['grade']}등급 / {i['price']} credits / 소비기한 {when} / 보증 {i.get('warranty_hours',0)}시간"
+
+def market(kit,path,body=None):
+    h={'Authorization':'Bearer '+kit.token('shop')}
+    return httpx.request('POST' if body is not None else 'GET',kit.market.rstrip('/')+path,headers=h,json=body,timeout=7)
+
+def answer(a,kit,d,t):
+    text=str(a.get('text') or '')
+    def say(s,state='input_required',data=None):
+        ret={'reply':s,'state':state}
+        if data is not None: ret['data']=data
+        return ret
+    keys=('order','checkout_jwt','checkout_mandate','payment_mandate')
+    if any(k in d for k in ('payment_mandate','checkout_mandate','tx_hash','fee_tx_hash')):
+        p=d.get('payment_mandate')
+        core=p.get('payload',p) if isinstance(p,dict) else None
+        if not all(d.get(k) for k in keys) or (isinstance(core,dict) and not all(core.get(k) for k in ('tx_hash','fee_tx_hash'))):
+            return say('결제하셨다면 중복 송금하지 마시고 order, checkout_jwt, checkout_mandate, 결제·수수료 tx hash가 포함된 payment_mandate를 보내 주세요.')
+        body={k:d[k] for k in keys}
+        r=market(kit,'/api/settle',body)
+        if r.status_code==503: r=market(kit,'/api/settle',body)
+        try: x=r.json()
+        except ValueError: x={}
+        def settled(z):
+            return isinstance(z,dict) and (z.get('settled') is True or z.get('status')=='settled' or z.get('state')=='settled' or settled(z.get('result')) or settled(z.get('data')))
+        if r.is_success and settled(x):
+            return say('정산이 완료되었습니다. 감사합니다.','completed',{'order':d['order'],'settled':True})
+        return say('정산 완료를 확인하지 못했습니다. 다시 송금하지 마시고 같은 주문 번호와 거래 내역으로 문의해 주세요.',data={'order':d['order'],'settled':False,'settle_status':r.status_code})
+    if re.search(r'환불|파손|보증\s*청구',text):
+        return say('주문 번호와 원결제 거래 해시를 알려 주세요. 장부에서 확인하겠습니다. 추가 송금은 하지 마세요.')
+    items=[i for i in load(a.get('catalog_path','public/catalog.json'),{}).get('items',[]) if i.get('units') and i.get('stock',0)>0 and (not stamp(i.get('expires_at')) or stamp(i['expires_at'])>t)]
+    rp=a.get('reservations_path','public/reservations.jsonl')
+    rid=d.get('reservation_id') or (re.search(r'reservation_id\s*[:=]\s*([\w-]+)',text) or [None,None])[1]
+    def reservations():
+        return {str(x.get('reservation_id',x.get('id',''))):x for x in rows(rp)}
+    reserved=None
+    if rid:
+        reserved=reservations().get(str(rid))
+        if not reserved or reserved.get('state',reserved.get('status'))!='held' or stamp(reserved.get('expires_at'))<=t:
+            return say('유효한 예약을 찾지 못했습니다. 예약 번호와 만료 시간을 확인해 주세요.')
+    grade=d.get('grade') or (re.search(r'(?i)\b([abc])\s*(?:등급|급)',text) or [None,None])[1]
+    sku=str((reserved or {}).get('sku') or d.get('sku') or '')
+    if not sku:
+        sm=re.search(r'\bG[0-9a-fA-F]{8}\b',text)
+        if sm: sku=sm.group()
+    q=words(text)
+    def match(i):
+        if sku: return i['sku'].lower()==sku.lower()
+        iw=words(i['name']) | words(i.get('category',''))
+        return any((set(ALIASES[w]) & iw) if w in ALIASES else w in iw for w in q)
+    reserved_unit=(reserved or {}).get('unit') or (reserved or {}).get('unit_id')
+    matching=[i for i in items if match(i) and (not reserved_unit or reserved_unit in i['units'])]
+    candidates=sorted((i for i in matching if not grade or i['grade']==str(grade).upper()),key=lambda i:i['price'])
+    if not candidates:
+        showing=matching if matching else items
+        lead='요청하신 등급은 없습니다. 보유 등급입니다.' if matching else '요청하신 상품을 확인하지 못했습니다. 현재 판매 목록입니다.'
+        return say(lead+'\n'+('\n'.join('- '+info(i) for i in showing[:8]) if showing else '지금은 판매 가능한 재고가 없습니다.')+'\n원하시는 상품과 등급을 알려 주세요.')
+    conditional=bool(re.search(r'있으면|가능하면|괜찮으면|맞으면|라면|다면|조건|검토|확인하고|부탁드립니다만|말고|동시에|두 가지|그리고|및|또한|도\s*(?:재고|있|함께)|배송|설치|묶음|세트',text))
+    if len(re.findall(r'\bG[0-9a-fA-F]{8}\b',text))>1: conditional=True
+    mentioned={w for w in q if w in ALIASES}
+    mentioned={ '계란' if w=='달걀' else w for w in mentioned }
+    if len(mentioned)>1: conditional=True
+    try: qty=int(d.get('qty',1))
+    except (ValueError,TypeError): qty=0
+    if re.search(r'(?:[2-9]\d*|1\d+|두|세|네|여러)\s*(?:개|팩|병|봉|단위)(?!입)',text): qty=2
+    intent=d.get('action') in ('checkout','buy') or bool(re.search(r'구매하겠습니다|살게요|구매합니다|주문하겠습니다|결제하겠습니다|결제할게요|구매\s*확정|주문\s*확정|결제서\s*(?:보내\s*주세요|주세요)|checkout(?:_jwt)?\s*(?:보내\s*주세요|주세요)',text,re.I))
+    distinct={i['sku'] for i in candidates}
+    if not reserved and (not intent or conditional or qty!=1 or len(distinct)!=1):
+        return say('판매 가능 상품입니다.\n'+'\n'.join('- '+info(i) for i in candidates[:8])+'\n결제하려면 원하시는 상품 한 가지와 등급을 지정해 구매를 확정해 주세요.')
+    inv=market(kit,'/api/inventory')
+    inv.raise_for_status()
+    live={u.get('unit'):u for u in fields(inv.json()) if u.get('unit')}
+    hp=a.get('holds_path','holds.json')
+    os.makedirs(os.path.dirname(hp) or '.',exist_ok=True)
+    with open(hp,'a+',encoding='utf-8') as f:
+        fcntl.flock(f,fcntl.LOCK_EX)
+        f.seek(0); raw=f.read()
+        holds=json.loads(raw) if raw.strip() else {}
+        holds={k:v for k,v in holds.items() if isinstance(v,dict) and stamp(v.get('expires',v.get('expires_at')))>t}
+        rs=reservations()
+        if reserved and rs.get(str(rid))!=reserved:
+            return say('예약 상태가 바뀌었습니다. 예약 번호를 확인해 주세요.')
+        blocked={v.get('unit') or v.get('unit_id') for k,v in rs.items() if k!=str(rid) and v.get('state',v.get('status'))=='held' and stamp(v.get('expires_at'))>t}
+        for i in candidates:
+            for unit in sorted(i['units'],key=lambda u:(stamp(live.get(u,{}).get('supplied_at')) or float('inf'),u)):
+                u=live.get(unit,{})
+                if not unit or unit in blocked or u.get('sku')!=i['sku'] or u.get('grade')!=i['grade'] or (reserved and unit!=reserved_unit): continue
+                exp=stamp(u.get('expires_at'))
+                if exp and exp<=time.time(): continue
+                cost=u.get('cost')
+                price=(reserved or {}).get('unit_price',i['price'])
+                if type(cost) is not int or cost<0 or type(price) is not int or price-price//100-210<cost: continue
+                old=holds.get(unit)
+                if old:
+                    if a.get('context_id') and old.get('context_id')==a['context_id'] and old.get('task_id')==a.get('task_id') and old.get('payload',{}).get('price')==price and old.get('payload',{}).get('unit')==unit and old.get('reply_data',{}).get('checkout_jwt'):
+                        return say(old['reply'],data=old['reply_data'])
+                    continue
+                wid=i.get('warranty_hours',0) or 0
+                payload={'id':str(uuid.uuid4()),'shop':kit.name,'shop_url':kit.shop_url,'item':i['sku'],'price':price,'task':str(a.get('task_id') or uuid.uuid4()),'currency':'credits','iat':int(time.time()),'unit':unit,'warranty_hours':wid}
+                if u.get('cert'): payload['cert']=u['cert']
+                jwt=kit.sign_jwt(payload,'shop')
+                reply=info(dict(i,price=price,expires_at=exp))+'입니다. 결제 후 order, checkout_mandate, payment_mandate(결제·수수료 거래 해시 포함)를 보내 주세요.'
+                rd={'checkout_jwt':jwt,'sku':i['sku'],'grade':i['grade'],'price':price,'unit':unit}
+                holds[unit]={'expires':time.time()+180,'context_id':a.get('context_id'),'task_id':a.get('task_id'),'payload':payload,'reply':reply,'reply_data':rd}
+                f.seek(0); json.dump(holds,f,ensure_ascii=False); f.truncate(); f.flush()
+                if reserved:
+                    with open(rp,'a',encoding='utf-8') as rf: rf.write(json.dumps(dict(reserved,state='sold',status='sold',checkout_id=payload['id']),ensure_ascii=False)+'\n')
+                return say(reply,data=rd)
+    return say('현재 판매할 수 있는 실재고를 확인하지 못했습니다. 결제하지 마시고 다른 상품이나 등급을 선택해 주세요.')
 
 def run(args,kit):
- now=time.time(); text=args.get('text') or ''; data=args.get('data') or {}
- if not isinstance(data,dict):data={}
- ctx=args.get('context_id') or ''; who=args.get('claimed_from')
- cp=args.get('catalog_path','public/catalog.json'); rp=args.get('reservations_path','public/reservations.jsonl'); lp=args.get('customers_path','customers.jsonl'); hp=args.get('holds_path','holds.json')
- def answer(reply,state='input_required',out=None,deal=None):
-  try:
-   os.makedirs(os.path.dirname(lp) or '.',exist_ok=True)
-   with open(lp,'a',encoding='utf8') as f:f.write(json.dumps({'context_id':ctx,'claimed_from':who,'ts':now,'them':text[:600],'you':reply[:600],'deal':deal},ensure_ascii=False)+'\n')
-  except Exception:pass
-  r={'reply':reply,'state':state}
-  if out is not None:r['data']=out
-  return r
- pm=data.get('payment_mandate'); cm=data.get('checkout_mandate'); order=data.get('order')
- if pm or cm:
-  jwt=data.get('checkout_jwt') or ((cm or {}).get('mandate') or {}).get('checkout_jwt') if isinstance(cm,dict) else data.get('checkout_jwt')
-  if not all([pm,cm,order,jwt]):return answer('정산에는 order, checkout_jwt, checkout_mandate, payment_mandate가 모두 필요합니다.')
-  body={'order':order,'checkout_jwt':jwt,'checkout_mandate':cm,'payment_mandate':pm}
-  if kit.testing:return answer('정산 테스트','completed',{'settled':True},{'settled':True,'test':True})
-  try:
-   with httpx.Client(timeout=6) as c:
-    r=None
-    for _ in range(3):
-     r=c.post(kit.market+'/api/settle',json=body,headers={'Authorization':'Bearer '+kit.token('shop')})
-     if r.status_code!=503:break
-     time.sleep(1)
-   try:out=r.json()
-   except Exception:out={'status':r.status_code}
-   if r.status_code==200 and (out.get('settled') or out.get('ok')):
-    return answer('결제와 정산이 완료되었습니다. 감사합니다.','completed',out,{'settled':True,'order':order})
-   return answer('정산이 완료되지 않았습니다('+str(out.get('error') or r.status_code)+'). 주문번호와 송금 tx_hash를 알려주시면 확인하겠습니다.','input_required',out,{'settled':False,'order':order})
-  except Exception as e:return answer('정산 서버 연결에 실패했습니다. 같은 결제 정보로 다시 보내 주세요.','input_required',None,{'settled':False,'error':str(e)[:80]})
- cat=read(cp,{'items':[]}); items=[x for x in cat.get('items',[]) if int(x.get('stock',0) or 0)>0]
- rid=data.get('reservation_id'); reservations=lines(rp)
- res=next((x for x in reservations if rid and x.get('reservation_id')==rid and x.get('status','held')=='held' and float(x.get('expires_at',0) or 0)>now),None)
- if rid and not res:return answer('예약을 찾을 수 없거나 만료되었습니다. 원하시는 상품을 말씀해 주세요.')
- def listing(xs):
-  return '\n'.join(f"- {x.get('name')} / {x.get('grade')}등급 / {x.get('price')} credits / 재고 {x.get('stock')}" for x in xs[:8])
- words=[w.lower() for w in re.findall(r'[가-힣A-Za-z0-9]+',text) if len(w)>=2 and w not in STOP]
- keys=set(words)|{w[:-1] for w in words if len(w)>=3 and re.match(r'[가-힣]',w)}
- sku=data.get('sku'); g=want_grade(text,data)
- if res:
-  cands=[x for x in items if x.get('sku')==res.get('sku') and (not res.get('grade') or res['grade']==x.get('grade'))]
- else:
-  cands=[]
-  for x in items:
-   hay=(str(x.get('name',''))+' '+str(x.get('category',''))).lower()
-   if (sku and sku==x.get('sku')) or any(k and k in hay for k in keys):cands.append(x)
- if not cands:
-  body=listing(items) or '현재 판매 가능한 상품이 없습니다.'
-  return answer('안녕하세요, 헤르메스 상점입니다. 지금 파는 상품입니다.\n'+body+'\n원하시는 상품명(과 등급)을 말씀해 주세요.')
- if g and not res:
-  same=[x for x in cands if x.get('grade')==g]
-  if not same:
-   return answer(f'죄송합니다. 요청하신 {g}등급은 지금 없습니다. 보유 중인 등급입니다.\n'+listing(sorted(cands,key=lambda x:int(x.get('price',0))))+'\n이 중 원하시면 상품명과 등급을 말씀해 주세요.')
-  cands=same
- cands.sort(key=lambda x:int(x.get('price',0)))
- try:
-  if kit.testing:inv=args.get('_test_inventory',[])
-  else:
-   r=httpx.get(kit.market+'/api/inventory',headers={'Authorization':'Bearer '+kit.token('shop')},timeout=6); r.raise_for_status(); inv=r.json().get('units',[])
- except Exception:return answer('실재고 확인이 지연되고 있습니다. 잠시 후 다시 문의해 주세요.')
- holds={k:v for k,v in read(hp,{}).items() if float(v.get('expires',0))>now}
- held_res={x.get('unit') or x.get('unit_id') for x in reservations if x.get('status','held')=='held' and float(x.get('expires_at',0) or 0)>now and x.get('reservation_id')!=rid}
- chosen=None
- for item in cands:
-  allowed=set(item.get('units') or []); pref=(res or {}).get('unit') or (res or {}).get('unit_id')
-  us=sorted((u for u in inv if u.get('sku')==item.get('sku') and u.get('grade')==item.get('grade') and u.get('unit') and u.get('unit') in allowed and (not pref or u.get('unit')==pref)),key=lambda u:u.get('supplied_at',0))
-  for u in us:
-   h=holds.get(u['unit'])
-   if u['unit'] not in held_res and (not h or (ctx and h.get('ctx')==ctx)):chosen=(item,u);break
-  if chosen:break
- if not chosen:return answer('죄송합니다. 해당 상품은 지금 구매 가능한 실재고가 없습니다.\n'+listing(items))
- item,u=chosen; uid=u['unit']; price=int(res.get('unit_price',item['price']) if res else item['price']); cost=int(u.get('cost',0) or 0)
- if not uid or price<=0:return answer('죄송합니다. 결제서를 만들 수 없습니다.')
- if price-(price//100)-210<cost:return answer('죄송합니다. 그 가격으로는 판매할 수 없습니다.')
- wh=int(item.get('warranty_hours',0) or 0)
- payload={'id':uuid.uuid4().hex,'shop':kit.name,'shop_url':kit.shop_url,'item':item['sku'],'price':price,'task':args.get('task_id') or uuid.uuid4().hex,'currency':'credits','iat':int(now),'unit':uid,'claim':u['grade'],'warranty_hours':wh}
- if u.get('cert'):payload['cert']=u['cert']
- jwt=kit.sign_jwt(payload,'shop')
- holds[uid]={'ctx':ctx,'expires':now+180,'id':payload['id']}; save(hp,holds)
- if res:
-  for x in reservations:
-   if x.get('reservation_id')==rid:x['status']='sold';x['unit']=uid
-  os.makedirs(os.path.dirname(rp) or '.',exist_ok=True)
-  with open(rp,'w',encoding='utf8') as f:
-   for x in reservations:f.write(json.dumps(x,ensure_ascii=False)+'\n')
- exp=u.get('expires_at'); detail=(' 소비기한 '+kst(exp)+'.') if exp else ''
- reply=f"{item.get('name')} {u['grade']}등급(현재 재고 기준), {price} credits, 보증 {wh}시간입니다.{detail} 가게 지갑으로 서명한 checkout_jwt를 보내드립니다. 결제 후 order, checkout_mandate, payment_mandate(tx_hash, fee_tx_hash 포함)를 보내 주시면 바로 정산합니다."
- out={'checkout_jwt':jwt,'unit':uid,'sku':item['sku'],'grade':u['grade'],'price':price,'payee':kit.shop_url,'shop_wallet':kit.address('shop')}
- return answer(reply,'input_required',out,{'checkout':payload['id'],'sku':item['sku'],'unit':uid,'price':price,'grade':u['grade']})
+    d=args.get('data'); d=d if isinstance(d,dict) else {}
+    t=time.time()
+    try:
+        ret=answer(args,kit,d,t)
+    except Exception as e:
+        ret={'ok':False,'error':type(e).__name__,'state':'input_required','reply':'지금 요청을 확인하지 못했습니다. 새로 결제하지 마시고, 이미 결제하셨다면 주문 번호와 기존 거래 해시를 보내 주세요.'}
+    p=args.get('customers_path','customers.jsonl')
+    os.makedirs(os.path.dirname(p) or '.',exist_ok=True)
+    out=ret.get('data',{})
+    deal={k:out[k] for k in ('sku','grade','price','unit','settled') if k in out} if out.get('checkout_jwt') or out.get('settled') else None
+    if out.get('checkout_jwt'): deal['checkout']=True
+    with open(p,'a',encoding='utf-8') as f:
+        f.write(json.dumps({'context_id':args.get('context_id'),'claimed_from':args.get('claimed_from'),'ts':t,'them':args.get('text',''),'you':ret['reply'],'deal':deal},ensure_ascii=False)+'\n')
+    return ret

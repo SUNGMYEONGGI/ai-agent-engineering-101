@@ -1,35 +1,35 @@
-import json,os,base64
+import base64,json,os,time
+from unittest.mock import patch
 
-def dec(p):
- p+='='*(-len(p)%4)
- return json.loads(base64.urlsafe_b64decode(p).decode('utf8'))
+class Resp:
+    status_code=200
+    is_success=True
+    def raise_for_status(self): pass
+    def json(self): return {'units':[{'unit':'u-live','sku':'G0746760c','grade':'A','cost':1700,'expires_at':int(time.time())+4000}]}
 
 def test(run,kit):
- d='tmp/test/a2a9'; os.makedirs(d,exist_ok=True)
- cp=d+'/catalog.json'; rp=d+'/res.jsonl'; lp=d+'/cust.jsonl'; hp=d+'/holds.json'
- for p in (rp,lp,hp):
-  if os.path.exists(p):os.remove(p)
- cat={'items':[{'sku':'G159be1f8','name':'[반찬천국] 취나물','category':'식품>반찬','grade':'C','price':2190,'stock':1,'units':['u-ff3749e7ead9'],'warranty_hours':0},{'sku':'G35745411','name':'국내산 시금치 1kg','category':'식품>야채','grade':'B','price':6690,'stock':1,'units':['u-92edcd1927b8'],'warranty_hours':0},{'sku':'G0026722f','name':'무타공 클립형 키친타올 걸이','category':'주방용품','grade':'A','price':4500,'stock':1,'units':['u-0d8bbeb6619e'],'warranty_hours':0}]}
- with open(cp,'w',encoding='utf8') as f:json.dump(cat,f,ensure_ascii=False)
- inv=[{'unit':'u-ff3749e7ead9','sku':'G159be1f8','grade':'C','cost':1479,'expires_at':1795712330,'supplied_at':1},{'unit':'u-92edcd1927b8','sku':'G35745411','grade':'B','cost':6038,'expires_at':1795723285,'supplied_at':1},{'unit':'u-0d8bbeb6619e','sku':'G0026722f','grade':'A','cost':3157,'expires_at':None,'supplied_at':1}]
- base={'catalog_path':cp,'reservations_path':rp,'customers_path':lp,'holds_path':hp,'_test_inventory':inv}
- r=run(dict(base,text='취나물 A등급 재고가 있습니까?',data={},context_id='c1'),kit)
- assert 'data' not in r or not r['data'].get('checkout_jwt'),r
- assert 'C등급' in r['reply'] and 'A등급은 지금 없습니다' in r['reply'],r
- r=run(dict(base,text='요거트 있나요',data={},context_id='c2'),kit)
- assert '시금치' in r['reply'] and '취나물' in r['reply'] and not r.get('data'),r
- r=run(dict(base,text='시금치 주세요',data={},context_id='c3'),kit)
- jwt=r['data']['checkout_jwt']; h,p,s=jwt.split('.')
- assert dec(h)['alg']=='EIP191' and s
- pl=dec(p)
- for k in ['id','shop','shop_url','item','price','task','currency','iat','unit']:
-  assert pl.get(k) not in (None,''),k
- assert pl['unit']=='u-92edcd1927b8' and pl['item']=='G35745411' and pl['claim']=='B' and pl['price']==6690
- r=run(dict(base,text='취나물 사고 싶어요',data={},context_id='c4'),kit)
- assert '팔 수 없습니다' in r['reply'] or r['data']['unit']=='u-ff3749e7ead9' or '판매할 수 없습니다' in r['reply'],r
- r=run(dict(base,text='키친타올 걸이 A급',data={},context_id='c5'),kit)
- assert r['data']['unit']=='u-0d8bbeb6619e',r
- r=run(dict(base,text='시금치',data={},context_id='c6'),kit)
- assert not r.get('data') or not r['data'].get('checkout_jwt'),r
- with open(lp,encoding='utf8') as f:n=len([x for x in f if x.strip()])
- assert n==6,n
+    p='tmp/test/a2a_v10_'+str(time.time_ns())+'/'
+    os.makedirs(p,exist_ok=True)
+    a={k+'_path':p+k+'.json' for k in ('catalog','reservations','customers','holds')}
+    a.update(context_id='ctx-test',task_id='task-test')
+    items=[{'sku':'Gaaaaaaa1','name':'후디스 고단백 무가당 그릭요거트 플레인','grade':'C','price':4990,'stock':1,'units':['u-yogurt']},{'sku':'Gaaaaaaa2','name':'한상궁김치 총각김치 단단한 알타리 무김치','grade':'B','price':8490,'stock':1,'units':['u-kimchi']},{'sku':'G0746760c','name':'동서 둥굴레차 50T 60g','grade':'A','price':3450,'stock':2,'units':['u-stale','u-live']}]
+    with open(a['catalog_path'],'w',encoding='utf-8') as f: json.dump({'items':items},f,ensure_ascii=False)
+    for msg in ('가정용 냉장고 재고와 배송 설치 조건, 소포장 우유 소비기한 알려 주세요. 판매 가능하면 checkout 보내 주세요.','단단한 두부와 차가 있으면 가격 알려 주세요.','둥굴레차 재고와 가격 알려 주세요.'):
+        r=run(dict(a,text=msg),kit)
+        assert not r.get('data',{}).get('checkout_jwt') and r.get('ok',True),r
+    with patch('httpx.request',return_value=Resp()) as call:
+        r=run(dict(a,text='둥굴레차 A등급 구매하겠습니다.'),kit)
+        assert call.call_args.args[1].endswith('/api/inventory'),r
+    assert r.get('data',{}).get('unit')=='u-live',r
+    jwt=r['data']['checkout_jwt']
+    h,payload,sig=jwt.split('.')
+    def dec(s): return base64.urlsafe_b64decode(s+'='*(-len(s)%4))
+    x=json.loads(dec(payload))
+    required={'id','shop','shop_url','item','price','task','currency','iat','unit'}
+    assert required<=x.keys() and all(x[k] not in ('',None) for k in required)
+    assert x['unit']=='u-live' and x['shop']==kit.name and x['shop_url']==kit.shop_url and x['item']=='G0746760c'
+    assert json.loads(dec(h))['alg']=='EIP191' and len(dec(sig))==65
+    expected=kit.sign_jwt(x,'shop')
+    assert jwt==expected
+    with open(a['customers_path'],encoding='utf-8') as f: logs=[json.loads(s) for s in f]
+    assert len(logs)==4 and all(z['deal'] is None for z in logs[:3]) and logs[3]['deal']['unit']=='u-live'
