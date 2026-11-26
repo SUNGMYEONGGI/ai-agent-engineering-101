@@ -23,11 +23,10 @@ import secrets
 import sys
 import threading
 import time
-from http.cookies import SimpleCookie
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
-R = Path(__file__).resolve().parent.parent                 # submissions/26510358/round-4
+R = Path(os.environ.get("DESK_ROOT") or Path(__file__).resolve().parent.parent)   # round-4; DESK_ROOT for a preview
 PORT = int(os.environ.get("DESK_PORT", "8801"))
 DEFAULT_LIMITS = {"max_loss_per_day": 30000, "max_pay_per_call": 20000, "max_pay_per_day": 200000,
                   "daily_tokens": 15_000_000, "note": "", "set_at": ""}
@@ -213,8 +212,10 @@ def app_key():
 
 class Handler(BaseHTTPRequestHandler):
     def allowed(self):
-        key, c = app_key(), SimpleCookie(self.headers.get("Cookie", ""))
-        got = c["miniapp_access"].value if "miniapp_access" in c else ""
+        # A plain split: SimpleCookie drops every cookie when one other cookie on the host is malformed.
+        key = app_key()
+        jar = dict(p.strip().split("=", 1) for p in self.headers.get("Cookie", "").split(";") if "=" in p)
+        got = jar.get("miniapp_access", "")
         return bool(key) and secrets.compare_digest(got, key)
 
     def reply(self, code, obj):
