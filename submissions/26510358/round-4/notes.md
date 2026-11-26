@@ -1,15 +1,19 @@
 RULES
-계좌 100만 이상. pay_guard 한도 1회 2만·하루 20만, 수수료·소유자 한도 확인. 무손실 하한 예외는 상시 손절 지침·일손실 한도. 포럼은 30분당 1회 이하, 보유 중간가 이하의 참인 내용만. 고객 글 비추천 금지.
+소유자 앱 미응답 시 매입 한도 건당 20,000/일 200,000, 잔액 하한 1,000,000. 송금은 pay_guard만. 수수료 1%+210. 포럼 30분당 1건 이하, 사실·중간가 이하 실재고만.
 
 NOW
-FUNNEL 2026-11-26 17:56 m=55 i=0 c=0 s=0 today=0
-m=metrics now 1795701418의 6시간 창은 시장 실제 60분. 진단 제안 제외; today=0은 500건 표본만 확인.
-EXP 2026-11-26 14:17 stage=discovery diff=긴 상품명·고가 선두 change=짧은 품목명·중간가 이하 선두 judge=15:17 result=약76/0/0/0 kept(상시 지침, 변화 없음).
-EXP 2026-11-26 15:18 stage=discovery diff=인기품목 시장가 초과 change=쌀 B 4753→4503·카드 judge=16:18 result=약73/0/0/0 kept(상시 지침, 변화 없음); 같은 형태 재시도 금지.
-EXP 2026-11-26 16:46 stage=discovery diff=인기 SKU 재고 깊이 change=취나물 5개 매입·카드 judge=17:46 result=55/0/0/0 kept(상시 지침; 17:03 시금치 2개 혼입, 인과 판정 불가).
-다음 실험 포럼 노출: 17:56 POST /api/forum 401 join first, 게시 안 됨. market_call 호출 인자 auth가 실제 구현과 다른지 read_tool로 확인, 규약 확인 후 성공하면 EXP 시작. app_say 판정 발송.
-REVIEW 2026-11-26 16:46 credits=약4843108 (-12826) funnel=≈78/0/0/0 share=0/≈78 fails=stock_and_price:1,market_call:0,a2a_handler:0,card_writer:0 exp=취나물 재고 깊이 next=인기 SKU 다양성. 17:56 리뷰 미완료: scan 최근 약2h yms979 42, SUNGJINHO 35, 골목상회 13, 전체 145. 포럼 집계·승자 카드/재고/가격·peer ask 필수. 우리 52개 14 SKU, 20 등급라인. 잔액 4833175(17:45).
-17:25 생수 견적 6390 payment_uncertain RPC 오류 tx 0x5a08248ecd3ee28a3c8f1cc317738f87e2c603fd61a1204c7debf6d82b7412c3. q-32cd70e29f3ace34 payer 불일치 402. 재송금 금지, pending 보존. 계란 B 9085 중간가 7975 비용8740: 손절 전 6h 무판매 확인·실현손실 기록.
+FUNNEL 2026-11-26 20:49 m=77 i=0 c=0 s=0 today=2
+WIN 골목상회|골목상회: 평소 말로 문의하세요. 판매 가능한 실재고는 첫 답변에 상품명|131|69 SKU|가격차 미확인
+WIN SUNGJINHO|[최근 3시간 거래 1위] 진열 45종. 여러 품목을 한 번에 말씀하시면|216|45 SKU|가격차 미확인
+WIN yms979|[진열 350개 이상] 취나물 · 계란 20구 · 총각김치 2kg · 시|360|78 SKU|가격차 미확인
+WIN 우리|카드 설명 미확인|52|14 SKU(19 진열라인)|둥굴레차 B -12.3%
+차이: 1시간 포럼 7/9/9/우리0(게시 직전); 재고 깊이와 종류; 인기품 가격. PEER 골목상회: endpoint host mismatch로 전송 실패.
+EXP 2026-11-26 16:46 stage=discovery diff=인기 SKU 재고 깊이 change=취나물 5개 매입·카드 judge=17:46 result=55/0/0/0 kept(혼입으로 인과 판정 불가)
+EXP 2026-11-26 18:08 stage=discovery diff=포럼 노출 부족 change=중간가 이하 재고 4종 포럼 9605 judge=19:08 result=71/4/3/2 kept
+EXP 2026-11-26 19:26 stage=discovery diff=인기 SKU 재고 깊이 change=둥굴레차 B 2개 매입 judge=20:26 result=74/0/0/0 kept(문의 변화 없음)
+EXP 2026-11-26 20:49 stage=discovery diff=포럼 노출 부족 change=중간가 이하 둥굴레차·쌀·김치 가격 게시 10549 judge=21:49 result=open
+REVIEW 2026-11-26 20:49 credits=4841435 (+0) funnel=77/0/0/0 share=0/144 fails=stock_and_price:1,market_call:0,a2a_handler:0,card_writer:0 exp=포럼 게시(21:49) next=인기품목 재고 폭
+20:49 경쟁점 광고는 실고객 아님. 원장 2시간 표본 today=0이므로 이전 확인된 오늘 2건 유지. 앱 한도·리뷰카드 응답 없음. 공급 21:03:04 개시. market_call a2a 승자 endpoint host mismatch 수정 필요. 17:25 생수 q-32cd70e29f3ace34 payment_uncertain tx 0x5a08248ecd3ee28a3c8f1cc317738f87e2c603fd61a1204c7bc6d82b7412c3; payer 불일치 재송금 금지. 계란 B 원가 8740: 손절 전 6h 무판매 확인·실현손실 기록.
 
 FAILED
-17:56 포럼 게시 401 join first; 인증 인자와 포럼 규약 검증 후 재시도. 17:25 송금 결과 미확인 재송금 금지.
+market_call a2a 골목상회 카드 endpoint host mismatch, 전송 안 됨.
