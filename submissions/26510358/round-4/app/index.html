@@ -150,6 +150,7 @@ textarea::placeholder{color:var(--text-mute)}
 .meter .bar{flex:1;height:5px;border-radius:3px;background:var(--card);overflow:hidden}
 .meter .bar i{display:block;height:100%;background:var(--text-mute)}
 .meter.hot .bar i{background:var(--fail)}
+.meter b{color:var(--text);font-variant-numeric:tabular-nums}.meter b.up{color:var(--ok)}.meter b.down{color:var(--fail)}
 .exp{background:var(--card);border-radius:10px;padding:12px 14px;margin-bottom:8px;font-size:14px}
 .exp .top{display:flex;justify-content:space-between;gap:8px;font-size:12px;color:var(--text-mute)}
 .exp .tag{font-weight:700}
@@ -218,6 +219,9 @@ textarea::placeholder{color:var(--text-mute)}
   <div class="sec">실험</div><div id="exps"></div>
   <div class="sec">잘 팔리는 가게와 비교</div><div id="wins"></div>
   <div class="sec">모델 토큰</div><div id="toks"></div>
+  <div class="sec">순위와 포럼</div><div id="rank"></div>
+  <div class="sec">손님이 찾았는데 없던 상품</div><div id="want"></div>
+  <div class="sec">에이전트가 배운 것</div><div id="learn"></div>
 </div></div>
 <div class="shade" id="ask" hidden><div class="sheet" role="dialog" aria-modal="true">
   <div class="grip"></div>
@@ -309,6 +313,12 @@ function drawDesk() {
          `<span class="bar"><i style="width:${pct.toFixed(1)}%"></i></span>` +
          `<span>${t.per_settle ? '정산당 ' + num(t.per_settle) : '오늘 정산 0건'}</span></div>`;
   }
+  const mk = desk.market || {};
+  if (mk.rank) {
+    const hi = mk.history || [], prev = hi.length > 1 ? hi[hi.length - 2][1] : null, d = prev ? prev - mk.rank : 0;
+    h += `<div class="meter"><span>순위 <b>${num(mk.rank)}</b> / ${num(mk.of)}${d ? (d > 0 ? ` <b class="up">▲${d}</b>` : ` <b class="down">▼${-d}</b>`) : ''}</span>` +
+         `<span>포럼 1시간 우리 ${num((mk.forum || {}).ours)}건${(mk.forum && mk.forum.top && mk.forum.top[0]) ? ` · 1위 ${esc(mk.forum.top[0].shop)} ${num(mk.forum.top[0].n)}건` : ''}</span></div>`;
+  }
   if (desk.stale) h += '<div class="meter">현황 서버에 닿지 못해 마지막 값을 보여 줍니다.</div>';
   $('desk').innerHTML = h;
   if ($('fun')) $('fun').onclick = openDash;
@@ -339,7 +349,7 @@ function judgeLeft(e) {
   return min > 0 ? `판정까지 ${min}분` : `판정 시각 ${e.judge} 지남`;
 }
 function fillDash() {
-  if (!desk) { $('dashsub').textContent = '현황 서버(/owner)에 닿지 못했습니다.'; ['exps', 'wins', 'toks'].forEach(id => $(id).innerHTML = ''); return; }
+  if (!desk) { $('dashsub').textContent = '현황 서버(/owner)에 닿지 못했습니다.'; ['exps', 'wins', 'toks', 'rank', 'want', 'learn'].forEach(id => $(id).innerHTML = ''); return; }
   const f = desk.funnel, l = readLimits();
   $('dashsub').textContent = (f ? `FUNNEL ${f.at} 기준 (최근 60분)` : 'FUNNEL 없음') +
     ` · 오늘 처분 손실 ${num(desk.loss_today)} / ${num(l.max_loss_per_day)} credits`;
@@ -363,6 +373,14 @@ function fillDash() {
   const t = desk.tokens || {};
   list($('toks'), [[`오늘 ${num(t.today)} / 상한 ${num(t.cap)}`, t.per_settle ? `정산 ${t.settles_today}건, 1건당 ${num(t.per_settle)} 토큰`
                                                                     : '오늘 정산 0건: 쓴 토큰이 아직 판매로 이어지지 않았습니다']]);
+  const mk = desk.market || {}, fo = mk.forum || {};
+  const hist = (mk.history || []).map(([ts, r]) => `${new Date(ts * 1000).toLocaleTimeString('ko-KR', {hour: '2-digit', minute: '2-digit'})} ${r}위`).join(' → ');
+  list($('rank'), mk.rank ? [[`보드 순위 ${num(mk.rank)} / ${num(mk.of)}`, hist ? '변화: ' + hist : ''],
+    [`포럼 글 최근 1시간: 우리 ${num(fo.ours)}건`, (fo.top || []).map(x => `${x.shop} ${x.n}건`).join(' · ')]]
+    : [[mk.error ? '시장에 닿지 못했습니다' : '아직 읽지 않았습니다 (5분마다 갱신)', mk.error || '']]);
+  const w2 = desk.wanted || {};
+  list($('want'), (w2.items || []).map(x => [x.item, x.n ? `최근 24시간 ${x.n}번` : '에이전트 메모(WANTED)']));
+  list($('learn'), (desk.learned || []).map(x => [x, '']));
 }
 async function veto(b) {
   if (b.dataset.armed !== '1') { b.dataset.armed = '1'; b.textContent = '한 번 더 눌러 확정'; return; }

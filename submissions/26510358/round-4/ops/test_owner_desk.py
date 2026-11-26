@@ -48,4 +48,23 @@ for bad in ({"max_pay_per_call": -1}, {"daily_tokens": 10**9}, {"max_pay_per_day
     except ValueError:
         pass
 assert d.parse_funnel("REVIEW 2026-11-26 13:55 credits=1 funnel=153/1/0/0 share=0")["i"] == 1
+# LEARNED, WANTED, market (rank history, forum posts per shop)
+d.RANKS = tmp / ".kit" / "desk_rank.json"
+n2 = NOTES.replace("NOW", "RULES\nLEARNED 2026-11-26 포럼 목록 글 -> 5분 안 문의 3~4건\nNOW") + "WANTED 현미 2kg, 냉장고\n"
+e = d.dash(now=day0, notes=n2)
+assert e["learned"] == ["2026-11-26 포럼 목록 글 -> 5분 안 문의 3~4건"], e["learned"]
+assert e["wanted"] == {"source": "notes.md", "items": [{"item": "현미 2kg, 냉장고", "n": None}]}, e["wanted"]
+(tmp / "wanted.jsonl").write_text("\n".join(json.dumps(r, ensure_ascii=False) for r in [
+    {"ts": day0 - 60, "item": "현미 2kg"}, {"ts": day0 - 120, "item": "현미 2kg"}, {"ts": day0 - 90000, "item": "old"},
+    {"ts": day0 - 30, "item": "냉장고"}]) + "\nnot json\n")
+assert d.dash(now=day0, notes=n2)["wanted"]["items"] == [{"item": "현미 2kg", "n": 2}, {"item": "냉장고", "n": 1}]
+board = {"shops": [{"name": "yms979", "rank": 3}, {"name": "Hermes Shop", "rank": 11}, {"name": "gone", "rank": None}]}
+forum = [{"ts": day0 - 60, "author": "yms979"}, {"ts": day0 - 120, "author": "yms979"},
+         {"ts": day0 - 30, "author": "Hermes Shop"}, {"ts": day0 - 7200, "author": "Hermes Shop"}]
+m = d.refresh_market(now=day0, board=board, forum=forum)
+assert (m["rank"], m["of"]) == (11, 2) and m["forum"] == {"ours": 1, "top": [{"shop": "yms979", "n": 2}, {"shop": "Hermes Shop", "n": 1}]}, m
+board["shops"][1]["rank"] = 9
+assert [r for _, r in d.refresh_market(now=day0 + 60, board=board, forum=[])["history"]] == [11, 9]
+assert d.refresh_market(now=day0 + 120, board=board, forum=[])["history"][-1][1] == 9   # unchanged rank: no new point
+assert d.dash(now=day0, notes=n2)["market"]["rank"] == 9
 print("owner_desk ok")

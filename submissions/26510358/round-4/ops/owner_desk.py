@@ -14,6 +14,10 @@ Sources (all written by the agent through its memory tool, formats fixed in agen
              EXP <YYYY-MM-DD HH:MM> stage=.. diff=.. change=.. judge=<HH:MM> result=..
              WIN <shop>|<card start>|<units>|<lines>|<price gap %>       (top 3 shops, then one line for "우리")
              LOSS <YYYY-MM-DD HH:MM> <sku> <credits>
+             LEARNED <date> <lever> -> <effect>   (in RULES; lessons an experiment proved)
+             WANTED <items>                       (fallback when wanted.jsonl is missing)
+  wanted.jsonl  {ts, item, buyer}: goods customers asked for that we lacked (written by a2a_handler)
+  market     GET /api/board (our rank) and /api/forum?role=shop (posts per shop, last hour), every 5 min in tick()
   logs/llm-shim.jsonl  token usage per model call (the shim reads owner_limits.json's daily_tokens as its cap)
 """
 import json
@@ -41,6 +45,10 @@ EXP = re.compile(r"^EXP (\d{4}-\d\d-\d\d \d\d:\d\d) (.*)$", re.M)
 EXP_KEYS = re.compile(r"(stage|diff|change|judge|result)=(.*?)(?=\s+(?:stage|diff|change|judge|result)=|$)")
 WIN = re.compile(r"^WIN (.+)$", re.M)
 LOSS = re.compile(r"LOSS (\d{4}-\d\d-\d\d) \d\d:\d\d \S+ (\d+)")
+LEARNED = re.compile(r"^.*?LEARNED (.+)$", re.M)
+WANTED_LINE = re.compile(r"^WANTED (.+)$", re.M)
+MARKET = os.environ.get("MARKET", "https://market.ourolabs.ai").rstrip("/")
+SHOP_NAME = os.environ.get("NAME", "Hermes Shop")
 
 
 def read(p, default=""):
@@ -115,6 +123,69 @@ def parse_winners(notes):
         if len(p) >= 5:
             rows.append({"shop": p[0], "card": p[1][:80], "units": p[2], "lines": p[3], "gap": p[4]})
     return rows
+
+
+def parse_learned(notes):
+    return [x.strip() for x in LEARNED.findall(notes)][-6:]
+
+
+def wanted(now, notes):
+    """Top 5 goods customers asked for in the last 24 h that we lacked: wanted.jsonl, else the agent's WANTED line."""
+    n = {}
+    for line in read("wanted.jsonl").splitlines():
+        try:
+            r = json.loads(line)
+        except ValueError:
+            continue
+        if isinstance(r, dict) and now - float(r.get("ts") or 0) <= 86400 and str(r.get("item") or "").strip():
+            k = str(r["item"]).strip()[:40]
+            n[k] = n.get(k, 0) + 1
+    if n:
+        return {"source": "wanted.jsonl", "items": [{"item": k, "n": v} for k, v in sorted(n.items(), key=lambda kv: -kv[1])[:5]]}
+    lines = WANTED_LINE.findall(notes)
+    return {"source": "notes.md", "items": [{"item": lines[-1].strip()[:200], "n": None}]} if lines else {"source": None, "items": []}
+
+
+RANKS = R / ".kit" / "desk_rank.json"
+_mkt = {"at": 0, "rank": None, "of": None, "forum": None, "error": ""}
+
+
+def get_json(path):
+    import urllib.request
+    with urllib.request.urlopen(MARKET + path, timeout=10) as r:
+        return json.loads(r.read())
+
+
+def refresh_market(now=None, board=None, forum=None):
+    """Our board rank (with a history of changes) and shop forum posts in the last hour. Network only here."""
+    now = now or time.time()
+    try:
+        board = board if board is not None else get_json("/api/board")
+        forum = forum if forum is not None else get_json("/api/forum?role=shop")
+    except Exception as e:                                 # the market being slow must not break the desk
+        _mkt["error"] = f"{type(e).__name__}: {e}"[:120]
+        return _mkt
+    shops = board.get("shops", board) if isinstance(board, dict) else board
+    ranked = [x for x in shops if isinstance(x, dict) and x.get("rank")]
+    me = next((x for x in ranked if x.get("name") == SHOP_NAME), None)
+    posts = {}
+    for p in forum if isinstance(forum, list) else []:
+        if isinstance(p, dict) and now - float(p.get("ts") or 0) <= 3600:
+            a = str(p.get("author") or "?")
+            posts[a] = posts.get(a, 0) + 1
+    top = sorted(posts.items(), key=lambda kv: -kv[1])[:3]
+    with _lock:
+        try:
+            hist = json.loads(RANKS.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            hist = []
+        if me and (not hist or hist[-1][1] != me["rank"]):
+            hist = (hist + [[int(now), me["rank"]]])[-50:]
+            RANKS.parent.mkdir(exist_ok=True)
+            RANKS.write_text(json.dumps(hist), encoding="utf-8")
+    _mkt.update(at=int(now), rank=me and me["rank"], of=len(ranked), history=hist[-12:], error="",
+                forum={"ours": posts.get(SHOP_NAME, 0), "top": [{"shop": k, "n": v} for k, v in top]})
+    return _mkt
 
 
 def loss_today(notes, day):
@@ -200,7 +271,9 @@ def dash(now=None, notes=None):
             "stages": STAGES, "experiments": parse_experiments(notes, vetoes()), "winners": parse_winners(notes),
             "tokens": {"today": tok, "cap": lim["daily_tokens"],
                        "per_settle": round(tok / settles) if settles else None, "settles_today": settles},
-            "loss_today": loss, "limits": lim, "alerts": alerts}
+            "loss_today": loss, "limits": lim, "alerts": alerts,
+            "learned": parse_learned(notes), "wanted": wanted(now, notes),
+            "market": {k: _mkt.get(k) for k in ("at", "rank", "of", "history", "forum", "error")}}
 
 
 def app_key():
@@ -266,6 +339,8 @@ class Handler(BaseHTTPRequestHandler):
 def tick():
     """Keep the stuck clock honest while nobody has the app open."""
     while True:
+        if time.time() - _mkt["at"] >= 300:
+            refresh_market()
         try:
             dash()
         except Exception as e:                            # a bad notes line must not stop the clock
