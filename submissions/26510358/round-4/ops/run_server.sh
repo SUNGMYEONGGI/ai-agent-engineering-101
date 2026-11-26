@@ -3,11 +3,11 @@
 #   ops/run_server.sh up        start systemd user services shop-kit, shop-desk (+ shop-shim with LLM=own, shop-mesh if ~/meshkit exists),
 #                               enabled so they come back after a reboot (needs `loginctl enable-linger`)
 #   ops/run_server.sh link      print the latest owner-app link (https://...trycloudflare.com/?k=...)
-#   ops/run_server.sh restart   restart the kit (after git pull); "restart shim" for the shim
+#   ops/run_server.sh restart   restart every installed service (after git pull); "restart kit|shim|desk" for one
 #   ops/run_server.sh down      stop and disable everything
 #   ops/run_server.sh status    services alive, recent kit events, model failures, today's tokens, disk
-# Env: LLM=market (default) uses the market's model desk (no shim, no key), LLM=own the shim to OpenAI (agent.json llm.model,
-#      AGENT_REASONING_EFFORT in .env), LLM=claude the shim to `claude -p` Opus 5.5 medium with OpenAI as fallback,
+# Env: LLM=own (default) the shim to OpenAI (agent.json llm.model, gpt-6.1-terra,
+#      AGENT_REASONING_EFFORT in .env), LLM=market the market's model desk (no shim, no key), LLM=claude the shim to `claude -p` Opus 5.5 medium with OpenAI as fallback,
 #      KIT_FLAGS="--with-buyer" adds kit flags. The mode is baked into the units at `up`: switch with down, then LLM=... up.
 # BACKEND=tmux keeps the old tmux session "shop" (for hosts without systemd, e.g. WSL).
 # systemd restarts a process 60 s after it exits (RESTART_SEC; quick tunnels answer 429 when asked too often; tmux: 10 s). Output goes to round-4/.kit/<name>.log,
@@ -19,7 +19,7 @@ ROOT=$(cd "$R/../../.." && pwd)                 # repository root
 S=$ROOT/submissions/26510358
 PY=${PY:-$HOME/.venvs/round4/bin/python}
 NAME=${NAME:-Hermes Shop}
-LLM=${LLM:-market}                              # market = the model desk; own/claude use ops/llm_shim.py and the key in .env
+LLM=${LLM:-own}                                 # own = OpenAI gpt-6.1-terra; market = the model desk; own/claude use ops/llm_shim.py and the key in .env
 MARKET=${MARKET:-https://market.ourolabs.ai}
 SESSION=${SESSION:-shop}
 UNITS=$HOME/.config/systemd/user
@@ -82,7 +82,7 @@ if [ "$BACKEND" = systemd ]; then case "${1:-}" in
     loginctl show-user "$USER" -p Linger 2>/dev/null | grep -q yes || echo "warning: linger is off, services stop when you log out: loginctl enable-linger $USER"
     exit 0 ;;
   restart)
-    sd restart "shop-${2:-kit}"; exit ;;
+    if [ -n "${2:-}" ]; then sd restart "shop-$2"; else sd restart $(names); fi; exit ;;
   down)
     U=$(names); [ -n "$U" ] && sd disable --now $U; echo "down: ${U:-nothing installed}"; exit 0 ;;
   status)
