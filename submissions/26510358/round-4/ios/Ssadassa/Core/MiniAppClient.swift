@@ -90,6 +90,27 @@ public final class MiniAppClient: @unchecked Sendable {
         try await answer(id, result: .object(["approved": .bool(approved)]))
     }
 
+    // MARK: owner desk (ops/owner_desk.py at /owner/*, same host and access cookie)
+
+    public func dash() async throws -> Dash {
+        try Dash.decode(try await send("GET", "/owner/dash"))
+    }
+
+    /// Saves the owner's limits on the server and returns what it stored.
+    public func saveLimits(_ limits: OwnerLimits) async throws -> OwnerLimits {
+        let e = JSONEncoder()
+        e.keyEncodingStrategy = .convertToSnakeCase
+        let data = try await send("POST", "/owner/limits", body: try e.encode(limits))
+        let d = JSONDecoder()
+        d.keyDecodingStrategy = .convertFromSnakeCase
+        return try d.decode(OwnerLimits.self, from: data)
+    }
+
+    /// The owner's veto on an experiment: action "stop" or "revert".
+    public func veto(exp: String, action: String) async throws {
+        _ = try await send("POST", "/owner/veto", body: try JSONEncoder().encode(["exp": exp, "action": action]))
+    }
+
     // MARK: transport
 
     private func token() async throws -> String {

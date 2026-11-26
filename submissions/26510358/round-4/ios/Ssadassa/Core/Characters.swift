@@ -81,6 +81,35 @@ public enum DemoData {
     public static let card = OwnerCard(title: "오늘 요약", body: "거래 23건 · 순이익 +412,300 credits\n가장 많이 팔린 것: 소파 A등급",
                                        ts: Date().timeIntervalSince1970 - 879)
 
+    /// A desk as the agent would leave it: blocked at 문의 for 3 h, one open experiment, the winners table.
+    public static func dash(now: Date = Date()) -> Dash {
+        let f = DateFormatter()
+        f.locale = Locale(identifier: "en_US_POSIX"); f.timeZone = TimeZone(identifier: "Asia/Seoul")
+        f.dateFormat = "yyyy-MM-dd HH:mm"
+        let at = f.string(from: now.addingTimeInterval(-25 * 60)), day = String(at.prefix(10))
+        f.dateFormat = "HH:mm"
+        let judge = f.string(from: now.addingTimeInterval(35 * 60))
+        let json = """
+        {"funnel": {"at": "\(at)", "m": 81, "i": 0, "c": 0, "s": 0, "today": 2, "blocked": "i"},
+         "stages": [["m", "시장 정산"], ["i", "문의"], ["c", "결제서"], ["s", "정산"]],
+         "experiments": [
+          {"at": "\(day) 12:10", "stage": "i", "diff": "카드가 긴 상품명으로 시작", "change": "짧은 명사 카드", "judge": "13:10", "result": "81/0/0/0 reverted", "state": "reverted"},
+          {"at": "\(day) 13:15", "stage": "i", "diff": "재고 폭 13라인", "change": "25라인으로 확대", "judge": "14:15", "result": "90/2/1/1 kept", "state": "kept"},
+          {"at": "\(at)", "stage": "i", "diff": "계란 가격 시장가 +14%", "change": "계란 B 중앙가로", "judge": "\(judge)", "result": "", "state": "open"}],
+         "winners": [
+          {"shop": "yms979", "card": "계란 20구 · 취나물 · 총각김치 2kg · 값은 정가보다 쌉니다", "units": "350", "lines": "30", "gap": "-5%"},
+          {"shop": "dongne", "card": "둥굴레차 · 두부 · 쌀 2kg", "units": "210", "lines": "24", "gap": "-2%"},
+          {"shop": "maeil", "card": "신선 계란, 김치", "units": "180", "lines": "19", "gap": "0%"},
+          {"shop": "우리", "card": "계란 B 특란 20구 신선 무항생제 농장 직송", "units": "43", "lines": "13", "gap": "+14%"}],
+         "tokens": {"today": 9485381, "cap": 15000000, "per_settle": 4742690, "settles_today": 2},
+         "loss_today": 26000,
+         "limits": {"max_loss_per_day": 30000, "max_pay_per_call": 20000, "max_pay_per_day": 200000, "daily_tokens": 15000000, "note": ""},
+         "alerts": [{"kind": "stuck", "key": "demo-stuck", "text": "FUNNEL이 3시간째 '문의' 단계에서 멈춰 있습니다."},
+                    {"kind": "loss", "key": "demo-loss", "text": "오늘 처분 손실 26,000 / 한도 30,000 credits (80% 이상)."}]}
+        """
+        return try! Dash.decode(Data(json.utf8))
+    }
+
     public static let replies = [
         "확인했어요. 지금 시장 상황을 보고 바로 알려드릴게요.",
         "좋아요. 다음 공급 창에서 그렇게 할게요.",

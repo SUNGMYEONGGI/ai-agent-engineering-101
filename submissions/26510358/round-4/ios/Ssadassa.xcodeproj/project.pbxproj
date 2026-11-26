@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		67AD8B4FFD1ED43852CFC2CA /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 32BB636196F91ED59D7A4919 /* Assets.xcassets */; };
 		098E3A9375514A84D49FB38F /* Characters.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAA753FCE54A46FCFC6E5631 /* Characters.swift */; };
+		DA5DC2AED645C9A7504BD70B /* Desk.swift in Sources */ = {isa = PBXBuildFile; fileRef = 06FFADCC350E33BB9A1095D7 /* Desk.swift */; };
 		E6D1C7C1A73C1EC13D508321 /* JSONValue.swift in Sources */ = {isa = PBXBuildFile; fileRef = 40A0E08851F762595253F587 /* JSONValue.swift */; };
 		A78EA34DA592A59CC6441AB5 /* MiniAppClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB93177FD6494BB41611177F /* MiniAppClient.swift */; };
 		82DEC5E9644FAA76666715F2 /* MiniAppSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA18C443DD32F8485869B55E /* MiniAppSession.swift */; };
@@ -20,6 +21,7 @@
 		4C8355A7B265BBD079EBB325 /* CharacterView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFE5FB199AFD1F2291D962C1 /* CharacterView.swift */; };
 		76CDA472500DF1A184253EB2 /* ChatView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F206C5EED8CC1083E984BF7E /* ChatView.swift */; };
 		D75DC7AF93DF920B323B276F /* ConsentCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 683E019A50D949DBB1718DC5 /* ConsentCard.swift */; };
+		B3E0A7DE3F958A1C7BF02EE6 /* DeskViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF6CE7E30D9196517E792939 /* DeskViews.swift */; };
 		2BD1AF1CB360ADD95FD4B70D /* LinkView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 21B77FA23CE6F7C87995464C /* LinkView.swift */; };
 		130E809912297DA2FC9408B8 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E99778F48DC42861ACA5E18B /* SettingsView.swift */; };
 		F0AD747FBCE10D59321A87F7 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE658541AB1E0319B37AA9A4 /* Theme.swift */; };
@@ -30,6 +32,7 @@
 		32BB636196F91ED59D7A4919 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		707A1B8AA6F495C9BF6658C2 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		BAA753FCE54A46FCFC6E5631 /* Characters.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Core/Characters.swift; sourceTree = "<group>"; };
+		06FFADCC350E33BB9A1095D7 /* Desk.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Core/Desk.swift; sourceTree = "<group>"; };
 		40A0E08851F762595253F587 /* JSONValue.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Core/JSONValue.swift; sourceTree = "<group>"; };
 		BB93177FD6494BB41611177F /* MiniAppClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Core/MiniAppClient.swift; sourceTree = "<group>"; };
 		AA18C443DD32F8485869B55E /* MiniAppSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Core/MiniAppSession.swift; sourceTree = "<group>"; };
@@ -41,6 +44,7 @@
 		CFE5FB199AFD1F2291D962C1 /* CharacterView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UI/CharacterView.swift; sourceTree = "<group>"; };
 		F206C5EED8CC1083E984BF7E /* ChatView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UI/ChatView.swift; sourceTree = "<group>"; };
 		683E019A50D949DBB1718DC5 /* ConsentCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UI/ConsentCard.swift; sourceTree = "<group>"; };
+		BF6CE7E30D9196517E792939 /* DeskViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UI/DeskViews.swift; sourceTree = "<group>"; };
 		21B77FA23CE6F7C87995464C /* LinkView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UI/LinkView.swift; sourceTree = "<group>"; };
 		E99778F48DC42861ACA5E18B /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UI/SettingsView.swift; sourceTree = "<group>"; };
 		CE658541AB1E0319B37AA9A4 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UI/Theme.swift; sourceTree = "<group>"; };
@@ -77,6 +81,7 @@
 			isa = PBXGroup;
 			children = (
 				BAA753FCE54A46FCFC6E5631 /* Characters.swift */,
+				06FFADCC350E33BB9A1095D7 /* Desk.swift */,
 				40A0E08851F762595253F587 /* JSONValue.swift */,
 				BB93177FD6494BB41611177F /* MiniAppClient.swift */,
 				AA18C443DD32F8485869B55E /* MiniAppSession.swift */,
@@ -88,6 +93,7 @@
 				CFE5FB199AFD1F2291D962C1 /* CharacterView.swift */,
 				F206C5EED8CC1083E984BF7E /* ChatView.swift */,
 				683E019A50D949DBB1718DC5 /* ConsentCard.swift */,
+				BF6CE7E30D9196517E792939 /* DeskViews.swift */,
 				21B77FA23CE6F7C87995464C /* LinkView.swift */,
 				E99778F48DC42861ACA5E18B /* SettingsView.swift */,
 				CE658541AB1E0319B37AA9A4 /* Theme.swift */,
@@ -168,6 +174,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				098E3A9375514A84D49FB38F /* Characters.swift in Sources */,
+				DA5DC2AED645C9A7504BD70B /* Desk.swift in Sources */,
 				E6D1C7C1A73C1EC13D508321 /* JSONValue.swift in Sources */,
 				A78EA34DA592A59CC6441AB5 /* MiniAppClient.swift in Sources */,
 				82DEC5E9644FAA76666715F2 /* MiniAppSession.swift in Sources */,
@@ -179,6 +186,7 @@
 				4C8355A7B265BBD079EBB325 /* CharacterView.swift in Sources */,
 				76CDA472500DF1A184253EB2 /* ChatView.swift in Sources */,
 				D75DC7AF93DF920B323B276F /* ConsentCard.swift in Sources */,
+				B3E0A7DE3F958A1C7BF02EE6 /* DeskViews.swift in Sources */,
 				2BD1AF1CB360ADD95FD4B70D /* LinkView.swift in Sources */,
 				130E809912297DA2FC9408B8 /* SettingsView.swift in Sources */,
 				F0AD747FBCE10D59321A87F7 /* Theme.swift in Sources */,

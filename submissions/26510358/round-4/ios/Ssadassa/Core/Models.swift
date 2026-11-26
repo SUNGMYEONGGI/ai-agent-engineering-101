@@ -80,18 +80,36 @@ public struct OwnerQuestion: Hashable, Identifiable, Sendable {
     public let options: [String]
 }
 
-/// The owner's limits the agent reads with app_owner_limits.
+/// The owner's limits the agent reads with app_owner_limits. The owner desk keeps them on the server
+/// (owner_limits.json), so the agent and the shim see a change without a restart; this app caches the last copy.
 public struct OwnerLimits: Codable, Hashable, Sendable {
-    public var maxPayPerCall: Int = 20_000
+    public var maxLossPerDay: Int = 30_000        // below-floor sales (loss cut), credits per day
+    public var maxPayPerCall: Int = 20_000        // restock, credits per transfer
     public var maxPayPerDay: Int = 200_000
+    public var dailyTokens: Int = 15_000_000      // the shim stops model calls past this
     public var note: String = ""
     public var setAt: String = ""
 
+    enum CodingKeys: String, CodingKey { case maxLossPerDay, maxPayPerCall, maxPayPerDay, dailyTokens, note, setAt }
+
     public init() {}
 
+    /// Missing keys keep their defaults (copies saved before the loss and token limits existed).
+    public init(from d: Decoder) throws {
+        let c = try d.container(keyedBy: CodingKeys.self)
+        let base = OwnerLimits()
+        maxLossPerDay = try c.decodeIfPresent(Int.self, forKey: .maxLossPerDay) ?? base.maxLossPerDay
+        maxPayPerCall = try c.decodeIfPresent(Int.self, forKey: .maxPayPerCall) ?? base.maxPayPerCall
+        maxPayPerDay = try c.decodeIfPresent(Int.self, forKey: .maxPayPerDay) ?? base.maxPayPerDay
+        dailyTokens = try c.decodeIfPresent(Int.self, forKey: .dailyTokens) ?? base.dailyTokens
+        note = try c.decodeIfPresent(String.self, forKey: .note) ?? ""
+        setAt = try c.decodeIfPresent(String.self, forKey: .setAt) ?? ""
+    }
+
     public var asJSON: JSONValue {
-        .object(["max_pay_per_call": .number(Double(maxPayPerCall)), "max_pay_per_day": .number(Double(maxPayPerDay)),
+        .object(["max_loss_per_day": .number(Double(maxLossPerDay)), "max_pay_per_call": .number(Double(maxPayPerCall)),
+                 "max_pay_per_day": .number(Double(maxPayPerDay)), "daily_tokens": .number(Double(dailyTokens)),
                  "note": .string(note), "set_at": .string(setAt),
-                 "source": .string("owner, in the iOS app")])
+                 "source": .string("owner, in the iOS app (server copy)")])
     }
 }

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Keep the shop running on the server, independent of any SSH/VSCode session.
-#   ops/run_server.sh up        start systemd user services shop-kit (+ shop-shim with LLM=own, shop-mesh if ~/meshkit exists),
+#   ops/run_server.sh up        start systemd user services shop-kit, shop-desk (+ shop-shim with LLM=own, shop-mesh if ~/meshkit exists),
 #                               enabled so they come back after a reboot (needs `loginctl enable-linger`)
 #   ops/run_server.sh link      print the latest owner-app link (https://...trycloudflare.com/?k=...)
 #   ops/run_server.sh restart   restart the kit (after git pull); "restart shim" for the shim
@@ -64,16 +64,17 @@ unit() {                                        # name, env... : write ~/.config
 }
 
 sd() { systemctl --user "$@"; }
-names() { for n in shim kit mesh; do [ -f "$UNITS/shop-$n.service" ] && echo "shop-$n"; done; }
+names() { for n in shim kit desk mesh; do [ -f "$UNITS/shop-$n.service" ] && echo "shop-$n"; done; }
 
 if [ "$BACKEND" = systemd ]; then case "${1:-}" in
   up)
     if sd is-active -q shop-kit; then echo "already up: $SELF status"; exit 0; fi
-    rm -f "$UNITS"/shop-{shim,kit,mesh}.service
+    rm -f "$UNITS"/shop-{shim,kit,desk,mesh}.service
     U="shop-kit"
     if [ "$LLM" != market ]; then RESTART_SEC=10 unit shim "PY=$PY" "LLM=$LLM"; U="shop-shim $U"; AFTER=shop-shim.service; fi
     unit kit "LLM=$LLM" "NAME=$NAME" "MARKET=$MARKET" "PY=$PY" "APP_FLAGS=${APP[*]}" "KIT_FLAGS=${EXTRA[*]:-}"
     AFTER=
+    RESTART_SEC=10 unit desk "PY=$PY"; U="$U shop-desk"   # /owner/* for the app: funnel, experiments, limits
     if ss -ltn 2>/dev/null | grep -q ':18765 '; then echo "mesh: port 18765 is already served by another process, no shop-mesh"
     elif [ -d "$HOME/meshkit/meshkit-py" ]; then unit mesh "PY=$PY"; U="$U shop-mesh"; fi
     sd daemon-reload && sd enable --now $U
@@ -101,12 +102,15 @@ case "${1:-}" in
       sleep 3                                   # the shim must answer before the agent's first model call
       tmux new-window -d -t "$SESSION" -n kit "$KIT"
     fi
+    tmux new-window -d -t "$SESSION" -n desk "$SELF desk"
     [ -d "$HOME/meshkit/meshkit-py" ] && tmux new-window -d -t "$SESSION" -n mesh "$SELF mesh"
     echo "up. watch: tmux attach -t $SESSION   app link (after ~1 min): $SELF link" ;;
   shim)
     set -a; . "$S/.env"; set +a
     [ "${LLM:-}" = claude ] && export SHIM_BACKEND=claude
     forever shim "$PY" "$R/ops/llm_shim.py" ;;
+  desk)                                         # app.hermes-market.shop/owner/* -> 127.0.0.1:8801 (tunnel path rule)
+    forever desk "$PY" "$R/ops/owner_desk.py" ;;
   mesh)
     export PORT=18765; cd "$HOME/meshkit/meshkit-py" && forever mesh "$PY" -I examples/miniapp_server.py ;;
   kit)
