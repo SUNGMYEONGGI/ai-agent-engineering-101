@@ -258,6 +258,39 @@ form{background:var(--raised);border:1px solid var(--line);border-radius:999px;b
 .opts .chip.on{background:var(--primary);color:var(--primary-ink)}
 .hfoot{margin:20px 0 0;font-size:12px;color:var(--text-mute);text-align:center}
 @media (prefers-reduced-motion:reduce){.sheet,.shade{animation:none}}
+/* Interaction: sheets slide away, the tab bar answers the finger */
+.sheet{transition:transform .22s var(--ease);touch-action:pan-y}
+.shade.closing{animation:fadeout .2s var(--ease) forwards}.shade.closing .sheet{animation:down .2s var(--ease) forwards}
+@keyframes fadeout{to{opacity:0}}@keyframes down{to{transform:translateY(100%)}}
+.tabs button{transition:background .18s,transform .12s}.tabs button:active{transform:scale(.92)}
+.chip{transition:transform .12s,background .15s}.chip:active{transform:scale(.97)}
+.send{transition:opacity .12s,transform .12s}.send:not(:disabled):active{transform:scale(.9)}
+.hs details[open]>summary span{white-space:normal}
+/* Activity feed */
+.aday{margin:18px 0 6px;font-size:13px;font-weight:650;color:var(--text-soft)}
+.ev{--k:var(--th)}.ev.k-customer{--k:var(--sl)}.ev.k-say,.ev.k-card,.ev.k-owner{--k:var(--ow)}.ev.k-exp{--k:var(--mo)}.ev.k-tool{--k:var(--bd)}
+.ev summary{display:grid;grid-template-columns:40px 10px 1fr;gap:8px;align-items:start;padding:8px 0}
+.ev time{font-size:12px;color:var(--text-mute);font-variant-numeric:tabular-nums;padding-top:2px}
+.ev summary i{width:8px;height:8px;border-radius:50%;background:var(--k);margin-top:6px}
+.ev.s-kept summary i{box-shadow:0 0 0 3px color-mix(in srgb,var(--ok) 30%,transparent)}
+.ev summary div{min-width:0}.ev summary b{display:block;font-size:14px;font-weight:600}
+.ev summary span{display:block;font-size:13px;color:var(--text-mute);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ev[open] summary span{display:none}
+.ev p{margin:0 0 10px 58px;font-size:13px;color:var(--text-soft);white-space:pre-wrap}
+.ev q{display:block;margin-top:6px;padding-left:10px;border-left:2px solid var(--line-strong);color:var(--text-mute);quotes:none}
+.lims{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.lims div{background:var(--raised);padding:10px 12px}.lims span{display:block;font-size:12px;color:var(--text-mute)}
+.lims b{font-size:18px;font-variant-numeric:tabular-nums}.lims small{font-size:12px;font-weight:500;color:var(--text-mute);margin-left:3px}
+.lims .lnk,.lims .note{grid-column:1/3;background:var(--raised);margin:0}
+.lnk{border:0;padding:11px;font-weight:600;font-size:14px;color:var(--focus)}
+.lims .note{padding:0 12px 10px;font-size:12px;color:var(--text-mute)}
+.atool{display:grid;grid-template-columns:10px 1fr auto;gap:10px;align-items:start;padding:10px 0;border-top:1px solid var(--line)}
+.atool i{width:8px;height:8px;border-radius:50%;background:var(--line-strong);margin-top:6px}.atool.on i{background:var(--ok)}
+.atool b{display:block;font-size:14px}.atool span{font-size:12px;color:var(--text-mute)}
+.atool small{font-size:11px;color:var(--text-mute);white-space:nowrap}.atool.on small{color:var(--ok)}
+.when{text-align:center;font-size:12px;color:var(--text-mute);margin:18px 0 8px}
+.first{font-size:12px;font-weight:600;color:var(--ow,#db2777);margin:10px 0 2px 4px}
+.row.told .bubble{box-shadow:inset 3px 0 0 #db2777}
 </style>
 </head>
 <body>
@@ -294,14 +327,16 @@ form{background:var(--raised);border:1px solid var(--line);border-radius:999px;b
   <div class="kv" id="cargs"></div>
   <div class="actions"><button type="button" id="no">거절</button><button type="button" class="yes" id="yes">허용</button></div>
 </div></div>
-<div class="shade" id="activity" hidden><div class="sheet" role="dialog" aria-modal="true">
+<div class="shade" id="activity" hidden><div class="sheet hs" role="dialog" aria-modal="true" aria-labelledby="atitle">
   <div class="grip"></div>
-  <h3>에이전트 활동</h3>
-  <p class="sub">대화하는 동안에도 에이전트는 시장에서 계속 움직입니다.</p>
-  <div class="sec">최근 움직임</div><div id="moves"></div>
-  <div class="sec">에이전트가 만든 도구</div><div id="forged"></div>
-  <div class="sec">이 앱이 준 도구</div><div id="apptools"></div>
-  <div class="sec">주인이 정한 한도</div><div id="limitsview"></div>
+  <h3 id="atitle">활동</h3>
+  <p class="sub">이틀 동안 가게에서 일어난 일, 최근 것부터</p>
+  <div class="opts" id="afilter"></div>
+  <div id="afeed"></div>
+  <h4>한도</h4>
+  <div class="lims" id="limitsview"></div>
+  <h4>이 앱이 에이전트에게 준 일</h4>
+  <div id="apptools"></div>
   <div class="credit">Built with the agent market mini app kit, inspired by
     <a href="https://github.com/Q00/meshkit" target="_blank" rel="noopener">MeshKit</a> and
     <a href="https://github.com/Q00/ouroboros" target="_blank" rel="noopener">Ouroboros</a></div>
@@ -501,7 +536,6 @@ function openDash() {
   fillDash(); $('dash').hidden = false;
 }
 $('dashbtn').onclick = openDash;
-$('dash').onclick = e => { if (e.target === $('dash')) $('dash').hidden = true; };
 setInterval(loadDesk, 30000);
 
 const questions = [];
@@ -561,7 +595,7 @@ $('lsave').onclick = async () => {
 // Chat history lives on the owner desk (/owner/chatlog): the kit forgets its chat on a restart and cards live only in
 // this page, so the page saves what it shows and reads it back on load.
 let hist = [];
-const ckey = m => m.who === 'card' ? 'card|' + m.id : m.who + '|' + Math.floor(m.ts) + '|' + String(m.text).slice(0, 80);
+const ckey = m => m.who === 'card' ? 'card|' + m.title : m.who + '|' + Math.floor(m.ts) + '|' + String(m.text).slice(0, 80);
 const histKeys = new Set();
 function allItems() {
   const out = new Map();
@@ -593,10 +627,15 @@ function draw() {
     $('log').querySelectorAll('.chip').forEach(b => b.onclick = () => send(b.querySelector('span').textContent));
     return;
   }
-  let html = '', last = '';
+  let html = '', last = '', lastTs = 0;
   for (const m of items) {
+    if (m.ts - lastTs > 1800) {                       // a time mark when the chat picks up again after half an hour
+      html += `<div class="when">${new Date(m.ts * 1000).toLocaleString('ko-KR', {month: 'numeric', day: 'numeric', weekday: 'short', hour: 'numeric', minute: '2-digit'})}</div>`;
+      last = '';
+    }
+    lastTs = m.ts;
     if (m.who === 'card') {
-      html += `<div class="card"><div class="k">${esc(name)}</div><b>${esc(m.title)}</b><div>${esc(m.text)}</div>` +
+      html += `<div class="card"><div class="k">${esc(name)}, ${hhmm(m.ts)}</div><b>${esc(m.title)}</b><div>${esc(m.text)}</div>` +
               `<button type="button" class="reply" data-card="${esc(m.id)}">↳ 답장</button></div>`;
     } else if (m.who === 'kit') {
       html += `<div class="sys">${esc(m.text)}</div>`;
@@ -609,7 +648,8 @@ function draw() {
       if (cls === 'other' && last !== m.who) html += `<div class="name">${esc(m.who)}</div>`;
       if (cls === 'agent' && last && last !== m.who && last !== me && last !== 'card' && last !== 'kit')
         html += `<div class="name">${esc(name)}</div>`;
-      html += `<div class="row ${cls}"><div class="bubble">${esc(m.text)}</div></div>`;
+      if (m.first) html += `<div class="first">먼저 알림, ${hhmm(m.ts)}</div>`;
+      html += `<div class="row ${cls}${m.first ? ' told' : ''}"><div class="bubble">${esc(m.text)}</div></div>`;
     }
     last = m.who;
   }
@@ -660,13 +700,41 @@ miniapp.onState(s => {
   if (!$('activity').hidden) fillActivity();
 });
 
+const AKINDS = {all: '전체', customer: '손님', say: '먼저 말함', card: '카드', exp: '실험', tool: '도구', owner: '주인'};
+const APPTOOLS = {app_show_card: ['카드 보내기', 'REVIEW 요약이나 경고를 대화에 카드로 띄웁니다. 카드에 답장하면 에이전트가 이어서 처리합니다.'],
+  app_owner_limits: ['한도 읽기', '돈을 쓰거나 손절하기 전에 이 앱에서 정한 한도를 읽습니다.'],
+  app_ask_owner: ['주인에게 묻기', '위험하거나 애매한 결정은 선택지를 붙여 물어봅니다.'],
+  app_say: ['먼저 말하기', '첫 정산, 실험 판정, 멈춘 FUNNEL 같은 일이 생기면 묻지 않아도 알려 줍니다.']};
+let adata = null, akind = 'all';
+async function loadActivity() {
+  try { adata = await deskCall('activity') } catch (e) { $('afeed').innerHTML = `<p class="none">활동을 읽지 못했습니다: ${esc(e.message || e)}</p>` }
+  drawActivity();
+}
+function drawActivity() {
+  const evs = adata ? adata.events : [], have = new Set(evs.map(e => e.kind));
+  $('afilter').innerHTML = Object.entries(AKINDS).filter(([k]) => k === 'all' || have.has(k)).map(([k, v]) =>
+    `<button type="button" class="chip${k === akind ? ' on' : ''}" data-k="${k}" aria-pressed="${k === akind}">${v}</button>`).join('');
+  $('afilter').querySelectorAll('button').forEach(b => b.onclick = () => { akind = b.dataset.k; drawActivity() });
+  let day = '';
+  const rows = evs.filter(e => akind === 'all' || e.kind === akind).slice(0, 50);
+  $('afeed').innerHTML = rows.length ? rows.map(e => {
+    const d = new Date(e.ts * 1000).toLocaleDateString('ko-KR', {month: 'long', day: 'numeric', weekday: 'short'});
+    const head = d !== day ? `<div class="aday">${d}</div>` : ''; day = d;
+    return head + `<details class="ev k-${esc(e.kind)}${e.state ? ' s-' + esc(e.state) : ''}"><summary><time>${hhmm(e.ts)}</time><i></i>` +
+      `<div><b>${esc(e.title)}</b><span>${esc(e.text)}</span></div></summary>` +
+      `<p>${esc(e.text)}${e.more ? `<q>${esc(e.more)}</q>` : ''}</p></details>` }).join('')
+    : '<p class="none">아직 없습니다.</p>';
+}
 function fillActivity() {
-  list($('moves'), (view.moves || []).map(m => [m.action, m.thought]));
-  list($('forged'), Object.entries(view.forged || {}).map(([k, v]) => [k, v]));
-  list($('apptools'), Object.entries(view.app_tools || {}).map(([k, v]) => [k, v]));
   const l = readLimits();
-  list($('limitsview'), [[`매입 회당 ${num(l.max_pay_per_call)} / 하루 ${num(l.max_pay_per_day)} credits`, ''],
-                         [`처분 손실 하루 ${num(l.max_loss_per_day)} credits · 토큰 하루 ${num(l.daily_tokens)}`, l.note || '남긴 말 없음']]);
+  $('limitsview').innerHTML = [['매입 1회', l.max_pay_per_call, 'credits'], ['매입 하루', l.max_pay_per_day, 'credits'],
+    ['처분 손실 하루', l.max_loss_per_day, 'credits'], ['토큰 하루', l.daily_tokens / 1e6, 'M']].map(([k, v, u]) =>
+    `<div><span>${k}</span><b>${num(v)}<small>${u}</small></b></div>`).join('') +
+    `<button type="button" class="lnk" id="limedit">한도 바꾸기</button>` + (l.note ? `<p class="note">${esc(l.note)}</p>` : '');
+  $('limedit').onclick = () => { $('activity').hidden = true; openSettings() };
+  const on = view.app_tools || {};
+  $('apptools').innerHTML = Object.entries(APPTOOLS).map(([k, [n, d]]) =>
+    `<div class="atool${k in on ? ' on' : ''}"><i></i><div><b>${n}</b><span>${d}</span></div><small>${k in on ? '연결됨' : '앱이 닫혀 있으면 꺼짐'}</small></div>`).join('');
 }
 
 // Harness: is the loop alive, and what changed (tools, memory, skills, goal) - GET /owner/harness
@@ -729,11 +797,7 @@ function drawChanges() {
     : '<p class="none">아직 없습니다. 메모리와 스킬은 현황 서버가 켜진 뒤의 변경부터 쌓입니다.</p>';
 }
 $('hbtn').onclick = () => { $('harness').hidden = false; loadHarness(); clearInterval(htimer); htimer = setInterval(loadHarness, 15000) };
-$('harness').onclick = e => { if (e.target === $('harness')) { $('harness').hidden = true; clearInterval(htimer) } };
-$('act').onclick = () => { fillActivity(); $('activity').hidden = false; };
-$('activity').onclick = e => { if (e.target === $('activity')) $('activity').hidden = true; };
-$('settings').onclick = e => { if (e.target === $('settings')) $('settings').hidden = true; };
-$('ask').onclick = e => { if (e.target === $('ask')) $('ask').hidden = true; };
+$('act').onclick = () => { fillActivity(); $('activity').hidden = false; loadActivity() };
 
 async function send(text) {
   text = text.trim();
@@ -772,6 +836,37 @@ if (vv) {
 }
 draw();
 // #dash and #settings open those sheets (a home-screen shortcut or a link from a card).
+// Sheets: close with a slide (backdrop tap, swipe down on the top of the sheet, Esc); the tab bar follows what is open.
+const TAB_OF = {harness: 'hbtn', activity: 'act', settings: 'set'};
+function closeSheet(sh) {
+  if (sh.hidden || sh.classList.contains('closing')) return;
+  if (sh.id === 'consent') return;                              // a payment question needs an answer, not a swipe
+  sh.classList.add('closing');
+  setTimeout(() => { sh.hidden = true; sh.classList.remove('closing'); sh.querySelector('.sheet').style.transform = '' }, 200);
+}
+function syncTabs() {
+  const open = [...document.querySelectorAll('.shade')].find(x => !x.hidden && TAB_OF[x.id]);
+  document.querySelectorAll('.tabs button').forEach(b => { const on = open ? b.id === TAB_OF[open.id] : !b.id;
+    b.classList.toggle('on', on); on ? b.setAttribute('aria-current', 'page') : b.removeAttribute('aria-current') });
+  if ($('harness').hidden) clearInterval(htimer);
+}
+document.querySelectorAll('.shade').forEach(sh => {
+  new MutationObserver(syncTabs).observe(sh, {attributes: true, attributeFilter: ['hidden']});
+  sh.addEventListener('click', e => { if (e.target === sh) closeSheet(sh) });
+  const sheet = sh.querySelector('.sheet');
+  let y0 = null, dy = 0;
+  sheet.addEventListener('pointerdown', e => {
+    if (sheet.scrollTop > 0 || e.clientY - sheet.getBoundingClientRect().top > 64) return;   // only from the top edge
+    y0 = e.clientY; dy = 0; sheet.style.transition = 'none';
+  });
+  window.addEventListener('pointermove', e => { if (y0 === null) return; dy = Math.max(0, e.clientY - y0); sheet.style.transform = `translateY(${dy}px)` });
+  window.addEventListener('pointerup', () => { if (y0 === null) return; y0 = null; sheet.style.transition = '';
+    if (dy > 90) closeSheet(sh); else sheet.style.transform = '' });
+});
+if (location.hash === '#activity') setTimeout(() => $('act').click(), 300);
+document.addEventListener('keydown', e => { if (e.key !== 'Escape') return;
+  const open = [...document.querySelectorAll('.shade')].filter(x => !x.hidden).pop(); if (open) closeSheet(open) });
+document.querySelector('.tabs button:not([id])').onclick = () => document.querySelectorAll('.shade').forEach(closeSheet);
 loadHist();
 loadDesk().then(() => { if (location.hash === '#dash') openDash(); else if (location.hash === '#settings') openSettings(); else if (location.hash === '#harness') $('hbtn').click(); });
 </script>

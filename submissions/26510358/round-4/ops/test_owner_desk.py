@@ -100,3 +100,14 @@ for bad in ("x", [1], [{}] * 201):
     except ValueError:
         pass
 print("chatlog ok")
+
+(tmp / "logs" / "app.jsonl").write_text(json.dumps({"ts": day0 + 5, "said_first": "첫 정산!", "page_open": False}) + "\n")
+with open(tmp / "logs" / "react.jsonl", "a") as fh:
+    fh.write(json.dumps({"ts": day0 + 9, "action": "app_show_card", "args": {"title": "REVIEW 10:00", "body": "b"}}) + "\n")
+d.chatlog_add([{"who": "card", "id": "pg1", "title": "REVIEW 10:00", "text": "b", "ts": day0 + 8}])   # the page saved it too
+cl = d.chatlog()
+assert sum(1 for m in cl if m.get("title") == "REVIEW 10:00") == 1 and any(m.get("text") == "첫 정산!" for m in cl), cl
+a = d.activity(now=day0 + 60, notes=NOTES)
+kinds = {e["kind"] for e in a["events"]}
+assert {"say", "card", "exp", "tool"} <= kinds, kinds
+print("activity ok")

@@ -11,6 +11,8 @@ on the same origin with the same access cookie (miniapp_access = .kit/app.key).
   GET  /owner/chatlog  the owner chat kept across kit restarts and page reloads (.kit/chatlog.jsonl; the kit keeps
                       only 200 messages in memory and the page's cards live only in the page)
   POST /owner/chatlog  {items: [{who, text, ts, id?, title?}]}: the page sends what it shows; duplicates are dropped
+  GET  /owner/activity what the shop did that the owner cares about, newest first: customers' messages, the agent
+                      speaking first (app_say) and its cards, experiments, tools it made, the owner's limit changes
   GET  /owner/harness is the harness running: loop, model, customers' A2A, memory, tools, market (each ok/warn/fail),
                       the last ReAct steps, and a timeline of what changed: tools (forge.jsonl), memory (notes.md),
                       skills (card.json), goal (git log of agent.json)
@@ -438,11 +440,30 @@ CHATLOG_MAX = 3000
 
 
 def chat_key(m):
-    return f"card|{m.get('id')}" if m.get("who") == "card" else f"{m.get('who')}|{int(float(m.get('ts') or 0))}|{str(m.get('text'))[:80]}"
+    return f"card|{m.get('title')}" if m.get("who") == "card" else f"{m.get('who')}|{int(float(m.get('ts') or 0))}|{str(m.get('text'))[:80]}"
+
+
+def agent_spoke():
+    """What the agent said first (logs/app.jsonl) and the cards it sent (logs/react.jsonl): written by the kit even when
+    no page was open, so the chat shows them after a kit restart wiped its memory or a card's page was closed."""
+    out = [{"who": "agent", "text": r.get("said_first", ""), "ts": r.get("ts", 0), "first": True}
+           for r in jsonl("logs/app.jsonl", 200) if r.get("said_first")]
+    for r in jsonl("logs/react.jsonl", 3000):
+        a = r.get("args") or {}
+        if r.get("action") == "app_show_card" and a.get("title"):
+            out.append({"who": "card", "id": "r" + str(int(r.get("ts", 0))), "title": str(a["title"]),
+                        "text": str(a.get("body", "")), "ts": r.get("ts", 0)})
+    return out
 
 
 def chatlog(last=300):
-    return jsonl(".kit/chatlog.jsonl", last)
+    seen, out = set(), []
+    for m in sorted(jsonl(".kit/chatlog.jsonl", last) + agent_spoke(), key=lambda m: float(m.get("ts") or 0)):
+        k = chat_key(m)
+        if k not in seen:
+            seen.add(k)
+            out.append(m)
+    return out[-last:]
 
 
 def chatlog_add(items):
@@ -459,7 +480,7 @@ def chatlog_add(items):
         clean.append(c)
     f = R / ".kit" / "chatlog.jsonl"
     with _lock:
-        seen = {chat_key(m) for m in chatlog(CHATLOG_MAX)}
+        seen = {chat_key(m) for m in jsonl(".kit/chatlog.jsonl", CHATLOG_MAX)}
         new = [c for c in clean if chat_key(c) not in seen and not seen.add(chat_key(c))]
         if new:
             f.parent.mkdir(exist_ok=True)
@@ -469,6 +490,40 @@ def chatlog_add(items):
             if len(lines) > CHATLOG_MAX:
                 f.write_text("\n".join(lines[-CHATLOG_MAX:]) + "\n", encoding="utf-8")
     return len(new)
+
+
+def activity(now=None, notes=None):
+    now = now or time.time()
+    notes = read("notes.md") if notes is None else notes
+    ev = []
+    for c in jsonl("customers.jsonl", 300):
+        rep_ = c.get("reply") or {}
+        ev.append({"ts": c.get("at") or c.get("ts") or 0, "kind": "customer", "title": f"{c.get('claimed_from') or '손님'}의 문의",
+                   "text": str(c.get("text", ""))[:300], "more": str(rep_.get("reply", "") if isinstance(rep_, dict) else rep_)[:300]})
+    for m in agent_spoke():
+        ev.append({"ts": m["ts"], "kind": "say" if m["who"] == "agent" else "card",
+                   "title": "에이전트가 먼저 말함" if m["who"] == "agent" else m["title"], "text": m["text"][:300]})
+    for e in parse_experiments(notes, vetoes()):
+        try:
+            ts = time.mktime(time.strptime(e["at"], "%Y-%m-%d %H:%M"))
+        except ValueError:
+            continue
+        ev.append({"ts": ts, "kind": "exp", "title": f"실험: {e.get('change', '')[:60]}",
+                   "text": f"가설 {e.get('diff', '')}. 판정 {e.get('judge', '')}" + (f", 결과 {e['result']}" if e.get("result") else ""),
+                   "state": e["state"]})
+    for f in jsonl("logs/forge.jsonl", 100):
+        ev.append({"ts": f.get("ts", 0), "kind": "tool", "title": f"도구 {'제작' if f.get('version') == 1 else '개선'}: {f.get('tool')} v{f.get('version')}",
+                   "text": "테스트 통과" if f.get("passed") else f"테스트 실패: {str(f.get('error'))[:200]}"})
+    lim = limits()
+    if lim.get("set_at"):
+        try:
+            ev.append({"ts": time.mktime(time.strptime(lim["set_at"], "%Y-%m-%d %H:%M")), "kind": "owner", "title": "한도를 바꿈",
+                       "text": lim.get("note") or ""})
+        except ValueError:
+            pass
+    ev = [e for e in ev if now - float(e["ts"] or 0) <= 2 * 86400]
+    ev.sort(key=lambda e: -float(e["ts"] or 0))
+    return {"ts": int(now), "events": ev[:80]}
 
 
 def app_key():
@@ -502,6 +557,8 @@ class Handler(BaseHTTPRequestHandler):
             return self.reply(200, dash())
         if self.path.split("?")[0] == "/owner/chatlog":
             return self.reply(200, {"items": chatlog()})
+        if self.path.split("?")[0] == "/owner/activity":
+            return self.reply(200, activity())
         if self.path.split("?")[0] == "/owner/harness":
             return self.reply(200, harness())
         self.reply(404, {"error": "not found"})
