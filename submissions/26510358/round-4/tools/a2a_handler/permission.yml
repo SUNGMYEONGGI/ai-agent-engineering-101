@@ -9,5 +9,5 @@ permission:
   handles: [a2a]
 logic: logic.py
 test: test.py
-version: 20
-replaces: a2a_handler@19
+version: 22
+replaces: a2a_handler@21
