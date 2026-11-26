@@ -185,11 +185,32 @@ header #askbtn{position:absolute;right:16px;top:calc(16px + env(safe-area-inset-
 .chip{display:flex;flex-direction:column;align-items:flex-start;gap:12px;text-align:left;padding:16px;min-height:96px;border-radius:20px;
   border:1px solid var(--line);background:var(--raised);font-size:15px;color:var(--text)}
 form{background:var(--raised);border:1px solid var(--line);border-radius:999px;box-shadow:0 2px 8px rgb(0 0 0/.04)}
-.tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin:10px auto 0;max-width:420px;padding:5px;border-radius:999px;
+.tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin:10px auto 0;max-width:420px;padding:5px;border-radius:999px;
   background:var(--raised);border:1px solid var(--line);box-shadow:var(--shadow-2)}
 .tabs button{display:flex;flex-direction:column;align-items:center;gap:2px;border:0;background:none;padding:6px 0;border-radius:999px;font-size:11px;font-weight:600}
 .tabs button.on{background:var(--hover)}
 @media (prefers-color-scheme:dark){.chip,form,.tabs,header .status{border-color:var(--line-strong)}}
+
+/* Phone frame on wide screens: the page keeps a mobile app's width and shape */
+@media (min-width:600px){
+  body{background:color-mix(in srgb,var(--bg) 82%,#000 18%);display:grid;place-items:center}
+  .app{width:430px;max-width:430px;height:min(932px,calc(100dvh - 40px));border:1px solid var(--line);border-radius:40px;
+    overflow:hidden;box-shadow:var(--shadow-3)}
+  .shade{align-items:flex-end}.sheet{max-width:430px;border-radius:24px 24px 0 0;max-height:80dvh}
+}
+.bubble{border-radius:20px}
+/* Harness sheet */
+.hrow{display:flex;gap:10px;align-items:flex-start;padding:10px 14px}
+.hrow i{flex:none;width:9px;height:9px;border-radius:50%;margin-top:7px;background:var(--ok)}
+.hrow i.warn{background:var(--warn)}.hrow i.fail{background:var(--fail)}
+.list .hrow div{padding:0;border:0}
+.hrow b{display:block;font-size:14px}.hrow small{color:var(--text-mute);font-size:12px}
+.chg{padding:10px 14px}
+.chg .k{display:inline-block;font-size:11px;font-weight:700;padding:1px 7px;border-radius:6px;background:var(--hover);margin-right:6px}
+.chg ins,.chg del{display:block;text-decoration:none;font-size:12px;font-family:var(--mono);white-space:pre-wrap;overflow-wrap:anywhere;margin-top:2px}
+.chg ins{color:var(--ok)}.chg del{color:var(--fail)}
+.opts .chip{min-height:0;padding:5px 12px;border-radius:999px;font-size:12px;flex-direction:row}
+.opts .chip.on{background:var(--primary);color:var(--primary-ink)}
 </style>
 </head>
 <body>
@@ -213,6 +234,7 @@ form{background:var(--raised);border:1px solid var(--line);border-radius:999px;b
     </form>
     <nav class="tabs">
       <button type="button" class="on" aria-current="page"><svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 5.5A2.5 2.5 0 0 1 5.5 3h8A2.5 2.5 0 0 1 16 5.5v5a2.5 2.5 0 0 1-2.5 2.5H8l-3.5 3v-3A2.5 2.5 0 0 1 3 10.5z"/><path d="M18 8h.5A2.5 2.5 0 0 1 21 10.5v5a2.5 2.5 0 0 1-2 2.45V21l-3.5-3H11a2.5 2.5 0 0 1-2.45-2H13.5A4.5 4.5 0 0 0 18 11.5z"/></svg><span>대화</span></button>
+      <button type="button" id="hbtn"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12h4l3-7 4 14 3-7h6"/></svg><span>하네스</span></button>
       <button type="button" id="act"><svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M10 3l1.8 5.2L17 10l-5.2 1.8L10 17l-1.8-5.2L3 10l5.2-1.8zM18 2l.9 2.1L21 5l-2.1.9L18 8l-.9-2.1L15 5l2.1-.9zM18 15l.7 1.6 1.6.7-1.6.7L18 20l-.7-1.6-1.6-.7 1.6-.7z"/></svg><span>활동</span></button>
       <button type="button" id="set"><svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm0 4a3.5 3.5 0 1 1 0 7 3.5 3.5 0 0 1 0-7zm0 14a8 8 0 0 1-6-2.7c.9-1.9 3.3-3.3 6-3.3s5.1 1.4 6 3.3A8 8 0 0 1 12 20z"/></svg><span>나</span></button>
     </nav>
@@ -236,6 +258,17 @@ form{background:var(--raised);border:1px solid var(--line);border-radius:999px;b
   <div class="credit">Built with the agent market mini app kit, inspired by
     <a href="https://github.com/Q00/meshkit" target="_blank" rel="noopener">MeshKit</a> and
     <a href="https://github.com/Q00/ouroboros" target="_blank" rel="noopener">Ouroboros</a></div>
+</div></div>
+<div class="shade" id="harness" hidden><div class="sheet" role="dialog" aria-modal="true">
+  <div class="grip"></div>
+  <h3>하네스</h3>
+  <p class="sub" id="hsub">불러오는 중</p>
+  <div class="sec">상태</div><div id="hhealth"></div>
+  <div class="sec">ReAct 루프 (최근 15걸음)</div><div id="hsteps"></div>
+  <div class="sec">도구</div><div id="htools"></div>
+  <div class="sec">변경 기록</div>
+  <div class="opts" id="hfilter"></div>
+  <div id="hchanges"></div>
 </div></div>
 <div class="shade" id="dash" hidden><div class="sheet" role="dialog" aria-modal="true">
   <div class="grip"></div>
@@ -570,6 +603,31 @@ function fillActivity() {
   list($('limitsview'), [[`매입 회당 ${num(l.max_pay_per_call)} / 하루 ${num(l.max_pay_per_day)} credits`, ''],
                          [`처분 손실 하루 ${num(l.max_loss_per_day)} credits · 토큰 하루 ${num(l.daily_tokens)}`, l.note || '남긴 말 없음']]);
 }
+
+// Harness: is the loop alive, and what changed (tools, memory, skills, goal) - GET /owner/harness
+const KINDS = {all: '전체', tool: '도구', memory: '메모리', skill: '스킬', goal: '지시(goal)'};
+let hdata = null, hkind = 'all', htimer = 0;
+const hm = ts => ts ? new Date(ts * 1000).toLocaleString('ko-KR', {month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit'}) : '-';
+async function loadHarness() {
+  try { hdata = await deskCall('harness'); $('hsub').textContent = '갱신 ' + hm(hdata.ts) + ' · 15초마다 새로 읽음' }
+  catch (e) { $('hsub').textContent = '하네스 정보를 못 읽었습니다: ' + (e.message || e); return }
+  $('hhealth').innerHTML = '<div class="list">' + hdata.health.map(r =>
+    `<div class="hrow"><i class="${esc(r.state)}"></i><div><b>${esc(r.name)}</b><small>${esc(r.detail)}</small></div></div>`).join('') + '</div>';
+  list($('hsteps'), hdata.steps.map(x => [`${hm(x.ts)} · ${x.action}`, x.thought + (x.why ? ' (' + x.why + ')' : '')]));
+  list($('htools'), hdata.tools.map(t => [t.name, `사용 ${num(t.uses)} · 실패 ${num(t.fails)} · 마지막 ${hm(t.last)}`]));
+  drawChanges();
+}
+function drawChanges() {
+  $('hfilter').innerHTML = Object.entries(KINDS).map(([k, v]) => `<button type="button" class="chip${k === hkind ? ' on' : ''}" data-k="${k}">${v}</button>`).join('');
+  $('hfilter').querySelectorAll('button').forEach(b => b.onclick = () => { hkind = b.dataset.k; drawChanges() });
+  const rows = (hdata ? hdata.changes : []).filter(c => hkind === 'all' || c.kind === hkind);
+  $('hchanges').innerHTML = rows.length ? '<div class="list">' + rows.slice(0, 40).map(c =>
+    `<div class="chg"><span class="k">${esc(KINDS[c.kind] || c.kind)}</span><b>${esc(c.title || '')}</b> <small>${hm(c.ts)}</small>` +
+    (c.added || []).map(x => `<ins>+ ${esc(x)}</ins>`).join('') + (c.removed || []).map(x => `<del>- ${esc(x)}</del>`).join('') + '</div>').join('') + '</div>'
+    : '<div class="none">아직 없습니다. 메모리와 스킬은 현황 서버가 켜진 뒤의 변경부터 쌓입니다.</div>';
+}
+$('hbtn').onclick = () => { $('harness').hidden = false; loadHarness(); clearInterval(htimer); htimer = setInterval(loadHarness, 15000) };
+$('harness').onclick = e => { if (e.target === $('harness')) { $('harness').hidden = true; clearInterval(htimer) } };
 $('act').onclick = () => { fillActivity(); $('activity').hidden = false; };
 $('activity').onclick = e => { if (e.target === $('activity')) $('activity').hidden = true; };
 $('settings').onclick = e => { if (e.target === $('settings')) $('settings').hidden = true; };
@@ -612,7 +670,7 @@ if (vv) {
 }
 draw();
 // #dash and #settings open those sheets (a home-screen shortcut or a link from a card).
-loadDesk().then(() => { if (location.hash === '#dash') openDash(); else if (location.hash === '#settings') openSettings(); });
+loadDesk().then(() => { if (location.hash === '#dash') openDash(); else if (location.hash === '#settings') openSettings(); else if (location.hash === '#harness') $('hbtn').click(); });
 </script>
 </body>
 </html>

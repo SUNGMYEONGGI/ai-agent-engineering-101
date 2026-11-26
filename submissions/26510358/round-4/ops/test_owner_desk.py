@@ -68,3 +68,18 @@ assert [r for _, r in d.refresh_market(now=day0 + 60, board=board, forum=[])["hi
 assert d.refresh_market(now=day0 + 120, board=board, forum=[])["history"][-1][1] == 9   # unchanged rank: no new point
 assert d.dash(now=day0, notes=n2)["market"]["rank"] == 9
 print("owner_desk ok")
+
+# harness: health rows, a memory change is logged between two snapshots, forge rows join the timeline
+(tmp / "notes.md").write_text("RULES\nA\n", encoding="utf-8")
+(tmp / "logs" / "react.jsonl").write_text(json.dumps({"ts": day0, "action": "sleep", "args": {"seconds": 600}}) + "\n")
+(tmp / "logs" / "forge.jsonl").write_text(json.dumps({"ts": day0, "tool": "recall", "version": 2, "passed": False, "error": "x"}) + "\n")
+d.track_changes(day0)
+(tmp / "notes.md").write_text("RULES\nB\n", encoding="utf-8")
+d.track_changes(day0 + 60)
+h = d.harness(now=day0 + 120)
+assert [r["name"] for r in h["health"]][0] == "ReAct 루프" and h["health"][0]["state"] == "ok", h["health"][0]
+assert h["health"][4]["state"] == "warn"                          # the last forge failed its test
+mem = [c for c in h["changes"] if c["kind"] == "memory"]
+assert mem and mem[0]["added"] == ["B"] and mem[0]["removed"] == ["A"], h["changes"]
+assert any(c["kind"] == "tool" and c["title"] == "recall v2" for c in h["changes"])
+print("harness ok")

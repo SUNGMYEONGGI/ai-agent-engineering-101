@@ -8,6 +8,9 @@ on the same origin with the same access cookie (miniapp_access = .kit/app.key).
   GET  /owner/dash    funnel, experiments, winners, tokens, losses, limits, alerts (JSON)
   POST /owner/limits  {max_loss_per_day, max_pay_per_call, max_pay_per_day, daily_tokens, note} -> owner_limits.json
   POST /owner/veto    {exp, action: stop|revert} -> owner_vetoes.jsonl (the app also tells the agent in the chat)
+  GET  /owner/harness is the harness running: loop, model, customers' A2A, memory, tools, market (each ok/warn/fail),
+                      the last ReAct steps, and a timeline of what changed: tools (forge.jsonl), memory (notes.md),
+                      skills (card.json), goal (git log of agent.json)
 
 Sources (all written by the agent through its memory tool, formats fixed in agent.json's goal):
   notes.md   FUNNEL <YYYY-MM-DD HH:MM> m=<n> i=<n> c=<n> s=<n> today=<n>   (last one wins)
@@ -24,6 +27,7 @@ import json
 import os
 import re
 import secrets
+import subprocess
 import sys
 import threading
 import time
@@ -276,6 +280,136 @@ def dash(now=None, notes=None):
             "market": {k: _mkt.get(k) for k in ("at", "rank", "of", "history", "forum", "error")}}
 
 
+def jsonl(name, last=None):
+    rows = []
+    for line in read(name).splitlines()[-last if last else 0:]:
+        try:
+            r = json.loads(line)
+        except ValueError:
+            continue
+        if isinstance(r, dict):
+            rows.append(r)
+    return rows
+
+
+def ago(ts, now):
+    if not ts:
+        return "기록 없음"
+    s = max(0, int(now - ts))
+    return f"{s}초 전" if s < 90 else f"{s // 60}분 전" if s < 5400 else f"{s // 3600}시간 전"
+
+
+def card_lines(text):
+    try:
+        c = json.loads(text)
+    except ValueError:
+        return []
+    return [f"설명: {str(c.get('description', ''))[:120]}"] + [
+        f"스킬: {k.get('name')}: {str(k.get('description', ''))[:80]}" for k in c.get("skills") or [] if isinstance(k, dict)]
+
+
+SNAPS = {"memory": ("notes.md", lambda t: [x for x in t.splitlines() if x.strip()]), "skill": ("card.json", card_lines)}
+
+
+def track_changes(now):
+    """notes.md (memory) and card.json (skills) keep no history: snapshot both and log the lines that came and went."""
+    changes = R / ".kit" / "desk_changes.jsonl"
+    with _lock:
+        try:
+            snap = json.loads((R / ".kit" / "desk_snap.json").read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            snap = {}
+        logged = False
+        for kind, (name, lines_of) in SNAPS.items():
+            new = lines_of(read(name))
+            old = snap.get(kind)
+            if old is not None and new != old:
+                added = [x for x in new if x not in old]
+                removed = [x for x in old if x not in new]
+                if added or removed:
+                    changes.parent.mkdir(exist_ok=True)
+                    with changes.open("a", encoding="utf-8") as fh:
+                        fh.write(json.dumps({"ts": int(now), "kind": kind, "file": name, "added": added[:8],
+                                             "removed": removed[:8]}, ensure_ascii=False) + "\n")
+                    logged = True
+            snap[kind] = new
+        (R / ".kit").mkdir(exist_ok=True)
+        (R / ".kit" / "desk_snap.json").write_text(json.dumps(snap, ensure_ascii=False), encoding="utf-8")
+        if logged and changes.stat().st_size > 2_000_000:                 # ponytail: crude cap, keep the newest half
+            lines = changes.read_text(encoding="utf-8").splitlines()
+            changes.write_text("\n".join(lines[len(lines) // 2:]) + "\n", encoding="utf-8")
+
+
+def goal_changes():
+    try:
+        out = subprocess.run(["git", "log", "-12", "--format=%ct|%h|%s", "--", "agent.json"], cwd=R, capture_output=True,
+                             text=True, timeout=5).stdout
+    except (OSError, subprocess.SubprocessError):
+        return []
+    rows = []
+    for line in out.splitlines():
+        ts, h, subj = (line.split("|", 2) + ["", ""])[:3]
+        rows.append({"ts": int(ts or 0), "kind": "goal", "title": f"goal {h}", "added": [subj[:200]], "removed": []})
+    return rows
+
+
+def harness(now=None):
+    now = now or time.time()
+    lim = limits()
+    steps = jsonl("logs/react.jsonl", 400)
+    last = steps[-1] if steps else {}
+    wake = last.get("ts", 0) + float((last.get("args") or {}).get("seconds") or 0) if last.get("action") == "sleep" else 0
+    loop_age = now - last.get("ts", 0)
+    hour = [x for x in steps if now - x.get("ts", 0) <= 3600]
+    shim = jsonl("logs/llm-shim.jsonl", 60)
+    m = shim[-1] if shim else {}
+    errs = sum(1 for x in shim if x.get("status") != 200)
+    tools = {}
+    try:
+        tools = json.loads(read("tools/index.json", "{}"))
+    except ValueError:
+        pass
+    forges = jsonl("logs/forge.jsonl")
+    cust = jsonl("customers.jsonl")
+    notes = read("notes.md")
+    day = time.strftime("%F", time.localtime(now))
+    tok = tokens_today(day)
+
+    def row(name, state, detail):
+        return {"name": name, "state": state, "detail": detail}
+
+    health = [
+        row("ReAct 루프", "ok" if loop_age < 1500 or now < wake + 300 else "fail",
+            f"마지막 {last.get('action', '-')} · {ago(last.get('ts'), now)} · 1시간 {len(hour)}걸음"
+            + (f" · {ago(now - (wake - now), now).replace('전', '뒤')} 깨어남" if wake > now else "")),
+        row("모델", "fail" if not m else "warn" if m.get("status") != 200 or errs >= 10 or tok >= lim["daily_tokens"] else "ok",
+            f"{m.get('model', '-')} · {ago(m.get('ts'), now)} · 최근 60회 오류 {errs} · 오늘 {tok / 1e6:.1f}M / {lim['daily_tokens'] / 1e6:.0f}M"),
+        row("손님 A2A", "ok" if now - (tools.get("a2a_handler") or {}).get("last", 0) < 3 * 3600 else "warn",
+            f"a2a_handler {ago((tools.get('a2a_handler') or {}).get('last'), now)} · 1시간 문의 "
+            f"{sum(1 for c in cust if now - c.get('ts', 0) <= 3600)}건 · 누적 {len(cust)}건"),
+        row("메모리", "ok" if len(notes) <= 3000 else "warn",
+            f"notes.md {len(notes):,}자 / 3,000 (넘으면 앞부분이 프롬프트에서 잘림) · 수정 "
+            f"{ago((R / 'notes.md').stat().st_mtime if (R / 'notes.md').exists() else 0, now)}"),
+        row("도구", "ok" if not any(not f.get("passed") for f in forges[-3:]) else "warn",
+            f"{len(tools)}개 · 실패 누적 {sum((v or {}).get('fails', 0) for v in tools.values())} · 마지막 forge "
+            + (f"{forges[-1].get('tool')} v{forges[-1].get('version')} {'통과' if forges[-1].get('passed') else '실패'} {ago(forges[-1].get('ts'), now)}" if forges else "없음")),
+        row("시장", "fail" if _mkt.get("error") else "ok",
+            _mkt.get("error") or f"순위 {_mkt.get('rank') or '-'} / {_mkt.get('of') or '-'} · {ago(_mkt.get('at'), now)} 확인"),
+    ]
+    changes = [{"ts": f.get("ts", 0), "kind": "tool", "title": f"{f.get('tool')} v{f.get('version')}",
+                "added": ["테스트 통과" if f.get("passed") else f"테스트 실패: {str(f.get('error'))[:160]}",
+                          "network: " + ", ".join((f.get("permission") or {}).get("network") or [])], "removed": []}
+               for f in forges[-30:]]
+    changes += [dict(c, title=c.get("file", c["kind"])) for c in jsonl(".kit/desk_changes.jsonl", 60)]
+    changes += goal_changes()
+    changes.sort(key=lambda c: -c.get("ts", 0))
+    return {"ts": int(now), "health": health,
+            "steps": [{"ts": x.get("ts"), "action": x.get("action"), "thought": str(x.get("thought", ""))[:200],
+                       "why": str((x.get("args") or {}).get("why", ""))[:120]} for x in steps[-15:][::-1]],
+            "tools": [{"name": k, **(v or {})} for k, v in sorted(tools.items(), key=lambda kv: -(kv[1] or {}).get("uses", 0))],
+            "changes": changes[:60]}
+
+
 def app_key():
     try:
         return (R / ".kit" / "app.key").read_text(encoding="utf-8").strip()
@@ -305,6 +439,8 @@ class Handler(BaseHTTPRequestHandler):
             return self.reply(401, {"error": "this app needs its access code"})
         if self.path.split("?")[0] == "/owner/dash":
             return self.reply(200, dash())
+        if self.path.split("?")[0] == "/owner/harness":
+            return self.reply(200, harness())
         self.reply(404, {"error": "not found"})
 
     def do_POST(self):
@@ -343,12 +479,17 @@ def tick():
             refresh_market()
         try:
             dash()
+            track_changes(time.time())
         except Exception as e:                            # a bad notes line must not stop the clock
             print(f"[desk] tick: {type(e).__name__}: {e}", flush=True)
         time.sleep(60)
 
 
 if __name__ == "__main__":
+    if sys.argv[1:] == ["--harness"]:
+        track_changes(time.time())
+        print(json.dumps(harness(), ensure_ascii=False, indent=1)[:4000])
+        sys.exit()
     if sys.argv[1:] == ["--once"]:
         print(json.dumps(dash(), ensure_ascii=False, indent=1))
         sys.exit()
