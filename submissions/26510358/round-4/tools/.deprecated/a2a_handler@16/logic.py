@@ -1,0 +1,75 @@
+import json,re,statistics,time,math
+from pathlib import Path
+from collections import defaultdict
+import httpx
+src=Path('ops/a2a_v11.py').read_text(encoding='utf8')
+old="x['price']<math.ceil((int(u.get('cost',0))+210)*100/99)"
+assert old in src
+src=src.replace(old,"not loss_allowed(u,x['price'],a,kit)")
+b={};exec(compile(src,'ops/a2a_v11.py','exec'),b)
+b['NOUNS'].update({'백미':['쌀','백미'],'현미':['현미'],'잡곡':['잡곡'],'가정용 건조기':['건조기'],'의류건조기':['건조기'],'건조기':['건조기'],'신선채소':['신선채소','채소','시금치','콩나물'],'제철 채소':['채소','시금치','콩나물'],'채소':['채소','시금치','콩나물'],'두유':['두유'],'돼지고기':['돼지고기','삼겹살','한돈'],'삼겹살':['삼겹살']})
+b['ORDER']=sorted(b['NOUNS'],key=len,reverse=True)
+def loss_allowed(u,price,a,kit):
+ floor=math.ceil((int(u.get('cost',0))+210)*100/99)
+ if price>=floor:return True
+ try:
+  rows=json.loads(b['checked_path'](a,'loss_path','loss_reservations.json',kit.testing).read_text(encoding='utf8'));day=time.strftime('%Y-%m-%d',time.gmtime(time.time()+32400));cap=30000
+  if kit.testing:cap=min(cap,int(a.get('loss_cap',30000)))
+  else:
+   try:cap=min(cap,int(json.loads(Path('owner_limits.json').read_text()).get('max_loss_per_day',30000)))
+   except (OSError,ValueError,TypeError):pass
+  rows=[r for r in rows if r.get('day')==day]
+  return sum(int(r['loss']) for r in rows)<=max(0,cap) and any(r.get('active') and r.get('unit')==u.get('unit') and r.get('sku')==u.get('sku') and r.get('grade')==u.get('grade') and int(r.get('price',-1))==price and int(r.get('loss',0))>=floor-price for r in rows)
+ except Exception:return False
+b['loss_allowed']=loss_allowed
+def run(a,kit):
+ try:
+  result=b['run'](a,kit)
+  if result.get('ok') is False:return result
+  d=a.get('data') if isinstance(a.get('data'),dict) else {};text=str(a.get('text') or '')
+  payment=any(k in d for k in ('payment_mandate','checkout_mandate','tx_hash','fee_tx_hash')) or bool(re.search(r'환불|파손|보증\s*청구',text))
+  if not payment:
+   requests=b['wanted'](text);reply=result.get('reply','');checks=(result.get('data') or {}).get('checkouts',[]);missing=[]
+   for noun,grade in requests:
+    if noun+'은(는) 없습니다' in reply or noun+' '+str(grade)+'등급은 없습니다' in reply or re.search(re.escape(noun)+r'.{0,30}없습니다',reply):missing.append(noun)
+   if not requests and not checks:
+    m=re.search(r'([가-힣A-Za-z0-9 ]{2,25}?)(?:\s*(?:재고|있나요|있습니까|구매|판매))',text)
+    if m:missing=[m.group(1).strip()]
+   if missing:
+    wp=b['checked_path'](a,'wanted_path','wanted.jsonl',kit.testing);wp.parent.mkdir(parents=True,exist_ok=True)
+    with wp.open('a',encoding='utf8') as f:
+     for item in missing:f.write(json.dumps({'ts':int(time.time()),'item':item,'buyer':a.get('claimed_from')},ensure_ascii=False)+'\n')
+   if not checks:
+    if missing and '없습니다' not in reply:reply='요청하신 '+', '.join(missing)+' 재고는 확인되지 않았습니다.'
+    try:
+     items=b['load'](b['checked_path'](a,'catalog_path','public/catalog.json',kit.testing),{}).get('items',[])
+     if kit.testing:ledger=a.get('ledger_fixture',[]);inventory=a.get('inventory_fixture',{})
+     else:
+      lr=httpx.get(kit.market.rstrip('/')+'/api/ledger?after=-500',timeout=8);lr.raise_for_status();ledger=lr.json();ir=b['api'](kit,'/api/inventory');ir.raise_for_status();inventory=ir.json()
+     if isinstance(ledger,dict):ledger=ledger.get('entries',ledger.get('ledger',[]))
+     sales=defaultdict(list)
+     for row in ledger:
+      if row.get('kind')!='settle' or row.get('round',4)!=4:continue
+      x=row.get('data') or {};v=x.get('amount',x.get('price'))
+      if x.get('sku') and x.get('grade') and isinstance(v,(int,float)) and v>0:sales[(x['sku'],x['grade'])].append(v)
+     units={u.get('unit'):u for u in inventory.get('units',[])};opts=[];seen=set();now=time.time();holds=b['load'](b['checked_path'](a,'holds_path','holds.json',kit.testing),{})
+     for x in items:
+      key=(x.get('sku'),x.get('grade'));prices=sales.get(key,[])
+      if not prices or x.get('price',float('inf'))>statistics.median(prices) or key in seen:continue
+      live=[]
+      for uid in x.get('units',[]):
+       u=units.get(uid);h=holds.get(uid) or {};exp=u.get('expires_at') if u else None
+       held=h.get('expires_at',0) if isinstance(h,dict) else h
+       if u and u.get('sku')==key[0] and u.get('grade')==key[1] and (not exp or b['tm'](exp)>now) and (not held or b['tm'](held)<=now) and loss_allowed(u,x['price'],a,kit):live.append(u)
+      if not live:continue
+      seen.add(key);opts.append('%s %s등급 %s credits'%(x['name'],x['grade'],x['price']))
+      if len(opts)==5:break
+     if opts:reply+='\n현재 재고 대안 (최근 동등급 중간가 이하): '+', '.join(opts)+'. 원하시면 소비기한을 확인해 결제서를 드립니다.'
+    except Exception:reply+='\n다른 상품의 재고와 가격을 확인해 드리겠습니다.'
+   result['reply']=reply
+  try:
+   p=b['checked_path'](a,'replies_path','customer_replies.jsonl',kit.testing);p.parent.mkdir(parents=True,exist_ok=True)
+   with p.open('a',encoding='utf8') as f:f.write(json.dumps({'ts':time.time(),'task_id':a.get('task_id'),'context_id':a.get('context_id'),'claimed_from':a.get('claimed_from'),'text':text,'reply':result.get('reply',''),'checkout':bool((result.get('data') or {}).get('checkouts')),'payment':payment},ensure_ascii=False)+'\n')
+  except Exception:pass
+  return result
+ except Exception as e:return {'ok':False,'error':str(e),'state':'input_required','reply':'재고 확인에 문제가 생겼습니다. 잠시 후 다시 문의해 주세요.'}
