@@ -1,0 +1,9 @@
+name: recall
+description: 로그 검색 및 응대기 백업 복구 진단.
+permission:
+  write: [ops/a2a_v16.py, ops/a2a_v16_test.py, tmp/test/]
+  timeout: 10
+logic: logic.py
+test: test.py
+version: 8
+replaces: recall@7

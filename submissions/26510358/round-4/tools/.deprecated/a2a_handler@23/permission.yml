@@ -1,0 +1,13 @@
+name: a2a_handler
+description: 실재고와 정산을 검증하고 수량·상품 유형에 맞는 결제서 및 누락 품목·대안을 안내합니다.
+permission:
+  network: [market.ourolabs.ai]
+  write: [public/reservations.jsonl, customers.jsonl, customer_replies.jsonl, holds.json, wanted.jsonl, tmp/test/]
+  identity: [shop]
+  wallet: [sign_jwt]
+  timeout: 35
+  handles: [a2a]
+logic: logic.py
+test: test.py
+version: 23
+replaces: a2a_handler@22

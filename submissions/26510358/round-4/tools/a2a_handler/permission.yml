@@ -1,5 +1,5 @@
 name: a2a_handler
-description: 실재고·손절 승인·정산을 검증하고 누락 품목 및 확인된 대안을 안내합니다.
+description: 실재고와 정산을 검증하고 수량·상품 유형에 맞는 결제서 및 누락 품목·대안을 안내합니다.
 permission:
   network: [market.ourolabs.ai]
   write: [public/reservations.jsonl, customers.jsonl, customer_replies.jsonl, holds.json, wanted.jsonl, tmp/test/]
@@ -9,5 +9,5 @@ permission:
   handles: [a2a]
 logic: logic.py
 test: test.py
-version: 22
-replaces: a2a_handler@21
+version: 24
+replaces: a2a_handler@23
