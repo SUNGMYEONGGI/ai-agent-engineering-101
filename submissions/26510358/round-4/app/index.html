@@ -143,7 +143,12 @@ textarea::placeholder{color:var(--text-mute)}
 .funnel .st{display:inline-flex;align-items:baseline;gap:4px;padding:3px 8px;border-radius:8px;background:var(--card)}
 .funnel .st small{font-size:11px;color:var(--text-mute)}
 .funnel .st b{font-variant-numeric:tabular-nums}
-.funnel .st.bad{background:color-mix(in srgb,var(--fail) 16%,var(--bg));color:var(--fail);font-weight:700}
+.funnel{--sm:#64748b;--si:#2563eb;--sc:#c2780a;--ss:#0f9d6b}
+.funnel .st-m{--c:var(--sm)}.funnel .st-i{--c:var(--si)}.funnel .st-c{--c:var(--sc)}.funnel .st-s{--c:var(--ss)}
+.funnel .st{background:color-mix(in srgb,var(--c) 11%,var(--bg))}.funnel .st b{color:var(--c)}
+.funnel .st small{color:color-mix(in srgb,var(--c) 75%,var(--text))}
+.funnel .st.bad b{color:var(--fail)}
+.funnel .st.bad{box-shadow:inset 0 0 0 1.5px var(--fail);background:color-mix(in srgb,var(--fail) 16%,var(--bg));color:var(--fail);font-weight:700}
 .funnel .st.bad small{color:var(--fail)}
 .funnel .arr{color:var(--text-mute);font-size:12px}
 .meter{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text-mute)}
@@ -199,18 +204,60 @@ form{background:var(--raised);border:1px solid var(--line);border-radius:999px;b
   .shade{align-items:flex-end}.sheet{max-width:430px;border-radius:24px 24px 0 0;max-height:80dvh}
 }
 .bubble{border-radius:20px}
-/* Harness sheet */
-.hrow{display:flex;gap:10px;align-items:flex-start;padding:10px 14px}
-.hrow i{flex:none;width:9px;height:9px;border-radius:50%;margin-top:7px;background:var(--ok)}
-.hrow i.warn{background:var(--warn)}.hrow i.fail{background:var(--fail)}
-.list .hrow div{padding:0;border:0}
-.hrow b{display:block;font-size:14px}.hrow small{color:var(--text-mute);font-size:12px}
-.chg{padding:10px 14px}
-.chg .k{display:inline-block;font-size:11px;font-weight:700;padding:1px 7px;border-radius:6px;background:var(--hover);margin-right:6px}
-.chg ins,.chg del{display:block;text-decoration:none;font-size:12px;font-family:var(--mono);white-space:pre-wrap;overflow-wrap:anywhere;margin-top:2px}
-.chg ins{color:var(--ok)}.chg del{color:var(--fail)}
+/* Harness sheet: one heartbeat chart, then quiet rows that open on tap */
+.hs{--mk:#2563eb;--sl:#0f9d6b;--mo:#c2780a;--th:#8b8fa3;--bd:#7c4dff;--ow:#db2777;--zz:var(--line-strong)}
+.hs h4{margin:24px 0 8px;font-size:15px;font-weight:650;letter-spacing:-.01em}
+.hs .c-mk{background:var(--mk)}.hs .c-sl{background:var(--sl)}.hs .c-mo{background:var(--mo)}.hs .c-th{background:var(--th)}
+.hs .c-bd{background:var(--bd)}.hs .c-ow{background:var(--ow)}.hs .c-zz{background:var(--zz)}
+.beat{margin-top:12px}
+.bhead{display:flex;align-items:center;gap:8px}
+.bhead i,.hr summary i{width:10px;height:10px;border-radius:50%;background:var(--ok);flex:none}
+.bhead i.warn,.hr.warn summary i{background:var(--warn)}.bhead i.fail,.hr.fail summary i{background:var(--fail)}
+.bhead b{font-size:22px;letter-spacing:-.02em}.bhead span{margin-left:auto;color:var(--text-mute);font-size:13px}
+.bars{display:grid;grid-template-columns:repeat(60,1fr);gap:1px;height:56px;margin-top:12px;align-items:end;
+  border-bottom:1px solid var(--line)}
+.bars span{display:flex;flex-direction:column-reverse;gap:1px}
+.bars i{display:block;height:6px;border-radius:1px}
+.baxis{display:flex;justify-content:space-between;font-size:11px;color:var(--text-mute);margin-top:4px}
+.legend{display:flex;flex-wrap:wrap;gap:4px 12px;margin-top:8px;font-size:12px;color:var(--text-soft)}
+.legend i{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:5px}
+.hs details>summary{list-style:none;cursor:pointer}.hs details>summary::-webkit-details-marker{display:none}
+.hr{border-top:1px solid var(--line)}.hr:last-child{border-bottom:1px solid var(--line)}
+.hr summary{display:flex;align-items:center;gap:10px;padding:12px 2px}
+.hr summary span{font-size:14px;color:var(--text-soft)}
+.hr summary b{margin-left:auto;font-size:16px;font-variant-numeric:tabular-nums;text-align:right}
+.hr p{margin:0 0 12px 20px;font-size:13px;color:var(--text-mute)}
+.mt{height:4px;border-radius:2px;background:var(--hover);margin:-4px 0 10px 20px;overflow:hidden}
+.mt em{display:block;height:100%;width:var(--w);background:var(--text-soft)}
+.hr.warn .mt em{background:var(--warn)}
+.cmp{margin:0 0 10px 20px;display:grid;gap:4px}
+.cmp div{display:grid;grid-template-columns:110px 1fr 36px;align-items:center;gap:8px;font-size:12px;color:var(--text-mute)}
+.cmp span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cmp em{display:block;height:8px;border-radius:4px;width:var(--w);background:var(--line-strong)}
+.cmp b{text-align:right;font-variant-numeric:tabular-nums;color:var(--text-soft)}
+.cmp .us span,.cmp .us b{color:var(--text);font-weight:700}.cmp .us em{background:var(--si,#2563eb)}
+.step summary{display:grid;grid-template-columns:40px 8px auto 1fr;align-items:center;gap:8px;padding:7px 0;font-size:13px}
+.step time{color:var(--text-mute);font-variant-numeric:tabular-nums;font-size:12px}
+.step summary i{width:8px;height:8px;border-radius:50%}
+.step summary b{font-weight:600;white-space:nowrap}
+.step summary span{color:var(--text-mute);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.step p{margin:0 0 8px 56px;font-size:13px;color:var(--text-soft)}.step small{color:var(--text-mute)}
+.tl{display:grid;grid-template-columns:112px 1fr 48px;grid-template-rows:auto auto;column-gap:10px;align-items:center;padding:6px 0;font-size:13px}
+.tl em{display:block;height:8px;border-radius:4px;width:var(--w);background:var(--mk)}
+.tl b{text-align:right;font-variant-numeric:tabular-nums}
+.tl small{grid-column:2/4;color:var(--text-mute);font-size:11px}.tl u{color:var(--fail);text-decoration:none;font-weight:600}
+.chg{border-left:3px solid var(--line-strong);padding-left:10px;margin:0 0 10px}
+.chg.k-tool{border-color:var(--mk)}.chg.k-memory{border-color:var(--th)}.chg.k-skill{border-color:var(--sl)}.chg.k-goal{border-color:var(--bd)}
+.chg summary{display:grid;grid-template-columns:1fr auto;gap:0 8px;font-size:14px}
+.chg summary b{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.chg summary small{grid-row:2;color:var(--text-mute);font-size:12px}
+.chg summary span{grid-row:1/3;grid-column:2;align-self:center;font-size:12px;color:var(--text-mute)}
+.chg ul{list-style:none;margin:6px 0 0;padding:0;font-size:12px;display:grid;gap:3px}
+.chg li{overflow-wrap:anywhere}.chg li.add{color:var(--ok)}.chg li.add::before{content:"+ "}.chg li.del{color:var(--fail)}.chg li.del::before{content:"− "}
 .opts .chip{min-height:0;padding:5px 12px;border-radius:999px;font-size:12px;flex-direction:row}
 .opts .chip.on{background:var(--primary);color:var(--primary-ink)}
+.hfoot{margin:20px 0 0;font-size:12px;color:var(--text-mute);text-align:center}
+@media (prefers-reduced-motion:reduce){.sheet,.shade{animation:none}}
 </style>
 </head>
 <body>
@@ -259,16 +306,15 @@ form{background:var(--raised);border:1px solid var(--line);border-radius:999px;b
     <a href="https://github.com/Q00/meshkit" target="_blank" rel="noopener">MeshKit</a> and
     <a href="https://github.com/Q00/ouroboros" target="_blank" rel="noopener">Ouroboros</a></div>
 </div></div>
-<div class="shade" id="harness" hidden><div class="sheet" role="dialog" aria-modal="true">
+<div class="shade" id="harness" hidden><div class="sheet hs" role="dialog" aria-modal="true" aria-labelledby="htitle">
   <div class="grip"></div>
-  <h3>하네스</h3>
-  <p class="sub" id="hsub">불러오는 중</p>
-  <div class="sec">상태</div><div id="hhealth"></div>
-  <div class="sec">ReAct 루프 (최근 15걸음)</div><div id="hsteps"></div>
-  <div class="sec">도구</div><div id="htools"></div>
-  <div class="sec">변경 기록</div>
-  <div class="opts" id="hfilter"></div>
-  <div id="hchanges"></div>
+  <h3 id="htitle">하네스</h3>
+  <div class="beat" id="hbeat"></div>
+  <h4>지금 상태</h4><div id="hhealth"></div>
+  <h4>방금 한 일</h4><div id="hsteps"></div>
+  <h4>도구 사용</h4><div id="htools"></div>
+  <h4>바뀐 것</h4><div class="opts" id="hfilter"></div><div id="hchanges"></div>
+  <p class="hfoot" id="hsub"></p>
 </div></div>
 <div class="shade" id="dash" hidden><div class="sheet" role="dialog" aria-modal="true">
   <div class="grip"></div>
@@ -363,7 +409,7 @@ function drawDesk() {
   let h = (desk.alerts || []).map(a => `<div class="alert">${esc(a.text)}</div>`).join('');
   h += f ? `<button class="funnel" type="button" id="fun" aria-label="FUNNEL, 최근 60분">` + desk.stages.map(([k, label], i) =>
              (i ? '<span class="arr">→</span>' : '') +
-             `<span class="st${f.blocked === k ? ' bad' : ''}"><small>${esc(label)}</small><b>${num(f[k])}</b></span>`).join('') + '</button>'
+             `<span class="st st-${k}${f.blocked === k ? ' bad' : ''}"><small>${esc(label)}</small><b>${num(f[k])}</b></span>`).join('') + '</button>'
          : '<div class="meter">FUNNEL 줄이 아직 없습니다. 에이전트의 다음 실행 뒤에 보입니다.</div>';
   if (t.cap) {
     const pct = Math.min(100, t.today / t.cap * 100);
@@ -624,26 +670,63 @@ function fillActivity() {
 }
 
 // Harness: is the loop alive, and what changed (tools, memory, skills, goal) - GET /owner/harness
-const KINDS = {all: '전체', tool: '도구', memory: '메모리', skill: '스킬', goal: '지시(goal)'};
+const KINDS = {all: '전체', tool: '도구', memory: '메모리', skill: '스킬', goal: '지시'};
+const ACT = {market_call: ['시장 조회', 'mk'], a2a_handler: ['손님 응대', 'sl'], reply: ['답장', 'sl'], card_writer: ['카드 게시', 'sl'],
+  stock_and_price: ['진열·가격', 'sl'], pay_guard: ['송금 검사', 'mo'], memory: ['메모 정리', 'th'], write_note: ['메모', 'th'],
+  recall: ['기록 검색', 'th'], read_tool: ['도구 읽기', 'th'], forge_tool: ['도구 제작', 'bd'], sleep: ['대기', 'zz'],
+  app_say: ['먼저 말하기', 'ow'], app_show_card: ['카드 보내기', 'ow'], app_owner_limits: ['한도 확인', 'ow'], app_ask_owner: ['주인에게 질문', 'ow']};
+const CAT = {mk: '시장', sl: '판매', mo: '돈', th: '생각', bd: '제작', ow: '주인', zz: '대기'};
+const act = a => ACT[a] || (/^app_/.test(a) ? [a.slice(4), 'ow'] : [a, 'th']);
 let hdata = null, hkind = 'all', htimer = 0;
-const hm = ts => ts ? new Date(ts * 1000).toLocaleString('ko-KR', {month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit'}) : '-';
+const rel = ts => { if (!ts) return '-'; const s = Math.max(0, Date.now() / 1000 - ts);
+  return s < 60 ? '방금' : s < 3600 ? Math.floor(s / 60) + '분 전' : s < 86400 ? Math.floor(s / 3600) + '시간 전' : Math.floor(s / 86400) + '일 전' };
+const hhmm = ts => new Date(ts * 1000).toLocaleTimeString('ko-KR', {hour: '2-digit', minute: '2-digit', hour12: false});
+function beat(h) {
+  // the last hour of the ReAct loop, one column per minute, one block per step, coloured by what the step was for
+  const now = h.ts, cols = Array.from({length: 60}, () => []);
+  for (const [ts, a] of h.pulse || []) { const i = 59 - Math.floor((now - ts) / 60); if (i >= 0 && i < 60) cols[i].push(act(a)[1]) }
+  const loop = h.health.find(r => r.key === 'loop') || {};
+  const used = [...new Set(cols.flat())];
+  return `<div class="bhead"><i class="${esc(loop.state)}"></i><b>${esc(loop.value || '')}</b>` +
+    `<span>${loop.wake ? hhmm(loop.wake) + '에 깨어남' : (h.pulse || []).length + '걸음 / 1시간'}</span></div>` +
+    `<div class="bars" role="img" aria-label="지난 60분 동안 ${(h.pulse || []).length}걸음">` +
+    cols.map(c => `<span>${c.slice(0, 8).map(k => `<i class="c-${k}"></i>`).join('')}</span>`).join('') + '</div>' +
+    `<div class="baxis"><span>60분 전</span><span>지금</span></div>` +
+    `<div class="legend">${used.map(k => `<span><i class="c-${k}"></i>${CAT[k]}</span>`).join('')}</div>`;
+}
+function healthRow(r) {
+  const bars = r.bars ? (() => { const max = Math.max(1, ...r.bars.map(b => b.n));
+    return `<div class="cmp">${r.bars.map((b, i) => `<div class="${i ? '' : 'us'}"><span>${esc(b.shop)}</span><em style="--w:${Math.max(2, 100 * b.n / max)}%"></em><b>${num(b.n)}</b></div>`).join('')}</div>` })() : '';
+  return `<details class="hr ${esc(r.state)}"><summary><i></i><span>${esc(r.name)}</span><b>${esc(r.value)}</b></summary>` +
+    (r.meter != null ? `<div class="mt"><em style="--w:${Math.round(100 * r.meter)}%"></em></div>` : '') + bars +
+    `<p>${esc(r.detail)}</p></details>`;
+}
 async function loadHarness() {
-  try { hdata = await deskCall('harness'); $('hsub').textContent = '갱신 ' + hm(hdata.ts) + ' · 15초마다 새로 읽음' }
-  catch (e) { $('hsub').textContent = '하네스 정보를 못 읽었습니다: ' + (e.message || e); return }
-  $('hhealth').innerHTML = '<div class="list">' + hdata.health.map(r =>
-    `<div class="hrow"><i class="${esc(r.state)}"></i><div><b>${esc(r.name)}</b><small>${esc(r.detail)}</small></div></div>`).join('') + '</div>';
-  list($('hsteps'), hdata.steps.map(x => [`${hm(x.ts)} · ${x.action}`, x.thought + (x.why ? ' (' + x.why + ')' : '')]));
-  list($('htools'), hdata.tools.map(t => [t.name, `사용 ${num(t.uses)} · 실패 ${num(t.fails)} · 마지막 ${hm(t.last)}`]));
+  try { hdata = await deskCall('harness') }
+  catch (e) { $('hbeat').innerHTML = `<p class="none">하네스를 읽지 못했습니다: ${esc(e.message || e)}. 서버에서 run_server.sh restart 후 다시 열어 주세요.</p>`; return }
+  $('hsub').textContent = hhmm(hdata.ts) + ' 기준, 열려 있는 동안 15초마다 갱신';
+  $('hbeat').innerHTML = beat(hdata);
+  const open = new Set([...document.querySelectorAll('#hhealth details[open]')].map(d => d.dataset.k));
+  $('hhealth').innerHTML = hdata.health.map(r => healthRow(r).replace('<details', `<details data-k="${esc(r.key)}"${open.has(r.key) ? ' open' : ''}`)).join('');
+  let prev = '';
+  $('hsteps').innerHTML = hdata.steps.map(x => { const [label, k] = act(x.action), t = hhmm(x.ts), show = t !== prev; prev = t;
+    return `<details class="step"><summary><time>${show ? t : ''}</time><i class="c-${k}"></i><b>${esc(label)}</b><span>${esc(x.thought)}</span></summary>` +
+      `<p>${esc(x.thought)}${x.why ? '<br>이유: ' + esc(x.why) : ''}<br><small>${esc(x.action)}</small></p></details>` }).join('');
+  const top = Math.sqrt(Math.max(1, ...hdata.tools.map(t => t.uses || 0)));
+  $('htools').innerHTML = hdata.tools.map(t => `<div class="tl"><span>${esc(t.name)}</span>` +
+    `<em style="--w:${Math.max(3, 100 * Math.sqrt(t.uses || 0) / top)}%"></em><b>${num(t.uses)}</b>` +
+    `<small>${t.fails ? `<u>실패 ${num(t.fails)}</u> ` : ''}${rel(t.last)}</small></div>`).join('');
   drawChanges();
 }
 function drawChanges() {
-  $('hfilter').innerHTML = Object.entries(KINDS).map(([k, v]) => `<button type="button" class="chip${k === hkind ? ' on' : ''}" data-k="${k}">${v}</button>`).join('');
+  $('hfilter').innerHTML = Object.entries(KINDS).map(([k, v]) => `<button type="button" class="chip${k === hkind ? ' on' : ''}" data-k="${k}" aria-pressed="${k === hkind}">${v}</button>`).join('');
   $('hfilter').querySelectorAll('button').forEach(b => b.onclick = () => { hkind = b.dataset.k; drawChanges() });
   const rows = (hdata ? hdata.changes : []).filter(c => hkind === 'all' || c.kind === hkind);
-  $('hchanges').innerHTML = rows.length ? '<div class="list">' + rows.slice(0, 40).map(c =>
-    `<div class="chg"><span class="k">${esc(KINDS[c.kind] || c.kind)}</span><b>${esc(c.title || '')}</b> <small>${hm(c.ts)}</small>` +
-    (c.added || []).map(x => `<ins>+ ${esc(x)}</ins>`).join('') + (c.removed || []).map(x => `<del>- ${esc(x)}</del>`).join('') + '</div>').join('') + '</div>'
-    : '<div class="none">아직 없습니다. 메모리와 스킬은 현황 서버가 켜진 뒤의 변경부터 쌓입니다.</div>';
+  const line = (x, sign) => `<li class="${sign === '+' ? 'add' : 'del'}">${esc(x)}</li>`;
+  $('hchanges').innerHTML = rows.length ? rows.slice(0, 40).map(c => { const ls = (c.added || []).map(x => line(x, '+')).concat((c.removed || []).map(x => line(x, '-')));
+    return `<details class="chg k-${esc(c.kind)}"><summary><b>${esc(c.title || '')}</b><small>${esc(KINDS[c.kind] || c.kind)}, ${rel(c.ts)}</small>` +
+      `<span>${ls.length} 줄 바뀜</span></summary><ul>${ls.join('')}</ul></details>` }).join('')
+    : '<p class="none">아직 없습니다. 메모리와 스킬은 현황 서버가 켜진 뒤의 변경부터 쌓입니다.</p>';
 }
 $('hbtn').onclick = () => { $('harness').hidden = false; loadHarness(); clearInterval(htimer); htimer = setInterval(loadHarness, 15000) };
 $('harness').onclick = e => { if (e.target === $('harness')) { $('harness').hidden = true; clearInterval(htimer) } };

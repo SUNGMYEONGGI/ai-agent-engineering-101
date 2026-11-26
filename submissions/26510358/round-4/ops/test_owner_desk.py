@@ -77,8 +77,8 @@ d.track_changes(day0)
 (tmp / "notes.md").write_text("RULES\nB\n", encoding="utf-8")
 d.track_changes(day0 + 60)
 h = d.harness(now=day0 + 120)
-assert [r["name"] for r in h["health"]][0] == "ReAct 루프" and h["health"][0]["state"] == "ok", h["health"][0]
-assert h["health"][4]["state"] == "warn"                          # the last forge failed its test
+assert h["health"][0]["key"] == "loop" and h["health"][0]["state"] == "ok", h["health"][0]
+assert next(r for r in h["health"] if r["key"] == "tools")["state"] == "warn"                          # the last forge failed its test
 mem = [c for c in h["changes"] if c["kind"] == "memory"]
 assert mem and mem[0]["added"] == ["B"] and mem[0]["removed"] == ["A"], h["changes"]
 assert any(c["kind"] == "tool" and c["title"] == "recall v2" for c in h["changes"])

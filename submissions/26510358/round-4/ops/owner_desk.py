@@ -390,31 +390,34 @@ def harness(now=None):
     day = time.strftime("%F", time.localtime(now))
     tok = tokens_today(day)
 
-    def row(name, state, detail):
-        return {"name": name, "state": state, "detail": detail}
+    def row(key, name, state, value, detail, meter=None, **extra):
+        """One part of the harness: a short value the page shows big, an optional 0..1 meter, the rest on tap."""
+        return {"key": key, "name": name, "state": state, "value": value, "detail": detail, "meter": meter, **extra}
 
+    a2a_last = (tools.get("a2a_handler") or {}).get("last", 0)
+    ours_hour = sum(1 for c in cust if now - c.get("ts", 0) <= 3600)
+    talks = _mkt.get("talks") or {}
+    fails = sum((v or {}).get("fails", 0) for v in tools.values())
+    lf = forges[-1] if forges else {}
     health = [
-        row("ReAct 루프", "ok" if loop_age < 1500 or now < wake + 300 else "fail",
-            f"마지막 {last.get('action', '-')} · {ago(last.get('ts'), now)} · 1시간 {len(hour)}걸음"
-            + (f" · {ago(now - (wake - now), now).replace('전', '뒤')} 깨어남" if wake > now else "")),
-        row("모델", "fail" if not m else "warn" if m.get("status") != 200 or errs >= 10 or tok >= lim["daily_tokens"] else "ok",
-            f"{m.get('model', '-')} · {ago(m.get('ts'), now)} · 최근 60회 오류 {errs} · 오늘 {tok / 1e6:.1f}M / {lim['daily_tokens'] / 1e6:.0f}M"),
-        row("손님 A2A", "ok" if now - (tools.get("a2a_handler") or {}).get("last", 0) < 3 * 3600 else "warn",
-            f"a2a_handler {ago((tools.get('a2a_handler') or {}).get('last'), now)} · 1시간 문의 "
-            f"{sum(1 for c in cust if now - c.get('ts', 0) <= 3600)}건 · 누적 {len(cust)}건"),
-        row("메모리", "ok" if len(notes) <= 3000 else "warn",
-            f"notes.md {len(notes):,}자 / 3,000 (넘으면 앞부분이 프롬프트에서 잘림) · 수정 "
-            f"{ago((R / 'notes.md').stat().st_mtime if (R / 'notes.md').exists() else 0, now)}"),
-        row("도구", "ok" if not any(not f.get("passed") for f in forges[-3:]) else "warn",
-            f"{len(tools)}개 · 실패 누적 {sum((v or {}).get('fails', 0) for v in tools.values())} · 마지막 forge "
-            + (f"{forges[-1].get('tool')} v{forges[-1].get('version')} {'통과' if forges[-1].get('passed') else '실패'} {ago(forges[-1].get('ts'), now)}" if forges else "없음")),
-        row("손님 대화 (시장 전체)", "ok" if any(now - c.get("ts", 0) <= 3600 for c in cust) else "warn",
-            "1시간 우리 {}건 · ".format(max((_mkt.get("talks") or {}).get("ours", 0), sum(1 for c in cust if now - c.get("ts", 0) <= 3600)))
-            + (" · ".join(
-                f"{t['shop']} {t['n']}" for t in (_mkt.get("talks") or {}).get("top", [])) or "기록 없음")
-            + " (우리 수는 customers.jsonl; 다른 가게는 GET /api/talks, kit v5.2만 집계)"),
-        row("시장", "fail" if _mkt.get("error") else "ok",
-            _mkt.get("error") or f"순위 {_mkt.get('rank') or '-'} / {_mkt.get('of') or '-'} · {ago(_mkt.get('at'), now)} 확인"),
+        row("loop", "ReAct 루프", "ok" if loop_age < 1500 or now < wake + 300 else "fail",
+            "잠자는 중" if wake > now else "깨어 있음",
+            f"마지막 행동 {last.get('action', '-')} ({ago(last.get('ts'), now)}), 지난 1시간 {len(hour)}걸음"
+            + (f", {int((wake - now) // 60) + 1}분 뒤 깨어남" if wake > now else ""), wake=int(wake) if wake > now else None),
+        row("model", "모델", "fail" if not m else "warn" if m.get("status") != 200 or errs >= 10 or tok >= lim["daily_tokens"] else "ok",
+            m.get("model", "-"), f"마지막 호출 {ago(m.get('ts'), now)}, 최근 60회 중 오류 {errs}회. 오늘 토큰 {tok:,} / {lim['daily_tokens']:,}",
+            min(1, tok / lim["daily_tokens"]) if lim["daily_tokens"] else None),
+        row("talks", "손님 대화", "ok" if ours_hour else "warn", f"1시간 {max(talks.get('ours', 0), ours_hour)}건",
+            f"손님 에이전트가 A2A로 보낸 메시지. 우리 응답 도구 a2a_handler 마지막 {ago(a2a_last, now)}, 누적 {len(cust)}건. "
+            "다른 가게 수는 시장 집계(/api/talks)", bars=[{"shop": "우리", "n": max(talks.get("ours", 0), ours_hour)}] + talks.get("top", [])),
+        row("memory", "메모리", "ok" if len(notes) <= 3000 else "warn", f"{len(notes):,}자",
+            f"notes.md, 매 실행 프롬프트에 들어가는 마지막 3,000자. 마지막 수정 "
+            f"{ago((R / 'notes.md').stat().st_mtime if (R / 'notes.md').exists() else 0, now)}", min(1, len(notes) / 3000)),
+        row("tools", "도구", "ok" if not any(not f.get("passed") for f in forges[-3:]) else "warn", f"{len(tools)}개",
+            f"실패 누적 {fails}회. 마지막 제작 {lf.get('tool', '-')} v{lf.get('version', '-')}, 테스트 "
+            f"{'통과' if lf.get('passed') else '실패'} ({ago(lf.get('ts'), now)})" if lf else f"실패 누적 {fails}회"),
+        row("market", "시장 순위", "fail" if _mkt.get("error") else "ok",
+            f"{_mkt.get('rank') or '-'}위 / {_mkt.get('of') or '-'}", _mkt.get("error") or f"{ago(_mkt.get('at'), now)} 확인"),
     ]
     changes = [{"ts": f.get("ts", 0), "kind": "tool", "title": f"{f.get('tool')} v{f.get('version')}",
                 "added": ["테스트 통과" if f.get("passed") else f"테스트 실패: {str(f.get('error'))[:160]}",
@@ -424,6 +427,7 @@ def harness(now=None):
     changes += goal_changes()
     changes.sort(key=lambda c: -c.get("ts", 0))
     return {"ts": int(now), "health": health,
+            "pulse": [[int(x.get("ts", 0)), x.get("action")] for x in hour],
             "steps": [{"ts": x.get("ts"), "action": x.get("action"), "thought": str(x.get("thought", ""))[:200],
                        "why": str((x.get("args") or {}).get("why", ""))[:120]} for x in steps[-15:][::-1]],
             "tools": [{"name": k, **(v or {})} for k, v in sorted(tools.items(), key=lambda kv: -(kv[1] or {}).get("uses", 0))],
