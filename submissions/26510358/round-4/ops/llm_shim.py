@@ -8,7 +8,10 @@ agent.json point llm.base anywhere, so this shim sits on 127.0.0.1 and:
     the kit's 4000 would often leave no room for the answer),
   - adds reasoning_effort from AGENT_REASONING_EFFORT when set,
   - forwards to OPENAI_BASE_URL with OPENAI_API_KEY,
-  - appends token usage (never message content) to logs/llm-shim.jsonl.
+  - appends token usage (never message content) to logs/llm-shim.jsonl,
+  - stops spending at SHIM_DAILY_TOKENS total tokens per local day (default 15,000,000, a safety net above the ~6-8M a day expected after the 11-26 sleep rules; 0 = no cap): past the cap it
+    answers the kit itself with a sleep move (no API call), so the agent rests until the next day instead of
+    retrying. Customers are still answered by the a2a_handler tool, which needs no model.
 
 SHIM_BACKEND=claude (run_server.sh LLM=claude) answers with Claude Code's CLI instead: `claude -p --model
 $CLAUDE_MODEL --effort $CLAUDE_EFFORT` (default claude-opus-5-5, medium) on the server's claude.ai login, no
@@ -90,6 +93,42 @@ def claude_complete(body):
     return 200, json.dumps(out).encode(), usage
 
 
+def tokens_today():
+    """Total tokens logged today (local date), read once at start; do_POST keeps it current."""
+    day, n = time.strftime("%F"), 0
+    try:
+        for line in open(USAGE_LOG, encoding="utf-8"):
+            try:
+                r = json.loads(line)
+            except ValueError:
+                continue
+            if time.strftime("%F", time.localtime(r.get("ts", 0))) == day:
+                n += (r.get("usage") or {}).get("total_tokens") or 0
+    except OSError:
+        pass
+    return {"day": day, "tokens": n}
+
+
+SPENT = tokens_today()
+
+
+def over_budget():
+    cap = int(os.environ.get("SHIM_DAILY_TOKENS", "15000000"))
+    if SPENT["day"] != time.strftime("%F"):
+        SPENT.update(day=time.strftime("%F"), tokens=0)
+    return cap > 0 and SPENT["tokens"] >= cap
+
+
+def budget_sleep():
+    """An OpenAI-shaped answer holding the kit's sleep move, used past the daily cap."""
+    move = {"thought": "The owner's daily model budget is used up; customers are still served by a2a_handler.",
+            "action": "sleep", "args": {"seconds": 3600, "why": "daily model budget reached (SHIM_DAILY_TOKENS)"}}
+    out = {"object": "chat.completion", "model": "shim-budget", "usage": None,
+           "choices": [{"index": 0, "finish_reason": "stop",
+                        "message": {"role": "assistant", "content": json.dumps(move, ensure_ascii=False)}}]}
+    return json.dumps(out).encode()
+
+
 class Handler(BaseHTTPRequestHandler):
     def do_POST(self):
         if not self.path.rstrip("/").endswith("/chat/completions"):
@@ -100,6 +139,9 @@ class Handler(BaseHTTPRequestHandler):
         except (ValueError, TypeError) as e:
             return self.send_error(400, f"bad json: {e}")
         t = time.time()
+        if over_budget():
+            self.log_usage("budget-sleep", 200, t, None)
+            return self.answer(200, budget_sleep())
         got = claude_complete(body) if os.environ.get("SHIM_BACKEND") == "claude" else None
         if got:
             status, out, usage = got
@@ -126,6 +168,7 @@ class Handler(BaseHTTPRequestHandler):
         self.answer(status, out)
 
     def log_usage(self, model, status, t, usage):
+        SPENT["tokens"] += (usage or {}).get("total_tokens") or 0
         USAGE_LOG.parent.mkdir(exist_ok=True)
         with open(USAGE_LOG, "a", encoding="utf-8") as f:
             f.write(json.dumps({"ts": int(time.time()), "model": model, "status": status,
