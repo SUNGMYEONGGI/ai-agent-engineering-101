@@ -71,9 +71,13 @@ struct SettingsView: View {
             SectionTitle(text: "주인이 정한 한도")
             SoftCard(padding: 0) {
                 VStack(spacing: 0) {
-                    stepperRow("한 번 최대 송금", $draft.maxPayPerCall, 0...1_000_000, 5_000)
+                    sliderRow("원가 아래 처분 손실 한도 (하루)", $draft.maxLossPerDay, 0...100_000, 5_000, "credits")
                     Divider().padding(.leading, 18)
-                    stepperRow("하루 최대 송금", $draft.maxPayPerDay, 0...10_000_000, 50_000)
+                    sliderRow("매입 한도 (회당)", $draft.maxPayPerCall, 0...50_000, 1_000, "credits")
+                    Divider().padding(.leading, 18)
+                    sliderRow("매입 한도 (하루)", $draft.maxPayPerDay, 0...500_000, 10_000, "credits")
+                    Divider().padding(.leading, 18)
+                    sliderRow("하루 토큰 상한", $draft.dailyTokens, 0...30_000_000, 500_000, "토큰")
                     Divider().padding(.leading, 18)
                     TextField("에이전트에게 남길 말 (예: 오늘은 가구 재고를 늘리지 말 것)", text: $draft.note, axis: .vertical)
                         .font(Theme.rounded(.subheadline))
@@ -82,13 +86,14 @@ struct SettingsView: View {
                 }
             }
             HStack {
-                Text("에이전트는 송금이나 전략을 바꾸기 전에 이 값을 읽어요. 이 기기에만 저장돼요.")
+                Text("서버에 저장돼요. 에이전트는 다음 실행 때 읽고, 토큰 상한은 바로 적용돼요. 재시작은 필요 없어요.")
                     .font(Theme.rounded(.caption)).foregroundStyle(Theme.mute)
                 Spacer()
                 Button(saved ? "저장됨" : "저장") {
-                    model.save(limits: draft)
-                    saved = true
-                    UINotificationFeedbackGenerator().notificationOccurred(.success)
+                    Task {
+                        saved = await model.save(limits: draft)
+                        UINotificationFeedbackGenerator().notificationOccurred(saved ? .success : .error)
+                    }
                 }
                 .buttonStyle(PillButtonStyle())
                 .disabled(draft == model.limits && !saved)
@@ -96,12 +101,19 @@ struct SettingsView: View {
         }
     }
 
-    private func stepperRow(_ title: String, _ value: Binding<Int>, _ range: ClosedRange<Int>, _ step: Int) -> some View {
-        Stepper(value: value, in: range, step: step) {
-            VStack(alignment: .leading, spacing: 2) {
+    private func sliderRow(_ title: String, _ value: Binding<Int>, _ range: ClosedRange<Int>, _ step: Int,
+                           _ unit: String) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack {
                 Text(title).font(Theme.rounded(.subheadline, .medium))
-                Text("\(value.wrappedValue.formatted()) credits").font(Theme.rounded(.headline, .bold)).monospacedDigit()
+                Spacer()
+                Text("\(value.wrappedValue.formatted()) \(unit)").font(Theme.rounded(.subheadline, .bold)).monospacedDigit()
             }
+            Slider(value: Binding(get: { Double(min(value.wrappedValue, range.upperBound)) },
+                                  set: { value.wrappedValue = Int($0) }),
+                   in: Double(range.lowerBound)...Double(range.upperBound), step: Double(step))
+                .tint(Theme.ink)
+                .accessibilityLabel(title)
         }
         .padding(.horizontal, 18).padding(.vertical, 12)
     }

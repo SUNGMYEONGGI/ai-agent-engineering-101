@@ -348,7 +348,7 @@ function fillDash() {
     const tag = e.veto ? `<span class="tag veto">주인 거부: ${e.veto === 'stop' ? '중단' : '되돌리기'}</span>`
                        : `<span class="tag ${e.state}">${EXP_STATE[e.state] || e.state}</span>`;
     const live = e.state === 'open' && !e.veto;
-    return `<div class="exp"><div class="top"><span>${esc(e.at)} · ${esc(e.stage || '')}</span>${tag}</div>` +
+    return `<div class="exp"><div class="top"><span>${esc(e.at)} · ${esc((Object.fromEntries(desk.stages)[e.stage]) || e.stage || '')}</span>${tag}</div>` +
       `<p><span>가설</span>${esc(e.diff || '-')}</p><p><span>바꾼 것</span>${esc(e.change || '-')}</p>` +
       (live ? `<p><span>판정</span>${esc(judgeLeft(e))}</p>` : `<p><span>결과</span>${esc(e.result || '-')}</p>`) +
       (live ? `<div class="veto"><button type="button" data-exp="${esc(e.at)}" data-act="stop">중단</button>` +

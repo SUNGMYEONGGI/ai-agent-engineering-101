@@ -16,6 +16,10 @@ final class AppModel: ObservableObject {
     /// The card the owner is replying to in a thread, if any.
     @Published var replyTo: OwnerCard?
     @Published private(set) var limits: OwnerLimits
+    /// The owner desk (/owner/dash): funnel, experiments, winners, tokens, alerts. Polled every 30 s.
+    @Published private(set) var dash: Dash?
+    @Published private(set) var deskError: String?
+    @Published var showDesk = false
     @Published private(set) var now = Date()
     /// Bumped on each real state change the characters react to (new reply, card, question, consent).
     @Published private(set) var beat = 0
@@ -36,6 +40,7 @@ final class AppModel: ObservableObject {
     private var handledConsents = Set<String>()
     private var demoConsent: PendingCall?
     private var clock: Timer?
+    private var deskTimer: Timer?
 
     /// link == nil: demo mode.
     init(link: AppLink?, user: String) {
@@ -48,6 +53,7 @@ final class AppModel: ObservableObject {
             state = DemoData.state()
             cards = [DemoData.card]
             questions = [DemoData.question]
+            dash = DemoData.dash()
             return
         }
         let tools = OwnerTools(limitsStore: store)
@@ -81,7 +87,20 @@ final class AppModel: ObservableObject {
         clock = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
             Task { @MainActor in self?.now = Date() }
         }
-        if let session { session.start(); return }
+        if let session {
+            session.start()
+            loadDesk()
+            #if DEBUG
+            if ProcessInfo.processInfo.arguments.contains("-desk") {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 2) { [weak self] in self?.showDesk = true }
+            }
+            #endif
+            deskTimer?.invalidate()
+            deskTimer = Timer.scheduledTimer(withTimeInterval: 30, repeats: true) { [weak self] _ in
+                Task { @MainActor in self?.loadDesk() }
+            }
+            return
+        }
         // Demo: a MeshKit consent arrives a few seconds in, the way a real one would.
         DispatchQueue.main.asyncAfter(deadline: .now() + 4) { [weak self] in
             guard let self, self.demoConsent == nil, !self.handledConsents.contains("demo-consent") else { return }
@@ -90,6 +109,8 @@ final class AppModel: ObservableObject {
             UINotificationFeedbackGenerator().notificationOccurred(.warning)
         }
         #if DEBUG
+        // `-desk`: opens the desk sheet at launch, for `xcrun simctl io screenshot` (no taps in Xcode 27's DeviceHub).
+        if ProcessInfo.processInfo.arguments.contains("-desk") { showDesk = true }
         // `-demo-flow`: plays 확인 → card → 허용 → 활동 by itself, so `xcrun simctl io screenshot` can check it
         // without taps (Xcode 27's DeviceHub opens no window to click). Demo data only; never in a release build.
         if ProcessInfo.processInfo.arguments.contains("-demo-flow") {
@@ -106,6 +127,49 @@ final class AppModel: ObservableObject {
     func stop() {
         session?.stop()
         clock?.invalidate()
+        deskTimer?.invalidate()
+    }
+
+    // MARK: owner desk
+
+    func loadDesk() {
+        guard let session else { return }
+        Task {
+            do {
+                let d = try await session.client.dash()
+                dash = d
+                deskError = nil
+                store.save(d.limits)                    // the copy app_owner_limits answers with
+                limits = store.load()
+                ring(d.alerts)
+            } catch {
+                deskError = String(describing: error)
+            }
+        }
+    }
+
+    /// Each desk alert rings once per device (funnel stuck 2 h, loss at 80%, token cap); the banner stays while it holds.
+    private func ring(_ alerts: [Dash.Alert]) {
+        var seen = UserDefaults.standard.stringArray(forKey: "hermes.alerts.seen") ?? []
+        let fresh = alerts.filter { !seen.contains($0.key) }
+        guard !fresh.isEmpty else { return }
+        seen = Array((seen + fresh.map(\.key)).suffix(50))
+        UserDefaults.standard.set(seen, forKey: "hermes.alerts.seen")
+        UINotificationFeedbackGenerator().notificationOccurred(.warning)
+        beat += 1
+    }
+
+    /// The owner's veto on an experiment, kept by the desk and told to the agent in the chat.
+    func veto(_ e: Dash.Experiment, revert: Bool) {
+        Task {
+            if let session {
+                do { try await session.client.veto(exp: e.at, action: revert ? "revert" : "stop") }
+                catch { self.error = String(describing: error); return }
+            }
+            send("[주인 거부] EXP \(e.at) \(revert ? "되돌리기" : "중단")")
+            UINotificationFeedbackGenerator().notificationOccurred(.success)
+            loadDesk()
+        }
     }
 
     var status: Status {
@@ -200,19 +264,36 @@ final class AppModel: ObservableObject {
         send(OwnerTools.answerMessage(q, t))
     }
 
-    func save(limits new: OwnerLimits) {
+    /// Saves on the server (the agent and the shim read it from there); false when the desk did not take it.
+    @discardableResult
+    func save(limits new: OwnerLimits) async -> Bool {
         let old = limits
-        store.save(new)
+        if let session {
+            do {
+                var v = try await session.client.saveLimits(new)
+                if v.setAt.isEmpty { v.setAt = ISO8601DateFormatter().string(from: Date()) }
+                store.save(v)
+            } catch {
+                self.error = "한도를 저장하지 못했습니다: \(error)"
+                return false
+            }
+        } else {
+            store.save(new)
+        }
         limits = store.load()
+        loadDesk()
         let changes: [(String, String, String)] = [
-            ("한 번 최대 송금", old.maxPayPerCall.formatted(), new.maxPayPerCall.formatted()),
-            ("하루 최대 송금", old.maxPayPerDay.formatted(), new.maxPayPerDay.formatted()),
+            ("처분 손실 한도 (하루)", old.maxLossPerDay.formatted(), new.maxLossPerDay.formatted()),
+            ("매입 한도 (회당)", old.maxPayPerCall.formatted(), new.maxPayPerCall.formatted()),
+            ("매입 한도 (하루)", old.maxPayPerDay.formatted(), new.maxPayPerDay.formatted()),
+            ("하루 토큰 상한", old.dailyTokens.formatted(), new.dailyTokens.formatted()),
             ("남길 말", old.note.isEmpty ? "없음" : old.note, new.note.isEmpty ? "없음" : new.note),
         ]
         let rows = changes.filter { $0.1 != $0.2 }.map { ($0.0, "\($0.1) → \($0.2)") }
-        guard !rows.isEmpty else { return }
+        guard !rows.isEmpty else { return true }
         log.insert(Decision(kind: .limits, title: "한도 변경", choice: "\(rows.count)개 항목",
                             details: rows + [("변경한 사람", "주인 · 이 iOS 앱")], status: .done, after: 0), at: 0)
+        return true
     }
 
     private var lastAgentTS: Double { state.chat.last { $0.who == "agent" }?.ts ?? 0 }

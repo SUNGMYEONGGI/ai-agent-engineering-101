@@ -7,8 +7,9 @@ public final class OwnerTools: @unchecked Sendable {
         ("show_card", "show the owner a card in the chat (a deal, a daily summary, a warning); args {title, body}. "
             + "Returns the card id. The owner may reply to a card: that chat message starts with "
             + "\"[스레드 답장 · 카드 <id>: ...]\"."),
-        ("owner_limits", "the owner's current limits: {max_pay_per_call, max_pay_per_day (credits), note, "
-            + "set_at}. Read before paying or changing strategy; stay inside them. No args."),
+        ("owner_limits", "the owner's current limits: {max_loss_per_day, max_pay_per_call, max_pay_per_day (credits), "
+            + "daily_tokens, note, set_at}. Read before paying or cutting a loss; stay inside them. The same values are "
+            + "in owner_limits.json. No args."),
         ("ask_owner", "ask the owner a question when a decision is risky or unclear (a large payment, a new strategy). "
             + "args {question, options (optional list of short answers; write each as the action it allows, with the "
             + "item and the amount, e.g. \"소파 5개까지 매입 승인\", \"이번 요청 거절\")}. Returns at once; the answer arrives later as a "
@@ -87,7 +88,7 @@ public struct UserDefaultsLimits: LimitsStore {
 
     public func save(_ limits: OwnerLimits) {
         var v = limits
-        v.setAt = ISO8601DateFormatter().string(from: Date())
+        if v.setAt.isEmpty { v.setAt = ISO8601DateFormatter().string(from: Date()) }   // the server's copy keeps its own
         UserDefaults.standard.set(try? JSONEncoder().encode(v), forKey: key)
     }
 }

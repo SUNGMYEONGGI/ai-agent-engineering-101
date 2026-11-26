@@ -20,6 +20,7 @@ struct ChatView: View {
         ScrollViewReader { proxy in
             VStack(spacing: 0) {
                 header(proxy)
+                DeskStrip()
                 ScrollView {
                     LazyVStack(alignment: .leading, spacing: 14) {
                             if model.timeline.isEmpty { hero }
@@ -51,6 +52,7 @@ struct ChatView: View {
             }
         }
         .background(Theme.paper.ignoresSafeArea())
+        .sheet(isPresented: $model.showDesk) { DeskSheet().environmentObject(model) }
     }
 
     private func jump(_ proxy: ScrollViewProxy, _ id: String?) {
