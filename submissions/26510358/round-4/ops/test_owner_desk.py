@@ -89,3 +89,14 @@ t = d.count_talks([{"ts": day0, "to": "Hermes Shop", "from_role": "buyer"}, {"ts
                    {"ts": day0 - 7200, "to": "Hermes Shop", "from_role": "buyer"}], day0 + 60)
 assert t["ours"] == 1 and t["top"][0] == {"shop": "골목상회", "n": 2} and t["shops"] == 2, t
 print("talks ok")
+
+assert d.chatlog_add([{"who": "owner-1", "text": "hi", "ts": 1}, {"who": "card", "id": "ab", "title": "T", "text": "x", "ts": 2}]) == 2
+assert d.chatlog_add([{"who": "owner-1", "text": "hi", "ts": 1.4}, {"who": "agent", "text": "yo", "ts": 3}]) == 1   # same message once
+assert [m["who"] for m in d.chatlog()] == ["owner-1", "card", "agent"]
+for bad in ("x", [1], [{}] * 201):
+    try:
+        d.chatlog_add(bad)
+        raise AssertionError(f"accepted {bad!r}"[:60])
+    except ValueError:
+        pass
+print("chatlog ok")

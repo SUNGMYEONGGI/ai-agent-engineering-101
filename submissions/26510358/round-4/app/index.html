@@ -315,7 +315,7 @@ const handled = new Set();
 miniapp.offer('show_card', 'show the owner a card in the chat (a deal, a daily summary, a warning); args {title, body}. ' +
   'Returns the card id. The owner may reply to a card: that chat message starts with "[스레드 답장 · 카드 <id>: ...]".', a => {
   const c = {who: 'card', id: Math.random().toString(36).slice(2, 8), title: String(a.title || ''), text: String(a.body || ''), ts: Date.now() / 1000};
-  cards.push(c); draw();
+  cards.push(c); draw(); saveHist();
   return {shown: c.id, note: 'a reply to this card starts with [스레드 답장 · 카드 ' + c.id + ': ...]'};
 });
 let replyTo = null;
@@ -512,8 +512,27 @@ $('lsave').onclick = async () => {
   } catch (e) { $('lerr').textContent = '저장하지 못했습니다: ' + e.message; $('lerr').hidden = false; }
 };
 
+// Chat history lives on the owner desk (/owner/chatlog): the kit forgets its chat on a restart and cards live only in
+// this page, so the page saves what it shows and reads it back on load.
+let hist = [];
+const ckey = m => m.who === 'card' ? 'card|' + m.id : m.who + '|' + Math.floor(m.ts) + '|' + String(m.text).slice(0, 80);
+const histKeys = new Set();
+function allItems() {
+  const out = new Map();
+  for (const m of hist.concat(view.chat, cards)) out.set(ckey(m), m);
+  return [...out.values()].sort((a, b) => a.ts - b.ts);
+}
+async function loadHist() {
+  try { hist = (await deskCall('chatlog')).items || []; hist.forEach(m => histKeys.add(ckey(m))); drawn = ''; draw() } catch (e) {}
+}
+function saveHist() {
+  const fresh = view.chat.concat(cards).filter(m => !histKeys.has(ckey(m)));
+  if (!fresh.length) return;
+  fresh.forEach(m => histKeys.add(ckey(m)));
+  deskCall('chatlog', {items: fresh}).catch(() => fresh.forEach(m => histKeys.delete(ckey(m))));
+}
 function draw() {
-  const items = view.chat.concat(cards).sort((a, b) => a.ts - b.ts);
+  const items = allItems();
   const mine = view.chat.filter(m => m.who === me).length;
   pending = pending.filter(p => mine <= p.base);
   const key = JSON.stringify([items.length, items.at(-1), pending, waiting, view.agent]);
@@ -535,7 +554,7 @@ function draw() {
               `<button type="button" class="reply" data-card="${esc(m.id)}">↳ 답장</button></div>`;
     } else if (m.who === 'kit') {
       html += `<div class="sys">${esc(m.text)}</div>`;
-    } else if (m.who === me) {
+    } else if (m.who === me || /^(owner|guest)-/.test(m.who)) {   // the owner's own words from any device
       const th = m.text.match(THREAD);
       if (th) html += `<div class="quote">↳ ${esc(th[1])}</div>`;
       html += `<div class="row me"><div class="bubble">${esc(th ? m.text.slice(th[0].length) : m.text)}</div></div>`;
@@ -551,7 +570,7 @@ function draw() {
   for (const p of pending) html += `<div class="row me pending"><div class="bubble">${esc(p.text)}</div></div>`;
   if (waiting) html += `<div class="row agent typing"><div class="bubble"><i></i><i></i><i></i></div></div>`;
   $('log').innerHTML = html;
-  $('log').querySelectorAll('.reply').forEach(b => b.onclick = () => setReply(cards.find(c => c.id === b.dataset.card)));
+  $('log').querySelectorAll('.reply').forEach(b => b.onclick = () => setReply(allItems().find(c => c.who === 'card' && c.id === b.dataset.card)));
   if (atEnd || pending.length) sc.scrollTop = sc.scrollHeight;
 }
 
@@ -591,7 +610,7 @@ miniapp.onState(s => {
   view = s;
   const name = s.agent || 'Agent';
   if ($('nm').textContent !== name) { $('nm').textContent = name; document.title = name; }
-  draw(); status(); showConsent();
+  draw(); status(); showConsent(); saveHist();
   if (!$('activity').hidden) fillActivity();
 });
 
@@ -670,6 +689,7 @@ if (vv) {
 }
 draw();
 // #dash and #settings open those sheets (a home-screen shortcut or a link from a card).
+loadHist();
 loadDesk().then(() => { if (location.hash === '#dash') openDash(); else if (location.hash === '#settings') openSettings(); else if (location.hash === '#harness') $('hbtn').click(); });
 </script>
 </body>

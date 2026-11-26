@@ -8,6 +8,9 @@ on the same origin with the same access cookie (miniapp_access = .kit/app.key).
   GET  /owner/dash    funnel, experiments, winners, tokens, losses, limits, alerts (JSON)
   POST /owner/limits  {max_loss_per_day, max_pay_per_call, max_pay_per_day, daily_tokens, note} -> owner_limits.json
   POST /owner/veto    {exp, action: stop|revert} -> owner_vetoes.jsonl (the app also tells the agent in the chat)
+  GET  /owner/chatlog  the owner chat kept across kit restarts and page reloads (.kit/chatlog.jsonl; the kit keeps
+                      only 200 messages in memory and the page's cards live only in the page)
+  POST /owner/chatlog  {items: [{who, text, ts, id?, title?}]}: the page sends what it shows; duplicates are dropped
   GET  /owner/harness is the harness running: loop, model, customers' A2A, memory, tools, market (each ok/warn/fail),
                       the last ReAct steps, and a timeline of what changed: tools (forge.jsonl), memory (notes.md),
                       skills (card.json), goal (git log of agent.json)
@@ -427,6 +430,43 @@ def harness(now=None):
             "changes": changes[:60]}
 
 
+CHATLOG_MAX = 3000
+
+
+def chat_key(m):
+    return f"card|{m.get('id')}" if m.get("who") == "card" else f"{m.get('who')}|{int(float(m.get('ts') or 0))}|{str(m.get('text'))[:80]}"
+
+
+def chatlog(last=300):
+    return jsonl(".kit/chatlog.jsonl", last)
+
+
+def chatlog_add(items):
+    """Owner input at a trust boundary: at most 200 small messages, strings only, appended once each."""
+    if not isinstance(items, list) or len(items) > 200:
+        raise ValueError("items must be a list of at most 200 messages")
+    clean = []
+    for m in items:
+        if not isinstance(m, dict):
+            raise ValueError("each item must be an object")
+        c = {"who": str(m.get("who", ""))[:40], "text": str(m.get("text", ""))[:4000], "ts": float(m.get("ts") or 0)}
+        if c["who"] == "card":
+            c.update(id=str(m.get("id", ""))[:20], title=str(m.get("title", ""))[:200])
+        clean.append(c)
+    f = R / ".kit" / "chatlog.jsonl"
+    with _lock:
+        seen = {chat_key(m) for m in chatlog(CHATLOG_MAX)}
+        new = [c for c in clean if chat_key(c) not in seen and not seen.add(chat_key(c))]
+        if new:
+            f.parent.mkdir(exist_ok=True)
+            with f.open("a", encoding="utf-8") as fh:
+                fh.writelines(json.dumps(c, ensure_ascii=False) + "\n" for c in new)
+            lines = f.read_text(encoding="utf-8").splitlines()
+            if len(lines) > CHATLOG_MAX:
+                f.write_text("\n".join(lines[-CHATLOG_MAX:]) + "\n", encoding="utf-8")
+    return len(new)
+
+
 def app_key():
     try:
         return (R / ".kit" / "app.key").read_text(encoding="utf-8").strip()
@@ -456,6 +496,8 @@ class Handler(BaseHTTPRequestHandler):
             return self.reply(401, {"error": "this app needs its access code"})
         if self.path.split("?")[0] == "/owner/dash":
             return self.reply(200, dash())
+        if self.path.split("?")[0] == "/owner/chatlog":
+            return self.reply(200, {"items": chatlog()})
         if self.path.split("?")[0] == "/owner/harness":
             return self.reply(200, harness())
         self.reply(404, {"error": "not found"})
@@ -465,7 +507,7 @@ class Handler(BaseHTTPRequestHandler):
             return self.reply(401, {"error": "this app needs its access code"})
         try:
             n = int(self.headers.get("content-length") or 0)
-            body = json.loads(self.rfile.read(min(n, 4096)) or b"{}")
+            body = json.loads(self.rfile.read(min(n, 1_000_000)) or b"{}")
             if not isinstance(body, dict):
                 raise ValueError("body must be an object")
             if self.path == "/owner/limits":
@@ -474,6 +516,8 @@ class Handler(BaseHTTPRequestHandler):
                 tmp.write_text(json.dumps(v, ensure_ascii=False, indent=1), encoding="utf-8")
                 tmp.replace(R / "owner_limits.json")
                 return self.reply(200, v)
+            if self.path == "/owner/chatlog":
+                return self.reply(200, {"added": chatlog_add(body.get("items"))})
             if self.path == "/owner/veto":
                 exp, action = str(body.get("exp", ""))[:20], body.get("action")
                 if not re.fullmatch(r"\d{4}-\d\d-\d\d \d\d:\d\d", exp) or action not in ("stop", "revert"):
