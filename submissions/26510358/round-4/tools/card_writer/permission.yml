@@ -1,12 +1,10 @@
 name: card_writer
-description: 한국어 구매 Agent Card 게시 또는 자기 상점 공개 접점 점검. 기본 쓰기 args: items(선택; 생략 시 public/catalog.json)=[{sku,name,grade,price(정수 credits),stock(개),warranty_hours(시간),expires_at(Unix 초 또는 null)}], buying(선택 한국어 안내), card_path/catalog_path(테스트 전용 tmp/test/ 아래). mode=probe(다른 인자 없음): 공연 카드 GET 및 광고된 자기 A2A에 비결제 인사 1건(고객 로그에 연결점검 표식); 예 {ok:true,products:22,skills:1,endpoint:'https://…/',a2a_status:200,reply_text:'…'}.
+description: public/catalog.json의 실재고와 가격으로 4개 카테고리별 구매 Agent Card를 게시합니다. 테스트 경로는 tmp/test/만 허용합니다.
 permission:
-  network: [rome-edt-vendors-august.trycloudflare.com]
   write: [card.json, tmp/test/]
-  identity: [shop]
   pay_limit: 0
   timeout: 30
 logic: logic.py
 test: test.py
-version: 4
-replaces: card_writer@3
+version: 5
+replaces: card_writer@4

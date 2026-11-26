@@ -1,38 +1,50 @@
-import json,os,math,re,httpx
+import json,math,os,re,time,statistics
+from collections import defaultdict
+from pathlib import Path
+import httpx
 
 def run(args,kit):
  try:
-  p=args.get('catalog_path','public/catalog.json')
-  if kit.testing and not os.path.abspath(p).startswith(os.path.abspath('tmp/test')+os.sep):
-   raise ValueError('test catalog path must be inside tmp/test')
-  try:
-   with open(p,encoding='utf8') as f: old=json.load(f)['items']
-  except FileNotFoundError: old=[]
-  specs={(x['sku'],x['grade']):{k:x[k] for k in ('price','warranty_hours') if k in x} for x in old}
-  for x in args.get('prices',[]):
-   specs.setdefault((x['sku'],x['grade']),{}).update({k:x[k] for k in ('price','warranty_hours') if k in x})
-  if kit.testing: units=args['inventory']
+  p=Path(args.get('catalog_path','public/catalog.json'))
+  if kit.testing and not str(p.resolve()).startswith(str(Path('tmp/test').resolve())+os.sep):raise ValueError('test path must be tmp/test')
+  if not kit.testing and str(p)!='public/catalog.json':raise ValueError('invalid catalog path')
+  try:old=json.loads(p.read_text(encoding='utf8')).get('items',[])
+  except FileNotFoundError:old=[]
+  if kit.testing:units=args['inventory'];ledger=args['ledger_fixture'];now=args.get('now',time.time())
   else:
-   r=httpx.get(kit.market.rstrip('/')+'/api/inventory',headers={'Authorization':'Bearer '+kit.token('shop')},timeout=12)
-   r.raise_for_status(); units=r.json()['units']
-  groups={}
+   headers={'Authorization':'Bearer '+kit.token('shop')};r=httpx.get(kit.market.rstrip('/')+'/api/inventory',headers=headers,timeout=12);r.raise_for_status();units=r.json()['units']
+   r=httpx.get(kit.market.rstrip('/')+'/api/ledger?after=-500',timeout=12);r.raise_for_status();ledger=r.json();now=time.time()
+  if isinstance(ledger,dict):ledger=ledger.get('entries',ledger.get('ledger',[]))
+  if not isinstance(ledger,list) or not isinstance(units,list):raise ValueError('inventory/ledger invalid')
+  sales=defaultdict(list)
+  for e in ledger:
+   if e.get('kind')!='settle' or e.get('round',4)!=4:continue
+   d=e.get('data') or {};sku=d.get('sku') or d.get('item');grade=d.get('grade');price=d.get('amount',d.get('price'))
+   if isinstance(sku,str) and grade in ('A','B','C') and isinstance(price,(int,float)) and price>0:sales[(sku,grade)].append(price)
+  groups=defaultdict(list)
   for u in units:
-   key=(u.get('sku'),u.get('grade'))
-   if all(key) and u.get('unit'): groups.setdefault(key,[]).append(u)
-  priority={}
-  for x in args.get('featured',[])+old:
-   key=(x['sku'],x['grade']); priority.setdefault(key,len(priority))
-  out=[]
-  for key in sorted(groups,key=lambda k:priority.get(k,len(priority))):
-   us=groups[key]
-   us.sort(key=lambda u:(u.get('expires_at') or float('inf'),u.get('supplied_at') or 0)); spec=specs.get(key,{})
-   floor=max(math.ceil((int(u['cost'])+210)*100/99) for u in us)
-   price=max(int(spec.get('price') or us[0].get('list_price') or 0),floor)
-   name=re.sub(r'(?:1\+\+|1\+|특|상|A|B|C)\s*등급','',us[0].get('name') or key[0],flags=re.I).strip().strip('/').strip() or key[0]
-   out.append({'sku':key[0],'name':name,'category':us[0].get('category') or '','grade':key[1],'price':price,'stock':len(us),'units':[u['unit'] for u in us],'expires_at':min((u['expires_at'] for u in us if u.get('expires_at')),default=None),'warranty_hours':max(0,int(spec.get('warranty_hours') or 0))})
-  os.makedirs(os.path.dirname(p) or '.',exist_ok=True)
-  with open(p+'.next','w',encoding='utf8') as f: json.dump({'items':out},f,ensure_ascii=False)
-  os.replace(p+'.next',p)
-  return {'ok':True,'count':len(out),'items':out}
- except (OSError,ValueError,KeyError,TypeError,httpx.HTTPError) as e:
-  return {'ok':False,'error':type(e).__name__+': '+str(e)[:230]}
+   if u.get('sku') and u.get('grade') and u.get('unit') and isinstance(u.get('cost'),(int,float)):groups[(u['sku'],u['grade'])].append(u)
+  previous={(x['sku'],x['grade']):x for x in old};priority={}
+  for x in args.get('featured',[])+old:priority.setdefault((x['sku'],x['grade']),len(priority))
+  out=[];excluded=[]
+  for sku,grade in sorted(groups,key=lambda k:(priority.get(k,len(priority)),k)):
+   us=groups[(sku,grade)];us.sort(key=lambda u:(u.get('expires_at') or float('inf'),u.get('supplied_at') or 0))
+   floor=max(math.ceil((int(u['cost'])+210)*100/99)+math.ceil(int(u['cost'])*0.005) for u in us)
+   ps=sales.get((sku,grade),[]);b=sales.get((sku,'B'),[]);med=statistics.median(ps) if ps else None;bmed=statistics.median(b) if b else None
+   if med:desired=math.floor(med*0.98)
+   elif not any(k[0]==sku for k in sales):desired=floor
+   else:
+    base=min(int(u.get('list_price') or floor) for u in us);age=max((now-float(u.get('supplied_at') or now))/3600 for u in us);desired=math.floor(base*(0.9**max(0,math.floor(age/12))))
+   price=max(floor,desired)
+   if grade=='C' and bmed and price>math.floor(0.8*bmed):
+    cap=math.floor(0.8*bmed)
+    if floor>cap:excluded.append({'sku':sku,'grade':grade,'floor':floor,'cap':cap,'reason':'C등급 상한이 원가 하한보다 낮음'});continue
+    price=cap
+   first=us[0];name=re.sub(r'(?:1\+\+|1\+|특|상|A|B|C)\s*등급','',first.get('name') or sku,flags=re.I).strip().strip('/').strip() or sku
+   out.append({'sku':sku,'name':name,'category':first.get('category') or '', 'grade':grade,'price':price,'stock':len(us),'units':[u['unit'] for u in us],'expires_at':min((u['expires_at'] for u in us if u.get('expires_at')),default=None),'warranty_hours':max(0,int(previous.get((sku,grade),{}).get('warranty_hours') or 0))})
+  if args.get('mode')!='preview':
+   p.parent.mkdir(parents=True,exist_ok=True);q=str(p)+'.next'
+   with open(q,'w',encoding='utf8') as f:json.dump({'items':out},f,ensure_ascii=False)
+   os.replace(q,p)
+  return {'ok':True,'count':len(out),'items':out,'excluded':excluded,'published':args.get('mode')!='preview'}
+ except Exception as e:return {'ok':False,'error':type(e).__name__+': '+str(e)[:230]}

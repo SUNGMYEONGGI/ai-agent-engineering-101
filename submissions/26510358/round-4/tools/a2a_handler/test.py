@@ -1,35 +1,23 @@
-import base64,json,os,time
-from unittest.mock import patch
-
-class Resp:
-    status_code=200
-    is_success=True
-    def raise_for_status(self): pass
-    def json(self): return {'units':[{'unit':'u-live','sku':'G0746760c','grade':'A','cost':1700,'expires_at':int(time.time())+4000}]}
-
+import base64,json,time,uuid
+from pathlib import Path
 def test(run,kit):
-    p='tmp/test/a2a_v10_'+str(time.time_ns())+'/'
-    os.makedirs(p,exist_ok=True)
-    a={k+'_path':p+k+'.json' for k in ('catalog','reservations','customers','holds')}
-    a.update(context_id='ctx-test',task_id='task-test')
-    items=[{'sku':'Gaaaaaaa1','name':'후디스 고단백 무가당 그릭요거트 플레인','grade':'C','price':4990,'stock':1,'units':['u-yogurt']},{'sku':'Gaaaaaaa2','name':'한상궁김치 총각김치 단단한 알타리 무김치','grade':'B','price':8490,'stock':1,'units':['u-kimchi']},{'sku':'G0746760c','name':'동서 둥굴레차 50T 60g','grade':'A','price':3450,'stock':2,'units':['u-stale','u-live']}]
-    with open(a['catalog_path'],'w',encoding='utf-8') as f: json.dump({'items':items},f,ensure_ascii=False)
-    for msg in ('가정용 냉장고 재고와 배송 설치 조건, 소포장 우유 소비기한 알려 주세요. 판매 가능하면 checkout 보내 주세요.','단단한 두부와 차가 있으면 가격 알려 주세요.','둥굴레차 재고와 가격 알려 주세요.'):
-        r=run(dict(a,text=msg),kit)
-        assert not r.get('data',{}).get('checkout_jwt') and r.get('ok',True),r
-    with patch('httpx.request',return_value=Resp()) as call:
-        r=run(dict(a,text='둥굴레차 A등급 구매하겠습니다.'),kit)
-        assert call.call_args.args[1].endswith('/api/inventory'),r
-    assert r.get('data',{}).get('unit')=='u-live',r
-    jwt=r['data']['checkout_jwt']
-    h,payload,sig=jwt.split('.')
-    def dec(s): return base64.urlsafe_b64decode(s+'='*(-len(s)%4))
-    x=json.loads(dec(payload))
-    required={'id','shop','shop_url','item','price','task','currency','iat','unit'}
-    assert required<=x.keys() and all(x[k] not in ('',None) for k in required)
-    assert x['unit']=='u-live' and x['shop']==kit.name and x['shop_url']==kit.shop_url and x['item']=='G0746760c'
-    assert json.loads(dec(h))['alg']=='EIP191' and len(dec(sig))==65
-    expected=kit.sign_jwt(x,'shop')
-    assert jwt==expected
-    with open(a['customers_path'],encoding='utf-8') as f: logs=[json.loads(s) for s in f]
-    assert len(logs)==4 and all(z['deal'] is None for z in logs[:3]) and logs[3]['deal']['unit']=='u-live'
+ p=Path('tmp/test');p.mkdir(parents=True,exist_ok=True)
+ names=[('y','그릭요거트','C',4990),('tea','둥굴레차','B',3251),('kim','총각김치 단단한','B',9119),('nam','취나물','B',2990),('nam','취나물','C',2590)]
+ items=[];units=[]
+ for i,(sku,name,grade,price) in enumerate(names):
+  u='unit-'+str(i);items.append({'sku':sku,'name':name,'grade':grade,'price':price,'stock':1,'units':[u],'warranty_hours':0});units.append({'unit':u,'sku':sku,'grade':grade,'cost':1000,'supplied_at':100,'expires_at':time.time()+10000})
+ cp=p/'handler_catalog.json';cp.write_text(json.dumps({'items':items},ensure_ascii=False),encoding='utf8')
+ def call(text):
+  suffix=uuid.uuid4().hex
+  return run({'text':text,'catalog_path':str(cp),'holds_path':str(p/('h'+suffix+'.json')),'customers_path':str(p/('c'+suffix+'.jsonl')),'reservations_path':str(p/'reservations_missing.jsonl'),'inventory_fixture':{'units':units}},kit)
+ r=call('냉장고와 소포장 우유 있나요? 결제서 주세요');assert not r.get('data',{}).get('checkouts') and '냉장고' in r['reply'] and '우유' in r['reply'],r
+ r=call('단단한 두부와 차 있으면 결제서 주세요');assert [x['sku'] for x in r['data']['checkouts']]==['tea'] and '두부' in r['reply'],r
+ r=call('요거트랑 샴푸·치약, 있으면 결제서 주세요');assert [x['sku'] for x in r['data']['checkouts']]==['y'] and '샴푸' in r['reply'] and '치약' in r['reply'],r
+ r=call('취나물 A등급 구매할게요');assert not r['data']['checkouts'] and 'B' in r['reply'] and 'C' in r['reply'],r
+ r=call('둥굴레차 구매');c=r['data']['checkouts'];assert len(c)==1,r
+ jwt=c[0]['checkout_jwt'];parts=jwt.split('.');assert len(parts)==3 and all(parts)
+ decode=lambda s:json.loads(base64.urlsafe_b64decode(s+'='*((-len(s))%4)))
+ assert decode(parts[0])=={'alg':'EIP191','typ':'JWT'}
+ payload=decode(parts[1]);assert all(payload.get(k) for k in ('id','shop','shop_url','item','price','task','currency','iat','unit')),payload
+ assert payload['unit']=='unit-1' and payload['item']=='tea'
+ assert kit.sign_jwt(payload,'shop')==jwt

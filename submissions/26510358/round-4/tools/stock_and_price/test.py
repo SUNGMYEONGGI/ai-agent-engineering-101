@@ -1,20 +1,16 @@
-import json,os,tempfile
-
+import math,tempfile,os,json
 def test(run,kit):
  os.makedirs('tmp/test',exist_ok=True)
  with tempfile.TemporaryDirectory(dir='tmp/test') as d:
-  p=d+'/catalog.json'; u={'unit':'u-1','sku':'G1','name':'백미 상등급','category':'식품','grade':'B','cost':1000,'list_price':3000,'expires_at':2345}
-  x=run({'catalog_path':p,'inventory':[u],'prices':[{'sku':'G1','grade':'B','price':2000,'warranty_hours':3}]},kit)
-  assert x['ok'] and x['count']==1
-  a=x['items'][0]; required=('sku','name','grade','price','stock','units','warranty_hours')
-  assert all(k in a and a[k] is not None and a[k]!='' for k in required)
-  assert a['units']==['u-1'] and a['grade']=='B' and a['price']==2000 and '상등급' not in a['name']
-  units=[u,dict(u,unit='u-2',expires_at=1234),dict(u,sku='G2',unit='u-3',cost=3400),dict(u,grade='A',unit='u-4')]
-  y=run({'catalog_path':p,'inventory':units,'featured':[{'sku':'G1','grade':'A'},{'sku':'G3','grade':'A'}]},kit)
-  assert y['ok'] and y['count']==3 and [a['grade'] for a in y['items']]==['A','B','B']
-  a=y['items'][1]; assert a['price']==2000 and a['warranty_hours']==3
-  assert a['units']==['u-2','u-1'] and a['expires_at']==1234 and y['items'][2]['price']>=3647
-  z=run({'catalog_path':p,'inventory':list(reversed(units))},kit)
-  assert z==y
-  with open(p,encoding='utf8') as f: assert json.load(f)['items']==y['items']
-  assert run({'inventory':[]},kit)['ok'] is False
+  now=200000;defunit=lambda sku,g,c,price,age:{'unit':sku+g,'sku':sku,'grade':g,'cost':c,'name':sku,'list_price':price,'supplied_at':now-age*3600,'expires_at':now+100000}
+  units=[defunit('known','B',1000,3000,1),defunit('known','C',900,3000,1),defunit('conflict','C',3000,4000,1),defunit('old','C',1000,4000,24),defunit('zero','B',1000,3000,1)]
+  def sale(s,g,p):return {'round':4,'kind':'settle','data':{'sku':s,'grade':g,'amount':p}}
+  ledger=[sale('known','B',2000),sale('known','C',1800),sale('conflict','B',3000),sale('old','B',5000)]
+  p=d+'/catalog.json';r=run({'catalog_path':p,'inventory':units,'ledger_fixture':ledger,'now':now},kit);assert r['ok'],r
+  by={(x['sku'],x['grade']):x for x in r['items']};floor=math.ceil(1210*100/99)+5
+  assert by['known','B']['price']==1960 and by['known','B']['price']>=floor
+  assert by['known','C']['price']==1600
+  assert ('conflict','C') not in by and r['excluded'][0]['sku']=='conflict'
+  assert by['old','C']['price']==math.floor(4000*0.9**2)
+  assert by['zero','B']['price']==floor
+  assert json.load(open(p))['items']==r['items']

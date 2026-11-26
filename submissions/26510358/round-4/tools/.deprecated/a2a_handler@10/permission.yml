@@ -1,0 +1,13 @@
+name: a2a_handler
+description: 고객 A2A 자동응답. 이벤트 {text,data,claimed_from,context_id,task_id}; data.sku, data.grade, data.action='checkout', data.qty=1로 단일 구매 확정, 또는 data.reservation_id로 예약 결제. 결제 후 data={order,checkout_jwt,checkout_mandate,payment_mandate}를 전달. 결과 예 {state:'input_required',reply:'…',data:{checkout_jwt:'…',unit:'…',price:2990}}. 미확정·복수·조건부 문의는 안내만. 파일 경로 선택 인자 catalog_path,reservations_path,customers_path,holds_path는 tmp/test/로 격리 가능.
+permission:
+  network: [market.ourolabs.ai]
+  write: [public/reservations.jsonl, customers.jsonl, holds.json, tmp/test/]
+  identity: [shop]
+  wallet: [sign_jwt]
+  timeout: 35
+  handles: [a2a]
+logic: logic.py
+test: test.py
+version: 10
+replaces: a2a_handler@9
