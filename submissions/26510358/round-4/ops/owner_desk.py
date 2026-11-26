@@ -160,10 +160,22 @@ def get_json(path):
         return json.loads(r.read())
 
 
-def refresh_market(now=None, board=None, forum=None):
+def count_talks(talks, now):
+    """Messages customers' agents sent each shop in the last hour (GET /api/talks: who wrote to whom, no words)."""
+    n = {}
+    for t in talks if isinstance(talks, list) else []:
+        if isinstance(t, dict) and t.get("from_role") == "buyer" and now - float(t.get("ts") or 0) <= 3600:
+            n[str(t.get("to"))] = n.get(str(t.get("to")), 0) + 1
+    top = sorted(n.items(), key=lambda kv: -kv[1])[:3]
+    return {"ours": n.get(SHOP_NAME, 0), "top": [{"shop": k, "n": v} for k, v in top], "shops": len(n)}
+
+
+def refresh_market(now=None, board=None, forum=None, talks=None):
     """Our board rank (with a history of changes) and shop forum posts in the last hour. Network only here."""
     now = now or time.time()
+    board_given = board is not None
     try:
+        talks = talks if talks is not None else [] if board_given else get_json("/api/talks")   # given board: a test
         board = board if board is not None else get_json("/api/board")
         forum = forum if forum is not None else get_json("/api/forum?role=shop")
     except Exception as e:                                 # the market being slow must not break the desk
@@ -187,7 +199,7 @@ def refresh_market(now=None, board=None, forum=None):
             hist = (hist + [[int(now), me["rank"]]])[-50:]
             RANKS.parent.mkdir(exist_ok=True)
             RANKS.write_text(json.dumps(hist), encoding="utf-8")
-    _mkt.update(at=int(now), rank=me and me["rank"], of=len(ranked), history=hist[-12:], error="",
+    _mkt.update(at=int(now), rank=me and me["rank"], of=len(ranked), history=hist[-12:], error="", talks=count_talks(talks, now),
                 forum={"ours": posts.get(SHOP_NAME, 0), "top": [{"shop": k, "n": v} for k, v in top]})
     return _mkt
 
@@ -393,6 +405,11 @@ def harness(now=None):
         row("도구", "ok" if not any(not f.get("passed") for f in forges[-3:]) else "warn",
             f"{len(tools)}개 · 실패 누적 {sum((v or {}).get('fails', 0) for v in tools.values())} · 마지막 forge "
             + (f"{forges[-1].get('tool')} v{forges[-1].get('version')} {'통과' if forges[-1].get('passed') else '실패'} {ago(forges[-1].get('ts'), now)}" if forges else "없음")),
+        row("손님 대화 (시장 전체)", "ok" if any(now - c.get("ts", 0) <= 3600 for c in cust) else "warn",
+            "1시간 우리 {}건 · ".format(max((_mkt.get("talks") or {}).get("ours", 0), sum(1 for c in cust if now - c.get("ts", 0) <= 3600)))
+            + (" · ".join(
+                f"{t['shop']} {t['n']}" for t in (_mkt.get("talks") or {}).get("top", [])) or "기록 없음")
+            + " (우리 수는 customers.jsonl; 다른 가게는 GET /api/talks, kit v5.2만 집계)"),
         row("시장", "fail" if _mkt.get("error") else "ok",
             _mkt.get("error") or f"순위 {_mkt.get('rank') or '-'} / {_mkt.get('of') or '-'} · {ago(_mkt.get('at'), now)} 확인"),
     ]

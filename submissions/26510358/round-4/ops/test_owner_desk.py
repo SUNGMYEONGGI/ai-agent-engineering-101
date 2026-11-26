@@ -83,3 +83,9 @@ mem = [c for c in h["changes"] if c["kind"] == "memory"]
 assert mem and mem[0]["added"] == ["B"] and mem[0]["removed"] == ["A"], h["changes"]
 assert any(c["kind"] == "tool" and c["title"] == "recall v2" for c in h["changes"])
 print("harness ok")
+
+t = d.count_talks([{"ts": day0, "to": "Hermes Shop", "from_role": "buyer"}, {"ts": day0, "to": "골목상회", "from_role": "buyer"},
+                   {"ts": day0, "to": "골목상회", "from_role": "buyer"}, {"ts": day0, "to": "x", "from_role": "shop"},
+                   {"ts": day0 - 7200, "to": "Hermes Shop", "from_role": "buyer"}], day0 + 60)
+assert t["ours"] == 1 and t["top"][0] == {"shop": "골목상회", "n": 2} and t["shops"] == 2, t
+print("talks ok")
