@@ -115,7 +115,12 @@ case "${1:-}" in
     # The kit checks its new trycloudflare URL from this host at once; the local resolver then caches "not found"
     # and the check fails for 120 s (11-24). Flushing the cache for the first 3 minutes needs no root.
     command -v resolvectl >/dev/null && ( for _ in $(seq 36); do resolvectl flush-caches 2>/dev/null; sleep 5; done ) &
-    forever kit "$PY" scripts/round4/agent_kit.py run --dir "$R" --market "$MARKET" --name "$NAME" --tunnel \
+    # Shop A2A address: the named tunnel (shop-tunnel, ~/.cloudflared/hermes-shop.yml) maps SHOP_PUBLIC_URL to
+    # 127.0.0.1:SHOP_PORT, so a kit restart keeps the same URL. A quick tunnel changed it on every restart and left the
+    # market listing a dead URL until the kit joined again (11-26: 12:46-12:50). SHOP_PUBLIC_URL= (empty) goes back to --tunnel.
+    SHOP_PUBLIC_URL=${SHOP_PUBLIC_URL-https://shop.hermes-market.shop}; SHOP_PORT=${SHOP_PORT:-8890}
+    if [ -n "$SHOP_PUBLIC_URL" ]; then WHERE=(--public-url "$SHOP_PUBLIC_URL" --port "$SHOP_PORT"); else WHERE=(--tunnel); fi
+    forever kit "$PY" scripts/round4/agent_kit.py run --dir "$R" --market "$MARKET" --name "$NAME" "${WHERE[@]}" \
       "${APP[@]}" ${EXTRA[@]+"${EXTRA[@]}"} ;;
   link)
     grep -o 'https://[^ ]*?k=[^ ]*' "$R/.kit/kit.log" 2>/dev/null | tail -1 || echo "no link yet: is the kit up?" ;;
