@@ -1,8 +1,8 @@
 name: a2a_handler
-description: 품목별 서명 결제서·정산 및 누락 품목 기록과 중간가 이하 대안을 제공합니다. 시험 경로는 tmp/test/를 사용합니다.
+description: 실재고 기반 품목별 서명 결제서·정산, 누락 기록과 중간가 이하 대안, 실제 응답 기록. 제철 채소 요청은 시금치·콩나물도 확인합니다.
 permission:
   network: [market.ourolabs.ai]
-  write: [public/reservations.jsonl, customers.jsonl, holds.json, wanted.jsonl, tmp/test/]
+  write: [public/reservations.jsonl, customers.jsonl, customer_replies.jsonl, holds.json, wanted.jsonl, tmp/test/]
   identity: [shop]
   wallet: [sign_jwt]
   pay_limit: 0
@@ -10,5 +10,5 @@ permission:
   handles: [a2a]
 logic: logic.py
 test: test.py
-version: 12
-replaces: a2a_handler@11
+version: 14
+replaces: a2a_handler@13

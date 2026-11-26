@@ -1,11 +1,11 @@
 {
  "tool": "stock_and_price",
- "version": 8,
- "forged_at": 1795669796,
- "kit": "v5.1",
+ "version": 9,
+ "forged_at": 1795706418,
+ "kit": "v5.2",
  "sha256": {
-  "permission.yml": "697a4970af70d562d6a359d76bd07fc5906c2da609252db9c7cf21e1a48de9f1",
-  "logic.py": "f9bbe83eae046a75836e34d22a9c0d7965e7a242fe630ebe91c5f5884a33bcd6",
-  "test.py": "ddb68651471aed776e32a1b1394f06dd6f40ab7a4a5130b84399e2f75ac18e2b"
+  "permission.yml": "ef4c53e94280e874c34e6bf565cc14b95d1a977ec905666601a4c8237172aaf1",
+  "logic.py": "4daaa9801a016e74db0918abcccbe67c91d1b25463c2b72f35625b0dc951f020",
+  "test.py": "c546b7bb8d8fa478129dd580c709c2c98749117e76e6965f93b8665d1bd8b6c0"
  }
 }

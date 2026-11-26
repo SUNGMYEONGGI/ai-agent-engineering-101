@@ -1,12 +1,12 @@
 name: stock_and_price
-description: 실재고를 만료순으로 묶되 선두 재고의 무손실 경쟁가에 맞는 연속 단위만 진열하고 나머지는 차후 재가격합니다. mode=preview는 파일을 쓰지 않습니다. 테스트는 tmp/test 경로와 inventory, ledger_fixture를 사용합니다.
+description: 실재고를 만료순 진열하고 손절 승인 단위는 중간가 하한과 일일 예약 한도 안에서만 진열합니다. mode=preview는 쓰지 않습니다. 테스트는 tmp/test 경로를 사용합니다.
 permission:
   network: [market.ourolabs.ai]
-  write: [public/catalog.json, public/catalog.json.next, tmp/test/]
+  write: [public/catalog.json, public/catalog.json.next, loss_reservations.json, loss_reservations.json.next, tmp/test/]
   identity: [shop]
   pay_limit: 0
   timeout: 35
 logic: logic.py
 test: test.py
-version: 8
-replaces: stock_and_price@7
+version: 9
+replaces: stock_and_price@8
