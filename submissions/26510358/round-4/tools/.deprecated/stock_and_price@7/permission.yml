@@ -1,0 +1,12 @@
+name: stock_and_price
+description: 실재고와 원장 표본으로 무손실 가격을 계산해 public/catalog.json 게시. mode=preview는 파일을 쓰지 않습니다. 테스트는 tmp/test 경로와 inventory, ledger_fixture를 사용합니다.
+permission:
+  network: [market.ourolabs.ai]
+  write: [public/catalog.json, public/catalog.json.next, tmp/test/]
+  identity: [shop]
+  pay_limit: 0
+  timeout: 35
+logic: logic.py
+test: test.py
+version: 7
+replaces: stock_and_price@6

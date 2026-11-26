@@ -1,0 +1,11 @@
+{
+ "tool": "stock_and_price",
+ "version": 7,
+ "forged_at": 1795665546,
+ "kit": "v5.1",
+ "sha256": {
+  "permission.yml": "5c1f7b61c83b16a2429d91b88b46b02eea7bb3fb1fff2160211ab110bfab3c20",
+  "logic.py": "b034706d151104c8178f907b8a83aa998dae99f5084ca0ca44fc553249678300",
+  "test.py": "0ae787f1f89f7f018d4d45c909799dce0c8c893047be6fe96b9693a479a484b0"
+ }
+}

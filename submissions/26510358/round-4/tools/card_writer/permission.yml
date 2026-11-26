@@ -1,10 +1,11 @@
 name: card_writer
-description: public/catalog.json의 실재고와 가격으로 4개 카테고리별 구매 Agent Card를 게시합니다. 테스트 경로는 tmp/test/만 허용합니다.
+description: 실재고와 최근 정산 중간가를 비교해 짧은 상품명으로 카드를 게시합니다. 테스트 경로는 tmp/test/만 허용하며 ledger_fixture를 지원합니다.
 permission:
+  network: [market.ourolabs.ai]
   write: [card.json, tmp/test/]
   pay_limit: 0
   timeout: 30
 logic: logic.py
 test: test.py
-version: 5
-replaces: card_writer@4
+version: 6
+replaces: card_writer@5

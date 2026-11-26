@@ -2,15 +2,14 @@ import math,tempfile,os,json
 def test(run,kit):
  os.makedirs('tmp/test',exist_ok=True)
  with tempfile.TemporaryDirectory(dir='tmp/test') as d:
-  now=200000;defunit=lambda sku,g,c,price,age:{'unit':sku+g,'sku':sku,'grade':g,'cost':c,'name':sku,'list_price':price,'supplied_at':now-age*3600,'expires_at':now+100000}
-  units=[defunit('known','B',1000,3000,1),defunit('known','C',900,3000,1),defunit('conflict','C',3000,4000,1),defunit('old','C',1000,4000,24),defunit('zero','B',1000,3000,1)]
+  now=200000
+  def unit(s,g,c,price,age,ident=None,exp=None):return {'unit':ident or s+g,'sku':s,'grade':g,'cost':c,'name':s,'list_price':price,'supplied_at':now-age*3600,'expires_at':exp or now+100000}
+  units=[unit('known','B',1000,3000,1),unit('known','C',900,3000,1),unit('conflict','C',3000,4000,1),unit('old','C',1000,4000,24),unit('zero','B',1000,3000,1),unit('tea','B',2047,4000,24,'cheap',now+100),unit('tea','B',3008,4000,24,'dear',now+200)]
   def sale(s,g,p):return {'round':4,'kind':'settle','data':{'sku':s,'grade':g,'amount':p}}
-  ledger=[sale('known','B',2000),sale('known','C',1800),sale('conflict','B',3000),sale('old','B',5000)]
+  ledger=[sale('known','B',2000),sale('known','C',1800),sale('conflict','B',3000),sale('old','B',5000),sale('tea','B',2724)]
   p=d+'/catalog.json';r=run({'catalog_path':p,'inventory':units,'ledger_fixture':ledger,'now':now},kit);assert r['ok'],r
-  by={(x['sku'],x['grade']):x for x in r['items']};floor=math.ceil(1210*100/99)+5
-  assert by['known','B']['price']==1960 and by['known','B']['price']>=floor
-  assert by['known','C']['price']==1600
+  by={(x['sku'],x['grade']):x for x in r['items']};assert by['known','B']['price']==1960 and by['known','C']['price']==1600
   assert ('conflict','C') not in by and r['excluded'][0]['sku']=='conflict'
-  assert by['old','C']['price']==math.floor(4000*0.9**2)
-  assert by['zero','B']['price']==floor
+  assert by['old','C']['price']==math.floor(4000*0.9**2) and by['zero','B']['price']==math.ceil(1210*100/99)+5
+  assert by['tea','B']['price']==math.floor(2724*0.98) and by['tea','B']['units']==['cheap'] and by['tea','B']['stock']==1
   assert json.load(open(p))['items']==r['items']
