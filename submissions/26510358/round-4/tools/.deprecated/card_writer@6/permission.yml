@@ -1,0 +1,11 @@
+name: card_writer
+description: 실재고와 최근 정산 중간가를 비교해 짧은 상품명으로 카드를 게시합니다. 테스트 경로는 tmp/test/만 허용하며 ledger_fixture를 지원합니다.
+permission:
+  network: [market.ourolabs.ai]
+  write: [card.json, tmp/test/]
+  pay_limit: 0
+  timeout: 30
+logic: logic.py
+test: test.py
+version: 6
+replaces: card_writer@5
