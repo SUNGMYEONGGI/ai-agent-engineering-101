@@ -9,7 +9,7 @@ agent.json point llm.base anywhere, so this shim sits on 127.0.0.1 and:
   - adds reasoning_effort from AGENT_REASONING_EFFORT when set,
   - forwards to OPENAI_BASE_URL with OPENAI_API_KEY,
   - appends token usage (never message content) to logs/llm-shim.jsonl,
-  - stops spending at SHIM_DAILY_TOKENS total tokens per local day (default 15,000,000, a safety net above the ~6-8M a day expected after the 11-26 sleep rules; 0 = no cap): past the cap it
+  - stops spending at the owner's daily_tokens (owner_limits.json, set in the app) or SHIM_DAILY_TOKENS total tokens per local day (default 15,000,000, a safety net above the ~6-8M a day expected after the 11-26 sleep rules; 0 = no cap): past the cap it
     answers the kit itself with a sleep move (no API call), so the agent rests until the next day instead of
     retrying. Customers are still answered by the a2a_handler tool, which needs no model.
 
@@ -112,8 +112,17 @@ def tokens_today():
 SPENT = tokens_today()
 
 
+def daily_cap():
+    """The owner's cap from the app (owner_limits.json, written by ops/owner_desk.py), read on every call so a change
+    needs no restart; SHIM_DAILY_TOKENS when the owner has not set one."""
+    try:
+        return int(json.loads((ROOT / "owner_limits.json").read_text(encoding="utf-8"))["daily_tokens"])
+    except (OSError, ValueError, KeyError, TypeError):
+        return int(os.environ.get("SHIM_DAILY_TOKENS", "15000000"))
+
+
 def over_budget():
-    cap = int(os.environ.get("SHIM_DAILY_TOKENS", "15000000"))
+    cap = daily_cap()
     if SPENT["day"] != time.strftime("%F"):
         SPENT.update(day=time.strftime("%F"), tokens=0)
     return cap > 0 and SPENT["tokens"] >= cap
