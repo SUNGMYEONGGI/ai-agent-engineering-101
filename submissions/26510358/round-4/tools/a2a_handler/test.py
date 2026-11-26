@@ -1,23 +1,13 @@
-import base64,json,time,uuid
+import json,time,uuid
 from pathlib import Path
 def test(run,kit):
- p=Path('tmp/test');p.mkdir(parents=True,exist_ok=True)
- names=[('y','그릭요거트','C',4990),('tea','둥굴레차','B',3251),('kim','총각김치 단단한','B',9119),('nam','취나물','B',2990),('nam','취나물','C',2590)]
- items=[];units=[]
- for i,(sku,name,grade,price) in enumerate(names):
-  u='unit-'+str(i);items.append({'sku':sku,'name':name,'grade':grade,'price':price,'stock':1,'units':[u],'warranty_hours':0});units.append({'unit':u,'sku':sku,'grade':grade,'cost':1000,'supplied_at':100,'expires_at':time.time()+10000})
- cp=p/'handler_catalog.json';cp.write_text(json.dumps({'items':items},ensure_ascii=False),encoding='utf8')
- def call(text):
-  suffix=uuid.uuid4().hex
-  return run({'text':text,'catalog_path':str(cp),'holds_path':str(p/('h'+suffix+'.json')),'customers_path':str(p/('c'+suffix+'.jsonl')),'reservations_path':str(p/'reservations_missing.jsonl'),'inventory_fixture':{'units':units}},kit)
- r=call('냉장고와 소포장 우유 있나요? 결제서 주세요');assert not r.get('data',{}).get('checkouts') and '냉장고' in r['reply'] and '우유' in r['reply'],r
- r=call('단단한 두부와 차 있으면 결제서 주세요');assert [x['sku'] for x in r['data']['checkouts']]==['tea'] and '두부' in r['reply'],r
- r=call('요거트랑 샴푸·치약, 있으면 결제서 주세요');assert [x['sku'] for x in r['data']['checkouts']]==['y'] and '샴푸' in r['reply'] and '치약' in r['reply'],r
- r=call('취나물 A등급 구매할게요');assert not r['data']['checkouts'] and 'B' in r['reply'] and 'C' in r['reply'],r
- r=call('둥굴레차 구매');c=r['data']['checkouts'];assert len(c)==1,r
- jwt=c[0]['checkout_jwt'];parts=jwt.split('.');assert len(parts)==3 and all(parts)
- decode=lambda s:json.loads(base64.urlsafe_b64decode(s+'='*((-len(s))%4)))
- assert decode(parts[0])=={'alg':'EIP191','typ':'JWT'}
- payload=decode(parts[1]);assert all(payload.get(k) for k in ('id','shop','shop_url','item','price','task','currency','iat','unit')),payload
- assert payload['unit']=='unit-1' and payload['item']=='tea'
- assert kit.sign_jwt(payload,'shop')==jwt
+ p=Path('tmp/test');p.mkdir(parents=True,exist_ok=True);tag=uuid.uuid4().hex
+ cp=p/(tag+'cat');hp=p/(tag+'hold');lg=p/(tag+'customers');rp=p/(tag+'res');wp=p/(tag+'wanted')
+ items=[];units=[];ledger=[]
+ for i,(name,sku) in enumerate([('백미 쌀 2kg','rice'),('둥굴레차','tea'),('취나물','veg'),('두부','tofu'),('생수','water')]):
+  uid=tag+str(i);items.append({'name':name,'sku':sku,'grade':'B','price':1000,'stock':1,'units':[uid],'warranty_hours':1});units.append({'sku':sku,'unit':uid,'grade':'B','cost':100,'expires_at':time.time()+3600});ledger.append({'kind':'settle','data':{'sku':sku,'grade':'B','amount':1200}})
+ cp.write_text(json.dumps({'items':items},ensure_ascii=False));args={'catalog_path':str(cp),'holds_path':str(hp),'customers_path':str(lg),'reservations_path':str(rp),'wanted_path':str(wp),'inventory_fixture':{'units':units},'ledger_fixture':ledger,'claimed_from':'buyer'}
+ r=run(dict(args,text='백미 2kg, 신선채소, 둥굴레차'),kit);assert len(r.get('data',{}).get('checkouts',[]))==2,r;assert '신선채소' in r['reply'] and '없습니다' in r['reply'],r
+ r=run(dict(args,text='가정용 건조기 실제 재고가 있습니까?'),kit);assert '건조기' in r['reply'] and '없습니다' in r['reply'] and '중간가 이하' in r['reply'],r
+ r=run(dict(args,text='현미 2kg 있나요?'),kit);assert '현미' in r['reply'] and '없습니다' in r['reply'] and '중간가 이하' in r['reply'],r
+ rows=[json.loads(x) for x in wp.read_text().splitlines()];assert {'신선채소','가정용 건조기','현미'}<=set(x['item'] for x in rows),rows

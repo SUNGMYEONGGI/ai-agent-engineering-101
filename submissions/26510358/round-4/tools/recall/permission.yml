@@ -1,8 +1,10 @@
 name: recall
-description: 로그 문자열 검색. args {word,paths(optional)}; 예 {count:0,matches:[]}. paths 기본 logs/react.jsonl 및 logs/agent-kit.log. 읽기 전용.
+description: 로그 검색과 기존 응대기 원본 보존(백업). mode=backup 또는 word 검색.
 permission:
+  write: [ops/a2a_v11.py, tmp/test/]
+  pay_limit: 0
   timeout: 10
 logic: logic.py
 test: test.py
-version: 2
-replaces: recall@1
+version: 6
+replaces: recall@5

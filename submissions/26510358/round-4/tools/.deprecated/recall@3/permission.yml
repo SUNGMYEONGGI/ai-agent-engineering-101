@@ -1,0 +1,9 @@
+name: recall
+description: 로그 검색. word, paths, last_only, field, offset, length 선택.
+permission:
+  pay_limit: 0
+  timeout: 10
+logic: logic.py
+test: test.py
+version: 3
+replaces: recall@2

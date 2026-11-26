@@ -1,3 +1,4 @@
+from pathlib import Path
 def test(run,kit):
- x=run({'word':'anything','paths':['tmp/test/nonexistent_recall_file']},kit);assert x=={'matches':[],'count':0}
- assert run({'word':''},kit)['count']==0
+ p=Path('tmp/test/recall_src');p.parent.mkdir(parents=True,exist_ok=True);p.write_text('hello');r=run({'mode':'backup','source':str(p),'dest':'tmp/test/recall_dest'},kit);assert r['ok'] and Path('tmp/test/recall_dest').read_text()=='hello'
+ assert run({'word':''},kit)=={'matches':[],'count':0}

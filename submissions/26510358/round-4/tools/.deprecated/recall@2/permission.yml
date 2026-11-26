@@ -1,0 +1,8 @@
+name: recall
+description: 로그 문자열 검색. args {word,paths(optional)}; 예 {count:0,matches:[]}. paths 기본 logs/react.jsonl 및 logs/agent-kit.log. 읽기 전용.
+permission:
+  timeout: 10
+logic: logic.py
+test: test.py
+version: 2
+replaces: recall@1
