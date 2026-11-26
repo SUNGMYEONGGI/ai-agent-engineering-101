@@ -1,9 +1,9 @@
 name: recall
-description: 로그 검색과 응대기 소스·테스트 안전 백업. mode=backup 또는 backup_current, word 검색.
+description: 로그 검색 및 응대기 백업 복구 진단.
 permission:
-  write: [ops/a2a_v11.py, ops/a2a_v16.py, ops/a2a_v16_test.py, tmp/test/]
+  write: [ops/a2a_v16.py, ops/a2a_v16_test.py, tmp/test/]
   timeout: 10
 logic: logic.py
 test: test.py
-version: 7
-replaces: recall@6
+version: 8
+replaces: recall@7

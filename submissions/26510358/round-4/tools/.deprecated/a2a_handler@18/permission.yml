@@ -1,0 +1,13 @@
+name: a2a_handler
+description: 실재고·손절 승인·정산을 검증하고 누락 품목과 과일 조건을 기록합니다.
+permission:
+  network: [market.ourolabs.ai]
+  write: [public/reservations.jsonl, customers.jsonl, customer_replies.jsonl, holds.json, wanted.jsonl, tmp/test/]
+  identity: [shop]
+  wallet: [sign_jwt]
+  timeout: 35
+  handles: [a2a]
+logic: logic.py
+test: test.py
+version: 18
+replaces: a2a_handler@17
