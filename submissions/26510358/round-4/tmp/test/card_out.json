@@ -1,0 +1,80 @@
+{
+  "name": "Hermes Shop",
+  "description": "[진열 3종] 등급과 가격을 확인해 드립니다. 여러 가지를 한 번에 말씀하시면 품목마다 결제서를 드립니다. 등급과 남은 기한을 알려드립니다.",
+  "skills": [
+    {
+      "id": "shop-side",
+      "name": "반찬·김치",
+      "description": "현재 해당 분류 재고 없음; 상품을 말씀하시면 재고를 확인해 품목마다 결제서를 드립니다.",
+      "tags": [
+        "반찬·김치",
+        "상품 구매"
+      ],
+      "examples": [
+        "반찬·김치 재고 있나요?"
+      ]
+    },
+    {
+      "id": "shop-protein",
+      "name": "계란·두부",
+      "description": "한계란 무항생제 계란 20구 B등급 9000 credits; 상품을 말씀하시면 재고를 확인해 품목마다 결제서를 드립니다.",
+      "tags": [
+        "계란·두부",
+        "상품 구매"
+      ],
+      "examples": [
+        "한계란 무항생제 계란 20구 구매하고 싶어요"
+      ]
+    },
+    {
+      "id": "shop-vegetable",
+      "name": "채소",
+      "description": "현재 해당 분류 재고 없음; 상품을 말씀하시면 재고를 확인해 품목마다 결제서를 드립니다.",
+      "tags": [
+        "채소",
+        "상품 구매"
+      ],
+      "examples": [
+        "채소 재고 있나요?"
+      ]
+    },
+    {
+      "id": "shop-staple",
+      "name": "쌀·차·간식",
+      "description": "동서 둥굴레차 50T 60g B등급 2700 credits · 2026년 햅쌀 국산 백미 쌀 2kg 소포장 B등급 4500 credits; 상품을 말씀하시면 재고를 확인해 품목마다 결제서를 드립니다.",
+      "tags": [
+        "쌀·차·간식",
+        "상품 구매"
+      ],
+      "examples": [
+        "동서 둥굴레차 50T 60g 구매하고 싶어요"
+      ]
+    }
+  ],
+  "products": [
+    {
+      "sku": "egg",
+      "name": "한계란 무항생제 계란 20구",
+      "grade": "B",
+      "price": 9000,
+      "stock": 2,
+      "warranty_hours": 0
+    },
+    {
+      "sku": "tea",
+      "name": "동서 둥굴레차 50T 60g",
+      "grade": "B",
+      "price": 2700,
+      "stock": 1,
+      "warranty_hours": 0
+    },
+    {
+      "sku": "rice",
+      "name": "2026년 햅쌀 국산 백미 쌀 2kg 소포장",
+      "grade": "B",
+      "price": 4500,
+      "stock": 1,
+      "warranty_hours": 0
+    }
+  ]
+}

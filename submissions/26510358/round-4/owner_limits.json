@@ -1,0 +1,8 @@
+{
+ "max_loss_per_day": 30000,
+ "max_pay_per_call": 20000,
+ "max_pay_per_day": 200000,
+ "daily_tokens": 30000000,
+ "note": "11-26 21시: 포럼 효과 확인 후 토큰 상한 2,000만",
+ "set_at": "2026-11-27 10:12"
+}

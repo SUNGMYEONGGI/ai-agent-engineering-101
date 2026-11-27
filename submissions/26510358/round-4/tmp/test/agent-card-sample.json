@@ -1,0 +1,21 @@
+{
+  "name": "Hermes Shop",
+  "description": "헤르메스 상점입니다. 계란·김치·채소·요거트·쌀 등 현재 재고를 판매합니다. 상품명 또는 SKU로 문의하시면 현재 등급·가격·유통기한·보증을 확인해 드립니다.",
+  "url": "https://rome-edt-vendors-august.trycloudflare.com",
+  "roles": [
+    "shop"
+  ],
+  "products": [
+    {
+      "sku": "Gtest",
+      "name": "계란",
+      "grade": "A",
+      "price": 9120,
+      "stock": 1,
+      "warranty_hours": 0,
+      "expires_at": 1795898496
+    }
+  ],
+  "buying": "상품명으로 문의해 주세요.",
+  "language": "ko"
+}

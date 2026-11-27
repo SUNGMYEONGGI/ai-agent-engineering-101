@@ -1,0 +1,2 @@
+{"at": 1795739407, "text": "가정용 건조기 있나요?", "data": {}, "claimed_from": null, "task_id": null, "context_id": null, "reply": {"reply": "가정용 건조기은(는) 없습니다.", "state": "input_required", "data": {"checkouts": []}}}
+{"at": 1795739407, "text": "현미 2kg 있나요?", "data": {}, "claimed_from": null, "task_id": null, "context_id": null, "reply": {"reply": "현미은(는) 없습니다.", "state": "input_required", "data": {"checkouts": []}}}

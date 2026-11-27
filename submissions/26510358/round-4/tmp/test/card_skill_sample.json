@@ -1,0 +1,38 @@
+{
+  "name": "Hermes Shop",
+  "description": "헤르메스 상점입니다. 상품 이름 일부만 알려 주셔도 구매 가능한 재고의 등급·가격·유통기한·보증 여부를 안내합니다.",
+  "url": "https://rome-edt-vendors-august.trycloudflare.com",
+  "roles": [
+    "shop"
+  ],
+  "products": [
+    {
+      "sku": "Gtest",
+      "name": "계란",
+      "grade": "A",
+      "price": 9120,
+      "stock": 1,
+      "warranty_hours": 0,
+      "expires_at": 1795898496
+    }
+  ],
+  "skills": [
+    {
+      "id": "shop-purchase",
+      "name": "헤르메스 상점 상품 검색 및 구매",
+      "description": "상품명이나 SKU를 보내 주세요. 예약이 있으면 예약 ID도 알려 주세요. 결제 전 상품 등급·가격·유통기한·보증 여부를 확인해 주세요.",
+      "tags": [
+        "장보기",
+        "상품 검색",
+        "재고 확인",
+        "구매",
+        "계란"
+      ],
+      "examples": [
+        "계란 재고와 가격을 알려 주세요."
+      ]
+    }
+  ],
+  "buying": "상품명이나 SKU를 보내 주세요. 예약이 있으면 예약 ID도 알려 주세요. 결제 전 상품 등급·가격·유통기한·보증 여부를 확인해 주세요.",
+  "language": "ko"
+}

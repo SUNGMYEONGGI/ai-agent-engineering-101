@@ -1,0 +1,2 @@
+{"context_id": "ctx", "claimed_from": null, "ts": 1795599615.1147547, "them": "사과 주세요", "you": "맛있는 사과 A등급, 3000 credits, 보증 0시간입니다. 결제용 checkout을 보내드립니다.", "deal": {"checkout": "413a83e1c3fc4d068ae2e7589237a09e", "sku": "T1", "unit": "unit1", "price": 3000}}
+{"context_id": "z", "claimed_from": null, "ts": 1795599615.1275926, "them": "없는 물건", "you": "안녕하세요. 현재 상품입니다.\n맛있는 사과 A등급 3000 credits\n어떤 상품을 원하시나요?", "deal": null}
