@@ -333,6 +333,48 @@ body{font-size:15.5px;line-height:1.62;letter-spacing:-.012em;font-feature-setti
 .ctx button{display:block;width:100%;text-align:left;border:0;background:none;padding:8px 12px;border-radius:8px;font-size:14px}
 .ctx button:hover,.ctx button:focus-visible{background:var(--hover);outline:0}
 @keyframes pop{from{opacity:0;transform:scale(.96)}}
+/* Desk charts */
+.rk .big{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-top:6px}
+.rk .big b{font-size:40px;line-height:1;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.rk .big b small{font-size:18px;margin-left:2px;font-weight:600}
+.rk .big span{font-size:13px;color:var(--text-mute)}.rk .big .best{margin-left:auto}
+.rk .big em{font-style:normal;font-size:13px;font-weight:700;padding:2px 8px;border-radius:999px}
+.rk .big em.up{color:var(--ok);background:color-mix(in srgb,var(--ok) 13%,transparent)}
+.rk .big em.down{color:var(--fail);background:color-mix(in srgb,var(--fail) 12%,transparent)}
+.rk svg{display:block;width:100%;height:auto;margin-top:8px;overflow:visible}
+.rk svg text{font-size:10px;fill:var(--text-mute);font-family:var(--font)}
+.rk .gl{stroke:var(--line);stroke-dasharray:3 3}.rk .ln{fill:none;stroke:var(--text);stroke-width:2;stroke-linejoin:round}
+.rk .pt{fill:var(--raised);stroke:var(--text);stroke-width:1.2}.rk .now{fill:#2563eb;stroke:var(--raised);stroke-width:2}
+.hb{display:grid;gap:6px}
+.hb div{display:grid;grid-template-columns:92px 1fr 52px;gap:10px;align-items:center;font-size:13px}
+.hb span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text-soft)}
+.hb em{display:block;height:10px;border-radius:5px;width:var(--w);background:var(--line-strong)}
+.hb b{text-align:right;font-variant-numeric:tabular-nums}.hb b small,.vbar b small{font-size:11px;font-weight:500;color:var(--text-mute);margin-left:1px}
+.hb .us span,.hb .us b{color:var(--text);font-weight:700}.hb .us em{background:#2563eb}
+#want .hb em{background:var(--mo)}
+.cap{margin:6px 0 0;font-size:12px;color:var(--text-mute)}
+.vb{display:grid;gap:12px}
+.vr{display:grid;gap:4px}.vl{display:flex;gap:8px;align-items:baseline;min-width:0}
+.vl b{font-size:14px;flex:none}.vl span{font-size:12px;color:var(--text-mute);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.vbar{display:grid;grid-template-columns:1fr 64px;gap:10px;align-items:center}
+.vbar em{display:block;height:12px;border-radius:6px;width:var(--w);background:var(--line-strong)}
+.vbar b{text-align:right;font-variant-numeric:tabular-nums;font-size:14px}
+.vr.us .vbar em{background:#2563eb}.vr.us .vl b{color:#2563eb}
+.vm{font-size:12px;color:var(--text-mute)}
+.tk .big{display:flex;align-items:baseline;gap:6px}.tk .big b{font-size:28px;letter-spacing:-.02em}.tk .big span{color:var(--text-mute)}
+.mt2{height:8px;border-radius:4px;background:var(--hover);overflow:hidden;margin:8px 0}
+.mt2 em{display:block;height:100%;width:var(--w);background:var(--text-soft);border-radius:4px}.mt2.hot em{background:var(--fail)}
+.tk p{margin:0;font-size:13px;color:var(--text-mute)}.tk p b{color:var(--text)}
+.ck{display:grid;grid-template-columns:10px 1fr;gap:10px}.ck i{width:10px;height:10px;border-radius:50%;margin-top:5px;background:var(--ok)}
+.ck.bad i{background:var(--fail)}.ck b{display:block}.ck span{font-size:12px;color:var(--text-mute)}
+.ck ul{margin:6px 0 0;padding-left:16px;font-size:13px;color:var(--text-soft)}
+.rs{display:grid;grid-template-columns:1fr auto;gap:4px 10px;padding:10px 0;border-top:1px solid var(--line)}
+.rs b{font-size:14px}.rs div span{display:block;font-size:12px;color:var(--text-mute)}
+.rs .mg{grid-column:1/3;display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:center;font-size:11px;color:var(--text-mute)}
+.rs .mg em{display:block;height:6px;border-radius:3px;width:var(--w);background:var(--mo)}
+.rs .vd{grid-row:1;grid-column:2;align-self:start;font-size:12px;font-weight:650;padding:2px 9px;border-radius:999px;background:var(--hover);color:var(--text-soft)}
+.rs .vd.go{background:color-mix(in srgb,var(--ok) 14%,transparent);color:var(--ok)}
+.learn{margin:0;padding-left:18px;font-size:13px;color:var(--text-soft);display:grid;gap:4px}
 </style>
 </head>
 <body>
@@ -400,18 +442,18 @@ body{font-size:15.5px;line-height:1.62;letter-spacing:-.012em;font-feature-setti
   <h4>바뀐 것</h4><div class="opts" id="hfilter"></div><div id="hchanges"></div>
   <p class="hfoot" id="hsub"></p>
 </div></div>
-<div class="shade" id="dash" hidden><div class="sheet" role="dialog" aria-modal="true">
+<div class="shade" id="dash" hidden><div class="sheet hs" role="dialog" aria-modal="true" aria-labelledby="dtitle">
   <div class="grip"></div>
-  <h3>가게 현황</h3>
+  <h3 id="dtitle">가게 현황</h3>
   <p class="sub" id="dashsub"></p>
-  <div class="sec">실험</div><div id="exps"></div>
-  <div class="sec">잘 팔리는 가게와 비교</div><div id="wins"></div>
-  <div class="sec">모델 토큰</div><div id="toks"></div>
-  <div class="sec">순위와 포럼</div><div id="rank"></div>
-  <div class="sec">손님이 찾았는데 없던 상품</div><div id="want"></div>
-  <div class="sec">에이전트가 배운 것</div><div id="learn"></div>
-  <div class="sec">하네스 점검 (코드가 10분마다)</div><div id="chk"></div>
-  <div class="sec">없던 상품, 매입할까</div><div id="rst"></div>
+  <div id="rank"></div>
+  <h4>손님이 찾았는데 없던 상품</h4><div id="want"></div>
+  <h4>없던 상품, 매입할까</h4><div id="rst"></div>
+  <h4>잘 팔리는 가게와 비교</h4><div id="wins"></div>
+  <h4>실험</h4><div id="exps"></div>
+  <h4>모델 토큰</h4><div id="toks"></div>
+  <h4>하네스 점검</h4><div id="chk"></div>
+  <h4>에이전트가 배운 것</h4><div id="learn"></div>
 </div></div>
 <div class="shade" id="ask" hidden><div class="sheet" role="dialog" aria-modal="true">
   <div class="grip"></div>
@@ -539,11 +581,37 @@ function judgeLeft(e) {
   const min = Math.round((j - Date.now()) / 60000);
   return min > 0 ? `판정까지 ${min}분` : `판정 시각 ${e.judge} 지남`;
 }
+// Charts for the desk: plain SVG and CSS bars, no library.
+function hbars(rows, unit) {
+  const max = Math.max(1, ...rows.map(r => r[1] || 0));
+  return `<div class="hb">` + rows.map(([k, n, us]) => `<div class="${us ? 'us' : ''}"><span>${esc(k)}</span>` +
+    `<em style="--w:${Math.max(n ? 3 : 0, 100 * (n || 0) / max)}%"></em><b>${num(n)}<small>${unit}</small></b></div>`).join('') + '</div>';
+}
+function rankChart(hist, rank, of, now) {
+  // board rank over time as a step line; 1st place at the top
+  const pts = hist.length ? hist.concat([[now, hist.at(-1)[1]]]) : [[now - 3600, rank], [now, rank]];
+  const W = 340, H = 120, L = 28, R = 8, T = 10, B = 22;
+  const rs = pts.map(p => p[1]), lo = Math.min(...rs), hi = Math.max(...rs, lo + 1);
+  const t0 = pts[0][0], t1 = Math.max(now, t0 + 60);
+  const x = t => L + (t - t0) / (t1 - t0) * (W - L - R), y = r => T + (r - lo) / (hi - lo) * (H - T - B);
+  let d = `M${x(pts[0][0]).toFixed(1)} ${y(pts[0][1]).toFixed(1)}`;
+  for (let i = 1; i < pts.length; i++) d += ` H${x(pts[i][0]).toFixed(1)} V${y(pts[i][1]).toFixed(1)}`;
+  const prev = hist.length > 1 ? hist.at(-2)[1] : rank, dl = prev - rank;
+  const tm = ts => new Date(ts * 1000).toLocaleTimeString('ko-KR', {hour: '2-digit', minute: '2-digit', hour12: false});
+  return `<div class="rk"><div class="big"><b>${rank}<small>위</small></b><span>${of}개 가게 중</span>` +
+    (dl ? `<em class="${dl > 0 ? 'up' : 'down'}">${dl > 0 ? '▲' : '▼'} ${Math.abs(dl)}</em>` : '') + `<span class="best">기록 중 최고 ${lo}위</span></div>` +
+    `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="순위 변화, ${tm(t0)}부터 지금까지 ${lo}위에서 ${hi}위 사이">` +
+    `<line x1="${L}" x2="${W - R}" y1="${y(lo)}" y2="${y(lo)}" class="gl"/><line x1="${L}" x2="${W - R}" y1="${y(hi)}" y2="${y(hi)}" class="gl"/>` +
+    `<text x="${L - 6}" y="${y(lo) + 4}" text-anchor="end">${lo}</text><text x="${L - 6}" y="${y(hi) + 4}" text-anchor="end">${hi}</text>` +
+    `<path d="${d}" class="ln"/>` + hist.map(([t, r]) => `<circle cx="${x(t).toFixed(1)}" cy="${y(r).toFixed(1)}" r="2.2" class="pt"/>`).join('') +
+    `<circle cx="${x(now).toFixed(1)}" cy="${y(rank).toFixed(1)}" r="4.5" class="now"/>` +
+    `<text x="${L}" y="${H - 6}">${tm(t0)}</text><text x="${W - R}" y="${H - 6}" text-anchor="end">지금</text></svg></div>`;
+}
 function fillDash() {
   if (!desk) { $('dashsub').textContent = '현황 서버(/owner)에 닿지 못했습니다.'; ['exps', 'wins', 'toks', 'rank', 'want', 'learn', 'chk', 'rst'].forEach(id => $(id).innerHTML = ''); return; }
   const f = desk.funnel, l = readLimits();
   $('dashsub').textContent = (f ? `FUNNEL ${f.at} 기준 (최근 60분)` : 'FUNNEL 없음') +
-    ` · 오늘 처분 손실 ${num(desk.loss_today)} / ${num(l.max_loss_per_day)} credits`;
+    `, 처분 손실 ${num(desk.loss_today)} / ${num(l.max_loss_per_day)}`;
   const exps = (desk.experiments || []).slice().reverse();
   $('exps').innerHTML = exps.length ? exps.map(e => {
     const tag = e.veto ? `<span class="tag veto">주인 거부: ${e.veto === 'stop' ? '중단' : '되돌리기'}</span>`
@@ -556,27 +624,34 @@ function fillDash() {
               `<button type="button" data-exp="${esc(e.at)}" data-act="revert">되돌리기</button></div>` : '') + '</div>';
   }).join('') : '<div class="none">아직 없습니다. 에이전트가 EXP 줄을 쓰면 여기에 보입니다.</div>';
   $('exps').querySelectorAll('.veto button').forEach(b => b.onclick = () => veto(b));
-  const w = desk.winners || [];
-  $('wins').innerHTML = w.length ? `<table class="win"><tr><th>가게</th><th>카드 문구</th><th>재고</th><th>품목</th><th>가격 차</th></tr>` +
-    w.map(r => `<tr class="${r.shop === '우리' ? 'us' : ''}"><td>${esc(r.shop)}</td><td>${esc(r.card)}</td><td class="n">${esc(r.units)}</td>` +
-               `<td class="n">${esc(r.lines)}</td><td class="n">${esc(r.gap)}</td></tr>`).join('') + '</table>'
-    : '<div class="none">아직 없습니다. 에이전트의 다음 REVIEW 뒤에 보입니다.</div>';
-  const t = desk.tokens || {};
-  list($('toks'), [[`오늘 ${num(t.today)} / 상한 ${num(t.cap)}`, t.per_settle ? `정산 ${t.settles_today}건, 1건당 ${num(t.per_settle)} 토큰`
-                                                                    : '오늘 정산 0건: 쓴 토큰이 아직 판매로 이어지지 않았습니다']]);
+  const w = desk.winners || [], maxU = Math.max(1, ...w.map(r => parseInt(r.units) || 0));
+  $('wins').innerHTML = w.length ? `<div class="vb">` + w.map(r => { const u = parseInt(r.units) || 0, us = r.shop === '우리';
+    return `<div class="vr${us ? ' us' : ''}"><div class="vl"><b>${esc(r.shop)}</b><span>${esc(r.card)}</span></div>` +
+      `<div class="vbar"><em style="--w:${Math.max(2, 100 * u / maxU)}%"></em><b>${num(u)}<small>개</small></b></div>` +
+      `<small class="vm">${esc(r.lines)}품목${r.gap && r.gap !== '미확인' ? ', 가격 ' + esc(r.gap) : ''}</small></div>` }).join('') +
+    `<p class="cap">막대: 진열 재고 개수</p></div>` : '<p class="none">아직 없습니다. 에이전트의 다음 REVIEW 뒤에 보입니다.</p>';
+  const t = desk.tokens || {}, tr = t.cap ? Math.min(1, t.today / t.cap) : 0;
+  $('toks').innerHTML = `<div class="tk"><div class="big"><b>${(t.today / 1e6 || 0).toFixed(1)}M</b><span>/ ${(t.cap / 1e6 || 0).toFixed(0)}M</span></div>` +
+    `<div class="mt2${tr >= .8 ? ' hot' : ''}"><em style="--w:${Math.round(tr * 100)}%"></em></div>` +
+    `<p>${t.per_settle ? `정산 ${t.settles_today}건, 1건에 <b>${(t.per_settle / 1e6).toFixed(2)}M</b> 토큰` : '오늘 정산 0건: 쓴 토큰이 아직 판매로 이어지지 않았습니다'}</p></div>`;
   const mk = desk.market || {}, fo = mk.forum || {};
-  const hist = (mk.history || []).map(([ts, r]) => `${new Date(ts * 1000).toLocaleTimeString('ko-KR', {hour: '2-digit', minute: '2-digit'})} ${r}위`).join(' → ');
-  list($('rank'), mk.rank ? [[`보드 순위 ${num(mk.rank)} / ${num(mk.of)}`, hist ? '변화: ' + hist : ''],
-    [`포럼 글 최근 1시간: 우리 ${num(fo.ours)}건`, (fo.top || []).map(x => `${x.shop} ${x.n}건`).join(' · ')]]
-    : [[mk.error ? '시장에 닿지 못했습니다' : '아직 읽지 않았습니다 (5분마다 갱신)', mk.error || '']]);
+  $('rank').innerHTML = mk.rank ? rankChart(mk.history || [], mk.rank, mk.of, desk.ts) +
+    `<h4>포럼 글, 최근 1시간</h4>` + hbars([['우리', fo.ours || 0, true]].concat((fo.top || []).map(x => [x.shop, x.n])), '건')
+    : `<p class="none">${mk.error ? '시장에 닿지 못했습니다: ' + esc(mk.error) : '순위는 5분마다 읽습니다. 잠시 뒤 다시 열어 주세요.'}</p>`;
   const w2 = desk.wanted || {};
-  list($('want'), (w2.items || []).map(x => [x.item, x.n ? `최근 24시간 ${x.n}번` : '에이전트 메모(WANTED)']));
-  list($('learn'), (desk.learned || []).map(x => [x, '']));
-  const ck = desk.checks || {}, rp = ck.replies || {};
-  list($('chk'), ck.at ? [[(ck.problems || []).length ? (ck.problems || []).join(' / ') : '문제 없음',
-    `${ck.at} 기준 최근 2시간: 문의 ${num(rp.inquiries)}건, 결제서 없는 답 ${num(rp.no_checkout)}건`]] : [['아직 점검 전입니다', '']]);
-  list($('rst'), (ck.restock || []).map(r => [`${r.item} · 24시간 ${r.asks_24h}번 찾음 → ${r.verdict}`,
-    r.net_margin != null ? `시장 B 중간가 ${num(r.median_b)}, 원가 ${num(r.unit_cost)}, 1개 남는 돈 ${num(r.net_margin)}, 우리 폐기 ${r.our_expired_24h}개` : '시세 표본 부족']));
+  $('want').innerHTML = (w2.items || []).length ? (w2.items[0].n != null ? hbars(w2.items.map(x => [x.item, x.n]), '번') :
+    `<p class="none">${esc(w2.items[0].item)}</p>`) + `<p class="cap">최근 24시간, 손님이 물었는데 재고가 없던 횟수</p>` : '<p class="none">없습니다.</p>';
+  $('learn').innerHTML = (desk.learned || []).length ? `<ul class="learn">${desk.learned.map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : '<p class="none">아직 없습니다.</p>';
+  const ck = desk.checks || {}, rp = ck.replies || {}, probs = ck.problems || [];
+  $('chk').innerHTML = ck.at ? `<div class="ck ${probs.length ? 'bad' : 'ok'}"><i></i><div><b>${probs.length ? '문제 ' + probs.length + '개' : '문제 없음'}</b>` +
+    `<span>${esc(ck.at)} 기준 최근 2시간, 문의 ${num(rp.inquiries)}건 중 결제서 없는 답 ${num(rp.no_checkout)}건</span>` +
+    (probs.length ? `<ul>${probs.map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : '') + '</div></div>' : '<p class="none">아직 점검 전입니다. 코드가 10분마다 확인합니다.</p>';
+  $('rst').innerHTML = (ck.restock || []).length ? ck.restock.map(r => {
+    const buy = /매입|buy|사/.test(r.verdict || '');
+    return `<div class="rs"><div><b>${esc(r.item)}</b><span>24시간 ${num(r.asks_24h)}번 찾음${r.our_expired_24h ? `, 폐기 ${r.our_expired_24h}개` : ''}</span></div>` +
+      (r.net_margin != null ? `<div class="mg"><span>원가 ${num(r.unit_cost)}</span><em style="--w:${Math.max(4, Math.min(100, 100 * r.unit_cost / Math.max(1, r.median_b)))}%"></em><span>중간가 ${num(r.median_b)}</span></div>` : '<div class="mg none">시세 표본 부족</div>') +
+      `<small class="vd ${buy ? 'go' : ''}">${esc(r.verdict)}</small></div>` }).join('') : '<p class="none">없습니다.</p>';
+
 }
 async function veto(b) {
   if (b.dataset.armed !== '1') { b.dataset.armed = '1'; b.textContent = '한 번 더 눌러 확정'; return; }
