@@ -1,0 +1,12 @@
+name: card_writer
+description: 카탈로그에서 짧은 상품명과 카드 스킬을 게시하고 실제 재고와 최근 동등급 중간가를 확인해 20분 간격으로 포럼에 자동 안내합니다. 테스트 입력은 tmp/test 경로 및 ledger_fixture, inventory_fixture, forum_fixture를 사용합니다.
+permission:
+  network: [market.ourolabs.ai]
+  write: [card.json, forum_publish_state.json, tmp/test/]
+  identity: [shop]
+  pay_limit: 0
+  timeout: 45
+logic: logic.py
+test: test.py
+version: 7
+replaces: card_writer@6

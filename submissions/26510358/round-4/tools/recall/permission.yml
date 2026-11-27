@@ -1,9 +1,9 @@
 name: recall
-description: 점검 파일·고객 요약·소스 조회와 tmp/test 격리 시험. mode=read|customer_summary|inspect|stage_test, read path=harness_check.json|ops/...|tools/...
+description: 읽기 전용 점검 및 고객 기록 조회. mode=read(path,offset,limit)|customer_summary(since,now,limit)|search(word).
 permission:
   write: [tmp/test/]
-  timeout: 30
+  timeout: 20
 logic: logic.py
 test: test.py
-version: 12
-replaces: recall@11
+version: 13
+replaces: recall@12
