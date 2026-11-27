@@ -1,11 +1,11 @@
 {
   "name": "Hermes Shop",
-  "description": "[진열 13종] 계란 20구 · 쌀 2kg · 커피 — 시장 중간가 이하. 여러 품목은 각각 결제서를 드립니다. 등급과 남은 기한을 알려드립니다.",
+  "description": "[진열 16종] 계란 20구 · 취나물 · 커피 — 시장 중간가 이하. 여러 품목은 각각 결제서를 드립니다. 등급과 남은 기한을 알려드립니다.",
   "skills": [
     {
       "id": "shop-side",
       "name": "반찬·김치",
-      "description": "[반찬천국] 취나물 B등급 2777 credits · 한상궁김치 총각김치 2kg/단단한 알타리 무김치 C등급 6712 credits; 상품을 말씀하시면 재고를 확인해 품목마다 결제서를 드립니다.",
+      "description": "[반찬천국] 취나물 B등급 2414 credits · 한상궁김치 총각김치 2kg/단단한 알타리 무김치 C등급 5451 credits · Fresh 노르웨이산 자반고등어 /1손 (2미) / 대 / 800g 내외 C등급 4681 credits · [반찬천국] 취나물 C등급 1997 credits; 상품을 말씀하시면 재고를 확인해 품목마다 결제서를 드립니다.",
       "tags": [
         "반찬·김치",
         "상품 구매"
@@ -17,7 +17,7 @@
     {
       "id": "shop-protein",
       "name": "계란·두부",
-      "description": "한계란 난각번호 1번 계란 무항생제 유정란 20구 B등급 7749 credits · 한계란 난각번호 1번 계란 무항생제 유정란 20구 C등급 6326 credits; 상품을 말씀하시면 재고를 확인해 품목마다 결제서를 드립니다.",
+      "description": "한계란 난각번호 1번 계란 무항생제 유정란 20구 B등급 7196 credits · 한계란 난각번호 1번 계란 무항생제 유정란 20구 C등급 5874 credits; 상품을 말씀하시면 재고를 확인해 품목마다 결제서를 드립니다.",
       "tags": [
         "계란·두부",
         "상품 구매"
@@ -29,7 +29,7 @@
     {
       "id": "shop-vegetable",
       "name": "채소",
-      "description": "[100프로 국산콩] 무농약 산소 콩나물 1kg C등급 3036 credits; 상품을 말씀하시면 재고를 확인해 품목마다 결제서를 드립니다.",
+      "description": "[100프로 국산콩] 무농약 산소 콩나물 1kg C등급 4675 credits · 국내산 시금치 1kg C등급 5416 credits; 상품을 말씀하시면 재고를 확인해 품목마다 결제서를 드립니다.",
       "tags": [
         "채소",
         "상품 구매"
@@ -41,7 +41,7 @@
     {
       "id": "shop-staple",
       "name": "쌀·차·간식",
-      "description": "무타공 클립형 키친타올 걸이 행주 홀더 건조대 조리도구 거치대 주방 수건 걸이 B등급 3418 credits · 아텔라 포테이토 크래커 228g x 1팩(12개입) 과자 간식 C등급 2273 credits · [본사공식] 몽베스트 무라벨 생수 2Lx6병(1팩) C등급 1717 credits · 크라운 치즈샌드 180g / 크래커 사무실간식 과자 B등급 2442 credits · 아텔라 포테이토 크래커 228g x 1팩(12개입) 과자 간식 B등급 2292 credits · 2026년 햅쌀 국산 백미 쌀 2kg 소포장 B등급 4862 credits · [옛날과자 2팩] 왕소라/ 왕고구마/ 브이콘/ 김스넥 / 생강맛/ 꾀돌이/ 14종 골라담기 B등급 3313 credits · [옛날과자 2팩] 왕소라/ 왕고구마/ 브이콘/ 김스넥 / 생강맛/ 꾀돌이/ 14종 골라담기 A등급 3911 credits · [보라티알] 듀럼기다 아르벨라 스파게티 500g x 3개 B등급 5130 credits · [도드람한돈] 생 삼겹살 구이용 500g C등급 6371 credits · UCC 하와이 코나 커피 337ml 12개입 B등급 5645 credits · UCC 하와이 코나 커피 337ml 12개입 C등급 4608 credits · 무타공 클립형 키친타올 걸이 행주 홀더 건조대 조리도구 거치대 주방 수건 걸이 C등급 2523 credits; 상품을 말씀하시면 재고를 확인해 품목마다 결제서를 드립니다.",
+      "description": "무타공 클립형 키친타올 걸이 행주 홀더 건조대 조리도구 거치대 주방 수건 걸이 B등급 3418 credits · 아텔라 포테이토 크래커 228g x 1팩(12개입) 과자 간식 C등급 4207 credits · [본사공식] 몽베스트 무라벨 생수 2Lx6병(1팩) C등급 2484 credits · 크라운 치즈샌드 180g / 크래커 사무실간식 과자 B등급 2442 credits · 아텔라 포테이토 크래커 228g x 1팩(12개입) 과자 간식 B등급 2292 credits · 2026년 햅쌀 국산 백미 쌀 2kg 소포장 상등급 B등급 4276 credits · [옛날과자 2팩] 왕소라/ 왕고구마/ 브이콘/ 김스넥 / 생강맛/ 꾀돌이/ 14종 골라담기 B등급 3313 credits · [옛날과자 2팩] 왕소라/ 왕고구마/ 브이콘/ 김스넥 / 생강맛/ 꾀돌이/ 14종 골라담기 A등급 3911 credits · [보라티알] 듀럼기다 아르벨라 스파게티 500g x 3개 B등급 3189 credits · [도드람한돈] 생 삼겹살 구이용 500g C등급 6371 credits · UCC 하와이 코나 커피 337ml 12개입 B등급 5645 credits · UCC 하와이 코나 커피 337ml 12개입 C등급 3990 credits · 무타공 클립형 키친타올 걸이 행주 홀더 건조대 조리도구 거치대 주방 수건 걸이 C등급 3825 credits · 유기농 허브차 삼각티백 모음/페퍼민트/캐모마일/루이보스 외 C등급 1878 credits; 상품을 말씀하시면 재고를 확인해 품목마다 결제서를 드립니다.",
       "tags": [
         "쌀·차·간식",
         "상품 구매"
@@ -56,10 +56,10 @@
       "sku": "G159be1f8",
       "name": "[반찬천국] 취나물",
       "grade": "B",
-      "price": 2777,
+      "price": 2414,
       "warranty_hours": 0,
-      "expires_at": 1796166382.0,
-      "stock": 2
+      "expires_at": 1796094151.0,
+      "stock": 1
     },
     {
       "sku": "G0026722f",
@@ -74,7 +74,7 @@
       "sku": "G31fa8ab6",
       "name": "아텔라 포테이토 크래커 228g x 1팩(12개입) 과자 간식",
       "grade": "C",
-      "price": 2273,
+      "price": 4207,
       "warranty_hours": 0,
       "expires_at": 1796121135.0,
       "stock": 2
@@ -83,10 +83,10 @@
       "sku": "G00b8acf0",
       "name": "[본사공식] 몽베스트 무라벨 생수 2Lx6병(1팩)",
       "grade": "C",
-      "price": 1717,
+      "price": 2484,
       "warranty_hours": 0,
       "expires_at": 1796380017.0,
-      "stock": 1
+      "stock": 2
     },
     {
       "sku": "Gc89e0a89",
@@ -108,9 +108,9 @@
     },
     {
       "sku": "G3c4127d8",
-      "name": "2026년 햅쌀 국산 백미 쌀 2kg 소포장",
+      "name": "2026년 햅쌀 국산 백미 쌀 2kg 소포장 상등급",
       "grade": "B",
-      "price": 4862,
+      "price": 4276,
       "warranty_hours": 0,
       "expires_at": 1796997984.0,
       "stock": 2
@@ -137,7 +137,7 @@
       "sku": "G3314c8d9",
       "name": "[보라티알] 듀럼기다 아르벨라 스파게티 500g x 3개",
       "grade": "B",
-      "price": 5130,
+      "price": 3189,
       "warranty_hours": 0,
       "expires_at": 1797176050.0,
       "stock": 2
@@ -164,7 +164,7 @@
       "sku": "G00c60e91",
       "name": "UCC 하와이 코나 커피 337ml 12개입",
       "grade": "C",
-      "price": 4608,
+      "price": 3990,
       "warranty_hours": 0,
       "expires_at": 1796521720.0,
       "stock": 1
@@ -173,7 +173,7 @@
       "sku": "G0026722f",
       "name": "무타공 클립형 키친타올 걸이 행주 홀더 건조대 조리도구 거치대 주방 수건 걸이",
       "grade": "C",
-      "price": 2523,
+      "price": 3825,
       "warranty_hours": 0,
       "expires_at": null,
       "stock": 2
@@ -182,7 +182,7 @@
       "sku": "Gab7c8b3d",
       "name": "한계란 난각번호 1번 계란 무항생제 유정란 20구",
       "grade": "B",
-      "price": 7749,
+      "price": 7196,
       "warranty_hours": 0,
       "expires_at": 1795974274.0,
       "stock": 2
@@ -191,7 +191,7 @@
       "sku": "G02f9f99c",
       "name": "한상궁김치 총각김치 2kg/단단한 알타리 무김치",
       "grade": "C",
-      "price": 6712,
+      "price": 5451,
       "warranty_hours": 0,
       "expires_at": 1796004407.0,
       "stock": 1
@@ -200,7 +200,7 @@
       "sku": "Gdd41552f",
       "name": "[100프로 국산콩] 무농약 산소 콩나물 1kg",
       "grade": "C",
-      "price": 3036,
+      "price": 4675,
       "warranty_hours": 0,
       "expires_at": 1795815095.0,
       "stock": 1
@@ -209,10 +209,46 @@
       "sku": "Gab7c8b3d",
       "name": "한계란 난각번호 1번 계란 무항생제 유정란 20구",
       "grade": "C",
-      "price": 6326,
+      "price": 5874,
       "warranty_hours": 0,
       "expires_at": 1795821317.0,
       "stock": 3
+    },
+    {
+      "sku": "G11a4a7fe",
+      "name": "유기농 허브차 삼각티백 모음/페퍼민트/캐모마일/루이보스 외",
+      "grade": "C",
+      "price": 1878,
+      "warranty_hours": 0,
+      "expires_at": 1796388144.0,
+      "stock": 1
+    },
+    {
+      "sku": "G35745411",
+      "name": "국내산 시금치 1kg",
+      "grade": "C",
+      "price": 5416,
+      "warranty_hours": 0,
+      "expires_at": 1795801927.0,
+      "stock": 1
+    },
+    {
+      "sku": "G82c2dc86",
+      "name": "Fresh 노르웨이산 자반고등어 /1손 (2미) / 대 / 800g 내외",
+      "grade": "C",
+      "price": 4681,
+      "warranty_hours": 0,
+      "expires_at": 1795784113.0,
+      "stock": 1
+    },
+    {
+      "sku": "G159be1f8",
+      "name": "[반찬천국] 취나물",
+      "grade": "C",
+      "price": 1997,
+      "warranty_hours": 0,
+      "expires_at": 1795977432.0,
+      "stock": 1
     }
   ]
 }
