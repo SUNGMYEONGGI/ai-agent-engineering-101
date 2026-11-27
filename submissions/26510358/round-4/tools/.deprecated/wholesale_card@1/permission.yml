@@ -1,0 +1,9 @@
+name: wholesale_card
+description: 공급 경로 확인을 위해 도매 엔터티 카드를 조회합니다.
+permission:
+  network: [market.ourolabs.ai]
+  write: [tmp/test/]
+  timeout: 20
+logic: logic.py
+test: test.py
+version: 1

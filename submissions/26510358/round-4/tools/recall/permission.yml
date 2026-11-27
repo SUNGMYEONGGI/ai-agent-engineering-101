@@ -1,9 +1,9 @@
 name: recall
-description: 로그 검색, 응대기 백업 복구, mode=customer_summary로 시각 이후 실제 문의·답변과 최근 24시간 미보유 요청을 요약합니다.
+description: 로그·고객 요약 및 소스 분할 조회. mode=read path offset limit, mode=customer_summary since.
 permission:
-  write: [ops/a2a_v16.py, ops/a2a_v16_test.py, tmp/test/]
+  write: [tmp/test/]
   timeout: 10
 logic: logic.py
 test: test.py
-version: 9
-replaces: recall@8
+version: 10
+replaces: recall@9

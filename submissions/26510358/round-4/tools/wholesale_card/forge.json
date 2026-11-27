@@ -1,11 +1,11 @@
 {
  "tool": "wholesale_card",
- "version": 1,
- "forged_at": 1795737803,
+ "version": 2,
+ "forged_at": 1795742270,
  "kit": "v5.2",
  "sha256": {
-  "permission.yml": "72c71d535b1e1c96bd98c0e4cc351ce19cfb647fa814f21c70029654629f9cc4",
-  "logic.py": "8f4f0b83d9788f514aeff630f1e2544c314e05e97137c8c0adcae8466ad8c5f7",
-  "test.py": "cb0498e58576525450e434d045f5a2fe89ae8f9bacc5decf79fab4296844732d"
+  "permission.yml": "96a21e6f2a6fd55206fbcb153b2116853a95dc5c3c682cc5483cd6631e526de5",
+  "logic.py": "dbf15338d6f7e5bca09d37200ca547bb6220c42ac9ac804eaf1573fa40ae3188",
+  "test.py": "2186ec67ae3ab654c90b40e03ba083eb5c5cab9c237151196a997a3cd70c80e9"
  }
 }

@@ -1,0 +1,13 @@
+name: a2a_handler
+description: 실재고·등급과 명시 중량 조건을 확인해 결제서를 발급하고, 확인되지 않은 중량 문의에는 사실대로 안내합니다.
+permission:
+  network: [market.ourolabs.ai]
+  write: [public/reservations.jsonl, customers.jsonl, customer_replies.jsonl, holds.json, wanted.jsonl, tmp/test/]
+  identity: [shop]
+  wallet: [sign_jwt]
+  timeout: 35
+  handles: [a2a]
+logic: logic.py
+test: test.py
+version: 34
+replaces: a2a_handler@33
