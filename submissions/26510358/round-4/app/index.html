@@ -291,6 +291,17 @@ form{background:var(--raised);border:1px solid var(--line);border-radius:999px;b
 .when{text-align:center;font-size:12px;color:var(--text-mute);margin:18px 0 8px}
 .first{font-size:12px;font-weight:600;color:var(--ow,#db2777);margin:10px 0 2px 4px}
 .row.told .bubble{box-shadow:inset 3px 0 0 #db2777}
+.thlink{display:flex;gap:8px;align-items:baseline;border:0;background:none;padding:2px 0 10px 14px;font-size:13px;color:var(--text-mute)}
+.thlink b{color:var(--focus);font-weight:650}.thlink:hover b,.thlink:hover span{text-decoration:underline}
+.card{margin-bottom:4px}
+.busy{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;margin:6px 0;font-size:13px;color:var(--text-mute)}
+.busy .again{border:1px solid var(--line-strong);background:var(--raised);border-radius:999px;padding:4px 12px;font-size:12px;font-weight:600;color:var(--text)}
+.th{display:flex;flex-direction:column;height:80dvh}
+#thbody{flex:1;overflow-y:auto;padding:4px 0 8px}
+.card.root{max-width:none;box-shadow:none}
+.thn{font-size:12px;color:var(--text-mute);margin:8px 0 6px;padding-bottom:6px;border-bottom:1px solid var(--line)}
+#thf{display:flex;align-items:flex-end;gap:8px;background:var(--card);border-radius:22px;padding:5px 5px 5px 16px;margin-top:6px}
+#thf textarea{flex:1;border:0;outline:0;resize:none;background:transparent;color:var(--text);font:inherit;font-size:16px;padding:7px 0;max-height:120px}
 </style>
 </head>
 <body>
@@ -326,6 +337,13 @@ form{background:var(--raised);border:1px solid var(--line);border-radius:999px;b
   <p class="sub" id="cname"></p>
   <div class="kv" id="cargs"></div>
   <div class="actions"><button type="button" id="no">거절</button><button type="button" class="yes" id="yes">허용</button></div>
+</div></div>
+<div class="shade" id="thread" hidden><div class="sheet th" role="dialog" aria-modal="true" aria-labelledby="thtitle">
+  <div class="grip"></div>
+  <h3 id="thtitle">스레드</h3>
+  <div id="thbody"></div>
+  <form id="thf"><textarea id="tht" rows="1" placeholder="스레드에 답하기" enterkeyhint="send" autocomplete="off"></textarea>
+    <button class="send" aria-label="보내기"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button></form>
 </div></div>
 <div class="shade" id="activity" hidden><div class="sheet hs" role="dialog" aria-modal="true" aria-labelledby="atitle">
   <div class="grip"></div>
@@ -386,6 +404,7 @@ const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '
 let me = 'guest-' + Math.random().toString(36).slice(2, 6);
 try { me = localStorage.getItem('miniapp-user') || me; localStorage.setItem('miniapp-user', me) } catch (e) {}
 const touch = matchMedia('(pointer: coarse)').matches;
+let waitingThread = 0;
 let view = {chat: [], consents: [], moves: [], forged: {}, app_tools: {}}, cards = [], pending = [], waiting = 0, seen = 0, drawn = '';
 const handled = new Set();
 
@@ -611,13 +630,67 @@ function saveHist() {
   fresh.forEach(m => histKeys.add(ckey(m)));
   deskCall('chatlog', {items: fresh}).catch(() => fresh.forEach(m => histKeys.delete(ckey(m))));
 }
+// Threads (Slack style): a reply to a card and the agent's answer to it leave the main chat and sit under the card
+// as "답글 N개"; tapping it opens the thread with its own message box.
+const BUSY = '(the agent is busy; ask again)';
+function split(items) {
+  const main = [], threads = new Map(), cardsBy = items.filter(m => m.who === 'card');
+  let open = null;                                     // the thread the owner just wrote in: the agent's next words go there
+  for (const m of items) {
+    const th = m.who !== 'card' && m.who !== 'agent' ? (m.text || '').match(THREAD) : null;
+    if (th) {
+      const c = cardsBy.find(c => th[1].startsWith(c.title.replace(/\s+/g, ' ')));
+      open = c ? c.title : null;
+      if (c) { (threads.get(open) || threads.set(open, []).get(open)).push(Object.assign({}, m, {text: m.text.slice(th[0].length)})); continue }
+    } else if (m.who === 'agent' && open) {
+      threads.get(open).push(m); if (m.text !== BUSY) open = null; continue;
+    } else if (m.who !== 'agent') open = null;
+    main.push(m);
+  }
+  return {main, threads};
+}
+let threadOpen = null;
+function bubbleFor(m, name) {
+  if (m.text === BUSY) return `<div class="busy">에이전트가 다른 일을 하느라 2분 안에 답하지 못했습니다.<button type="button" class="again">다시 보내기</button></div>`;
+  const mine = m.who === me || /^(owner|guest)-/.test(m.who);
+  return `<div class="row ${mine ? 'me' : 'agent'}"><div class="bubble">${esc(m.text)}</div></div>`;
+}
+function drawThread() {
+  if ($('thread').hidden || !threadOpen) return;
+  const {threads} = split(allItems()), c = allItems().find(m => m.who === 'card' && m.title === threadOpen);
+  if (!c) return;
+  const list = threads.get(threadOpen) || [];
+  const tp = pending.filter(p => p.thread === threadOpen);
+  $('thbody').innerHTML = `<div class="card root"><div class="k">${esc(view.agent || 'Agent')}, ${hhmm(c.ts)}</div><b>${esc(c.title)}</b><div>${esc(c.text)}</div></div>` +
+    `<div class="thn">${list.filter(r => r.text !== BUSY).length ? '답글 ' + list.filter(r => r.text !== BUSY).length + '개' : '아직 답글이 없습니다. 이 카드에 대해 물어보세요.'}</div>` +
+    list.map(m => bubbleFor(m)).join('') + tp.map(p => `<div class="row me pending"><div class="bubble">${esc(p.text)}</div></div>`).join('') +
+    (tp.length || (waiting && lastThread === threadOpen) ? '<div class="row agent typing"><div class="bubble"><i></i><i></i><i></i></div></div>' : '');
+  wireAgain($('thbody'), list);
+  const b = $('thbody'); b.scrollTop = b.scrollHeight;
+}
+let lastThread = null;
+function wireAgain(root, msgs) {
+  root.querySelectorAll('.again').forEach((btn, i) => btn.onclick = () => {
+    const busy = msgs.filter(m => m.text === BUSY)[i], k = msgs.indexOf(busy);
+    const asked = msgs.slice(0, k).reverse().find(m => m.who !== 'agent' && m.who !== 'card');
+    if (asked) root === $('thbody') ? sendThread(asked.text) : send(asked.text);
+  });
+}
+function openThread(title) { threadOpen = title; $('thread').hidden = false; drawThread(); if (!touch) $('tht').focus() }
+function sendThread(text) {
+  const c = allItems().find(m => m.who === 'card' && m.title === threadOpen);
+  if (!c || !text.trim()) return;
+  lastThread = threadOpen;
+  send(threadReply(c, text.trim()), threadOpen, text.trim());
+}
 function draw() {
-  const items = allItems();
+  const all = allItems(), {main, threads} = split(all), items = main;
   const mine = view.chat.filter(m => m.who === me).length;
   pending = pending.filter(p => mine <= p.base);
-  const key = JSON.stringify([items.length, items.at(-1), pending, waiting, view.agent]);
+  const key = JSON.stringify([all.length, all.at(-1), pending, waiting, view.agent]);
   if (key === drawn) return;
   drawn = key;
+  drawThread();
   const sc = $('scroll'), atEnd = sc.scrollHeight - sc.scrollTop - sc.clientHeight < 80;
   const name = view.agent || 'Agent';
   if (!items.length && !pending.length) {
@@ -635,14 +708,17 @@ function draw() {
     }
     lastTs = m.ts;
     if (m.who === 'card') {
-      html += `<div class="card"><div class="k">${esc(name)}, ${hhmm(m.ts)}</div><b>${esc(m.title)}</b><div>${esc(m.text)}</div>` +
-              `<button type="button" class="reply" data-card="${esc(m.id)}">↳ 답장</button></div>`;
+      const rs = (threads.get(m.title) || []).filter(r => r.text !== BUSY);
+      html += `<div class="card"><div class="k">${esc(name)}, ${hhmm(m.ts)}</div><b>${esc(m.title)}</b><div>${esc(m.text)}</div></div>` +
+              `<button type="button" class="thlink" data-title="${esc(m.title)}">${rs.length ? `<b>답글 ${rs.length}개</b><span>마지막 ${hhmm(rs.at(-1).ts)}</span>` : '<span>스레드에서 답하기</span>'}</button>`;
     } else if (m.who === 'kit') {
       html += `<div class="sys">${esc(m.text)}</div>`;
     } else if (m.who === me || /^(owner|guest)-/.test(m.who)) {   // the owner's own words from any device
       const th = m.text.match(THREAD);
       if (th) html += `<div class="quote">↳ ${esc(th[1])}</div>`;
       html += `<div class="row me"><div class="bubble">${esc(th ? m.text.slice(th[0].length) : m.text)}</div></div>`;
+    } else if (m.text === BUSY) {
+      html += bubbleFor(m);
     } else {
       const cls = m.who === 'agent' ? 'agent' : 'other';
       if (cls === 'other' && last !== m.who) html += `<div class="name">${esc(m.who)}</div>`;
@@ -653,10 +729,11 @@ function draw() {
     }
     last = m.who;
   }
-  for (const p of pending) html += `<div class="row me pending"><div class="bubble">${esc(p.text)}</div></div>`;
-  if (waiting) html += `<div class="row agent typing"><div class="bubble"><i></i><i></i><i></i></div></div>`;
+  for (const p of pending.filter(p => !p.thread)) html += `<div class="row me pending"><div class="bubble">${esc(p.text)}</div></div>`;
+  if (waiting > waitingThread) html += `<div class="row agent typing"><div class="bubble"><i></i><i></i><i></i></div></div>`;
   $('log').innerHTML = html;
-  $('log').querySelectorAll('.reply').forEach(b => b.onclick = () => setReply(allItems().find(c => c.who === 'card' && c.id === b.dataset.card)));
+  $('log').querySelectorAll('.thlink').forEach(b => b.onclick = () => openThread(b.dataset.title));
+  wireAgain($('log'), items);
   if (atEnd || pending.length) sc.scrollTop = sc.scrollHeight;
 }
 
@@ -799,21 +876,31 @@ function drawChanges() {
 $('hbtn').onclick = () => { $('harness').hidden = false; loadHarness(); clearInterval(htimer); htimer = setInterval(loadHarness, 15000) };
 $('act').onclick = () => { fillActivity(); $('activity').hidden = false; loadActivity() };
 
-async function send(text) {
+async function send(text, thread, shown) {
   text = text.trim();
   if (!text) return;
-  pending.push({text, base: view.chat.filter(m => m.who === me).length + pending.length});
-  waiting++; draw(); status();
+  pending.push({text: shown || text, thread, base: view.chat.filter(m => m.who === me).length + pending.length});
+  waiting++; if (thread) waitingThread++; draw(); status();
   try { await miniapp.chat(text, me) } catch (e) {}
-  waiting--; draw(); status();
+  waiting--; if (thread) waitingThread--; draw(); status();
 }
 
 const t = $('t');
 function grow() { t.style.height = 'auto'; t.style.height = Math.min(t.scrollHeight, 140) + 'px'; $('go').disabled = !t.value.trim(); }
 t.addEventListener('input', grow);
-t.addEventListener('keydown', e => {
-  if (e.key === 'Enter' && !e.shiftKey && !e.isComposing && !touch) { e.preventDefault(); $('f').requestSubmit(); }
-});
+// Enter sends, Shift+Enter breaks the line. Korean input: Enter while a syllable is still being composed commits it
+// first (compositionend), then sends; the browser's own second Enter right after is ignored.
+function enterSends(box, submit) {
+  let afterIme = false, sentAt = 0;
+  const go = () => { if (Date.now() - sentAt < 80) return; sentAt = Date.now(); submit() };
+  box.addEventListener('keydown', e => {
+    if (e.key !== 'Enter' || e.shiftKey || touch) return;
+    if (e.isComposing || e.keyCode === 229) { afterIme = true; return }
+    e.preventDefault(); go();
+  });
+  box.addEventListener('compositionend', () => { if (afterIme) { afterIme = false; setTimeout(go, 0) } });
+}
+enterSends(t, () => $('f').requestSubmit());
 $('f').onsubmit = e => {
   e.preventDefault();
   const v = t.value.trim(); t.value = ''; grow();
@@ -864,9 +951,12 @@ document.querySelectorAll('.shade').forEach(sh => {
     if (dy > 90) closeSheet(sh); else sheet.style.transform = '' });
 });
 if (location.hash === '#activity') setTimeout(() => $('act').click(), 300);
+if (location.hash.startsWith('#thread=')) setTimeout(() => openThread(decodeURIComponent(location.hash.slice(8))), 1500);
 document.addEventListener('keydown', e => { if (e.key !== 'Escape') return;
   const open = [...document.querySelectorAll('.shade')].filter(x => !x.hidden).pop(); if (open) closeSheet(open) });
 document.querySelector('.tabs button:not([id])').onclick = () => document.querySelectorAll('.shade').forEach(closeSheet);
+$('thf').onsubmit = e => { e.preventDefault(); const v = $('tht').value; $('tht').value = ''; sendThread(v) };
+enterSends($('tht'), () => $('thf').requestSubmit());
 loadHist();
 loadDesk().then(() => { if (location.hash === '#dash') openDash(); else if (location.hash === '#settings') openSettings(); else if (location.hash === '#harness') $('hbtn').click(); });
 </script>
