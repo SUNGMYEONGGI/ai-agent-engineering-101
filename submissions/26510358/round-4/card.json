@@ -1,11 +1,11 @@
 {
   "name": "Hermes Shop",
-  "description": "[진열 14종] [보라티알] 듀럼기다 아르벨라 스파게티 500 · 쌀 2kg . 해당 상품은 최근 시장 중간가 이하입니다. 여러 가지를 한 번에 말씀하시면 품목마다 결제서를 드립니다. 등급과 남은 기한을 알려드립니다.",
+  "description": "[진열 19종] UCC 하와이 코나 커피 337ml 12개입 · [본사공식] 몽베스트 무라벨 생수 2Lx6병( · 계란 20구 · 쌀 2kg · 총각김치 2kg · 취나물 . 해당 상품은 최근 시장 중간가 이하입니다. 여러 가지를 한 번에 말씀하시면 품목마다 결제서를 드립니다. 등급과 남은 기한을 알려드립니다.",
   "skills": [
     {
       "id": "shop-side",
       "name": "반찬·김치",
-      "description": "[반찬천국] 취나물 B등급 2494 credits; 상품을 말씀하시면 재고를 확인해 품목마다 결제서를 드립니다.",
+      "description": "[반찬천국] 취나물 B등급 2374 credits · 한상궁김치 총각김치 2kg/단단한 알타리 무김치 B등급 8225 credits · 한상궁김치 총각김치 2kg/단단한 알타리 무김치 C등급 5827 credits · Fresh 노르웨이산 자반고등어 /1손 (2미) / 대 / 800g 내외 C등급 4950 credits; 상품을 말씀하시면 재고를 확인해 품목마다 결제서를 드립니다.",
       "tags": [
         "반찬·김치",
         "상품 구매"
@@ -17,7 +17,7 @@
     {
       "id": "shop-protein",
       "name": "계란·두부",
-      "description": "한계란 난각번호 1번 계란 무항생제 유정란 20구 B등급 7822 credits · 한계란 난각번호 1번 계란 무항생제 유정란 20구 A등급 10169 credits; 상품을 말씀하시면 재고를 확인해 품목마다 결제서를 드립니다.",
+      "description": "한계란 난각번호 1번 계란 무항생제 유정란 20구 B등급 7340 credits · 한계란 난각번호 1번 계란 무항생제 유정란 20구 A등급 12900 credits · 정식수입 사토노유키 실큰두부 300g 1팩 상온보관 멸균두부 연두부 순두부 단백질 식단관리 C등급 2280 credits; 상품을 말씀하시면 재고를 확인해 품목마다 결제서를 드립니다.",
       "tags": [
         "계란·두부",
         "상품 구매"
@@ -29,19 +29,19 @@
     {
       "id": "shop-vegetable",
       "name": "채소",
-      "description": "현재 해당 분류 재고 없음; 상품을 말씀하시면 재고를 확인해 품목마다 결제서를 드립니다.",
+      "description": "[100프로 국산콩] 무농약 산소 콩나물 1kg C등급 3504 credits; 상품을 말씀하시면 재고를 확인해 품목마다 결제서를 드립니다.",
       "tags": [
         "채소",
         "상품 구매"
       ],
       "examples": [
-        "채소 재고 있나요?"
+        "[100프로 국산콩] 무농약 산소 콩나물 1kg 구매하고 싶어요"
       ]
     },
     {
       "id": "shop-staple",
       "name": "쌀·차·간식",
-      "description": "후디스 고단백 무가당 그릭요거트 플레인 400g 2개 C등급 7233 credits · 동서 둥굴레차 50T 60g B등급 3051 credits · 무타공 클립형 키친타올 걸이 행주 홀더 건조대 조리도구 거치대 주방 수건 걸이 A등급 3271 credits · 무타공 클립형 키친타올 걸이 행주 홀더 건조대 조리도구 거치대 주방 수건 걸이 B등급 3418 credits · 아텔라 포테이토 크래커 228g x 1팩(12개입) 과자 간식 C등급 3568 credits · 유기농 허브차 삼각티백 모음/페퍼민트/캐모마일/루이보스 외 C등급 1790 credits · [본사공식] 몽베스트 무라벨 생수 2Lx6병(1팩) C등급 3456 credits · 2026년 햅쌀 국산 백미 쌀 2kg 소포장 C등급 3596 credits · 크라운 치즈샌드 180g / 크래커 사무실간식 과자 B등급 2442 credits · 아텔라 포테이토 크래커 228g x 1팩(12개입) 과자 간식 B등급 4371 credits · 2026년 햅쌀 국산 백미 쌀 2kg 소포장 B등급 4639 credits · [옛날과자 2팩] 왕소라/ 왕고구마/ 브이콘/ 김스넥 / 생강맛/ 꾀돌이/ 14종 골라담기 B등급 3313 credits · [옛날과자 2팩] 왕소라/ 왕고구마/ 브이콘/ 김스넥 / 생강맛/ 꾀돌이/ 14종 골라담기 A등급 3911 credits · [보라티알] 듀럼기다 아르벨라 스파게티 500g x 3개 B등급 4103 credits · [도드람한돈] 생 삼겹살 구이용 500g C등급 6854 credits · UCC 하와이 코나 커피 337ml 12개입 B등급 9900 credits · UCC 하와이 코나 커피 337ml 12개입 C등급 5082 credits · 무타공 클립형 키친타올 걸이 행주 홀더 건조대 조리도구 거치대 주방 수건 걸이 C등급 2523 credits; 상품을 말씀하시면 재고를 확인해 품목마다 결제서를 드립니다.",
+      "description": "후디스 고단백 무가당 그릭요거트 플레인 400g 2개 C등급 6164 credits · 동서 둥굴레차 50T 60g B등급 2870 credits · 무타공 클립형 키친타올 걸이 행주 홀더 건조대 조리도구 거치대 주방 수건 걸이 B등급 3418 credits · 아텔라 포테이토 크래커 228g x 1팩(12개입) 과자 간식 C등급 2273 credits · 유기농 허브차 삼각티백 모음/페퍼민트/캐모마일/루이보스 외 C등급 1670 credits · [본사공식] 몽베스트 무라벨 생수 2Lx6병(1팩) C등급 2127 credits · 크라운 치즈샌드 180g / 크래커 사무실간식 과자 B등급 2442 credits · 아텔라 포테이토 크래커 228g x 1팩(12개입) 과자 간식 B등급 2292 credits · 2026년 햅쌀 국산 백미 쌀 2kg 소포장 B등급 4663 credits · [옛날과자 2팩] 왕소라/ 왕고구마/ 브이콘/ 김스넥 / 생강맛/ 꾀돌이/ 14종 골라담기 B등급 3313 credits · [옛날과자 2팩] 왕소라/ 왕고구마/ 브이콘/ 김스넥 / 생강맛/ 꾀돌이/ 14종 골라담기 A등급 3911 credits · [보라티알] 듀럼기다 아르벨라 스파게티 500g x 3개 B등급 3189 credits · [도드람한돈] 생 삼겹살 구이용 500g C등급 7568 credits · 손질 가자미 특대 4~6미 1.4kg내외 C등급 6618 credits · UCC 하와이 코나 커피 337ml 12개입 B등급 9900 credits · UCC 하와이 코나 커피 337ml 12개입 C등급 4365 credits · 무타공 클립형 키친타올 걸이 행주 홀더 건조대 조리도구 거치대 주방 수건 걸이 C등급 2523 credits; 상품을 말씀하시면 재고를 확인해 품목마다 결제서를 드립니다.",
       "tags": [
         "쌀·차·간식",
         "상품 구매"
@@ -56,16 +56,16 @@
       "sku": "G159be1f8",
       "name": "[반찬천국] 취나물",
       "grade": "B",
-      "price": 2494,
+      "price": 2374,
       "warranty_hours": 0,
       "expires_at": 1796035433.0,
-      "stock": 2
+      "stock": 1
     },
     {
       "sku": "G5e1cf31d",
       "name": "후디스 고단백 무가당 그릭요거트 플레인 400g 2개",
       "grade": "C",
-      "price": 7233,
+      "price": 6164,
       "warranty_hours": 0,
       "expires_at": 1795763068.0,
       "stock": 1
@@ -74,18 +74,9 @@
       "sku": "G0746760c",
       "name": "동서 둥굴레차 50T 60g",
       "grade": "B",
-      "price": 3051,
+      "price": 2870,
       "warranty_hours": 0,
       "expires_at": 1797724959.0,
-      "stock": 1
-    },
-    {
-      "sku": "G0026722f",
-      "name": "무타공 클립형 키친타올 걸이 행주 홀더 건조대 조리도구 거치대 주방 수건 걸이",
-      "grade": "A",
-      "price": 3271,
-      "warranty_hours": 0,
-      "expires_at": null,
       "stock": 1
     },
     {
@@ -95,13 +86,13 @@
       "price": 3418,
       "warranty_hours": 0,
       "expires_at": null,
-      "stock": 3
+      "stock": 4
     },
     {
       "sku": "G31fa8ab6",
       "name": "아텔라 포테이토 크래커 228g x 1팩(12개입) 과자 간식",
       "grade": "C",
-      "price": 3568,
+      "price": 2273,
       "warranty_hours": 0,
       "expires_at": 1796121135.0,
       "stock": 2
@@ -110,7 +101,7 @@
       "sku": "G11a4a7fe",
       "name": "유기농 허브차 삼각티백 모음/페퍼민트/캐모마일/루이보스 외",
       "grade": "C",
-      "price": 1790,
+      "price": 1670,
       "warranty_hours": 0,
       "expires_at": 1796369387.0,
       "stock": 1
@@ -119,19 +110,10 @@
       "sku": "G00b8acf0",
       "name": "[본사공식] 몽베스트 무라벨 생수 2Lx6병(1팩)",
       "grade": "C",
-      "price": 3456,
+      "price": 2127,
       "warranty_hours": 0,
       "expires_at": 1796380017.0,
       "stock": 2
-    },
-    {
-      "sku": "G3c4127d8",
-      "name": "2026년 햅쌀 국산 백미 쌀 2kg 소포장",
-      "grade": "C",
-      "price": 3596,
-      "warranty_hours": 0,
-      "expires_at": 1796760906.0,
-      "stock": 1
     },
     {
       "sku": "Gc89e0a89",
@@ -146,16 +128,16 @@
       "sku": "G31fa8ab6",
       "name": "아텔라 포테이토 크래커 228g x 1팩(12개입) 과자 간식",
       "grade": "B",
-      "price": 4371,
+      "price": 2292,
       "warranty_hours": 0,
       "expires_at": 1797332517.0,
-      "stock": 2
+      "stock": 1
     },
     {
       "sku": "G3c4127d8",
       "name": "2026년 햅쌀 국산 백미 쌀 2kg 소포장",
       "grade": "B",
-      "price": 4639,
+      "price": 4663,
       "warranty_hours": 0,
       "expires_at": 1796997984.0,
       "stock": 2
@@ -182,7 +164,7 @@
       "sku": "G3314c8d9",
       "name": "[보라티알] 듀럼기다 아르벨라 스파게티 500g x 3개",
       "grade": "B",
-      "price": 4103,
+      "price": 3189,
       "warranty_hours": 0,
       "expires_at": 1797176050.0,
       "stock": 2
@@ -191,9 +173,18 @@
       "sku": "G6e208aec",
       "name": "[도드람한돈] 생 삼겹살 구이용 500g",
       "grade": "C",
-      "price": 6854,
+      "price": 7568,
       "warranty_hours": 0,
       "expires_at": 1796324822.0,
+      "stock": 1
+    },
+    {
+      "sku": "G045659e8",
+      "name": "손질 가자미 특대 4~6미 1.4kg내외",
+      "grade": "C",
+      "price": 6618,
+      "warranty_hours": 0,
+      "expires_at": 1795774496.0,
       "stock": 1
     },
     {
@@ -209,7 +200,7 @@
       "sku": "G00c60e91",
       "name": "UCC 하와이 코나 커피 337ml 12개입",
       "grade": "C",
-      "price": 5082,
+      "price": 4365,
       "warranty_hours": 0,
       "expires_at": 1796521720.0,
       "stock": 1
@@ -227,7 +218,7 @@
       "sku": "Gab7c8b3d",
       "name": "한계란 난각번호 1번 계란 무항생제 유정란 20구",
       "grade": "B",
-      "price": 7822,
+      "price": 7340,
       "warranty_hours": 0,
       "expires_at": 1795972144.0,
       "stock": 2
@@ -236,9 +227,54 @@
       "sku": "Gab7c8b3d",
       "name": "한계란 난각번호 1번 계란 무항생제 유정란 20구",
       "grade": "A",
-      "price": 10169,
+      "price": 12900,
       "warranty_hours": 0,
       "expires_at": 1796058201.0,
+      "stock": 1
+    },
+    {
+      "sku": "G02f9f99c",
+      "name": "한상궁김치 총각김치 2kg/단단한 알타리 무김치",
+      "grade": "B",
+      "price": 8225,
+      "warranty_hours": 0,
+      "expires_at": 1796093554.0,
+      "stock": 1
+    },
+    {
+      "sku": "G02f9f99c",
+      "name": "한상궁김치 총각김치 2kg/단단한 알타리 무김치",
+      "grade": "C",
+      "price": 5827,
+      "warranty_hours": 0,
+      "expires_at": 1796004407.0,
+      "stock": 1
+    },
+    {
+      "sku": "G5c96ee78",
+      "name": "정식수입 사토노유키 실큰두부 300g 1팩 상온보관 멸균두부 연두부 순두부 단백질 식단관리",
+      "grade": "C",
+      "price": 2280,
+      "warranty_hours": 0,
+      "expires_at": 1795766651.0,
+      "stock": 1
+    },
+    {
+      "sku": "G82c2dc86",
+      "name": "Fresh 노르웨이산 자반고등어 /1손 (2미) / 대 / 800g 내외",
+      "grade": "C",
+      "price": 4950,
+      "warranty_hours": 0,
+      "expires_at": 1795784113.0,
+      "stock": 1
+    },
+    {
+      "sku": "Gdd41552f",
+      "name": "[100프로 국산콩] 무농약 산소 콩나물 1kg",
+      "grade": "C",
+      "price": 3504,
+      "warranty_hours": 0,
+      "expires_at": 1795815095.0,
       "stock": 1
     }
   ]
