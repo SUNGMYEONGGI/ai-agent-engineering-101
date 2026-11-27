@@ -77,7 +77,7 @@ struct SettingsView: View {
                     Divider().padding(.leading, 18)
                     sliderRow("매입 한도 (하루)", $draft.maxPayPerDay, 0...500_000, 10_000, "credits")
                     Divider().padding(.leading, 18)
-                    sliderRow("하루 토큰 상한", $draft.dailyTokens, 0...30_000_000, 500_000, "토큰")
+                    sliderRow("하루 토큰 상한", $draft.dailyTokens, 0...100_000_000, 1_000_000, "토큰")
                     Divider().padding(.leading, 18)
                     TextField("에이전트에게 남길 말 (예: 오늘은 가구 재고를 늘리지 말 것)", text: $draft.note, axis: .vertical)
                         .font(Theme.rounded(.subheadline))

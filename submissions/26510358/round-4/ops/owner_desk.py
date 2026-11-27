@@ -44,7 +44,7 @@ PORT = int(os.environ.get("DESK_PORT", "8801"))
 DEFAULT_LIMITS = {"max_loss_per_day": 30000, "max_pay_per_call": 20000, "max_pay_per_day": 200000,
                   "daily_tokens": 15_000_000, "note": "", "set_at": ""}
 BOUNDS = {"max_loss_per_day": (0, 200_000), "max_pay_per_call": (0, 100_000), "max_pay_per_day": (0, 1_000_000),
-          "daily_tokens": (0, 50_000_000)}
+          "daily_tokens": (0, 100_000_000)}
 STAGES = [("m", "시장 정산"), ("i", "문의"), ("c", "결제서"), ("s", "정산")]
 STUCK_ALERT_S = 2 * 3600
 
