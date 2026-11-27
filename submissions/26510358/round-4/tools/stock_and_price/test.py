@@ -1,15 +1,15 @@
 import tempfile,os,json
+from pathlib import Path
+
 def test(run,kit):
  os.makedirs('tmp/test',exist_ok=True)
  with tempfile.TemporaryDirectory(dir='tmp/test') as d:
-  now=200000; cp=d+'/catalog.json';rp=d+'/res.json'
-  u={'unit':'u1','sku':'fish','name':'고등어','grade':'C','cost':4000,'list_price':9900,'kind':'food','expires_at':now+1000,'supplied_at':now-90000}
-  ledger={'data':[{'kind':'settle','round':4,'ts':now-100,'data':{'sku':'fish','grade':'C','amount':6000,'shop':'other'}}]}
-  r=run({'inventory':[u],'ledger_fixture':ledger,'now':now,'catalog_path':cp,'reserve_path':rp},kit)
-  assert r['ok'] and r['items'][0]['price']==5400 and r['items'][0]['units']==['u1']
-  assert json.load(open(cp))['items'][0]['grade']=='C'
-  u2=dict(u,unit='u2',cost=7000)
-  r=run({'inventory':[u2],'ledger_fixture':ledger,'now':now,'catalog_path':cp,'reserve_path':rp,'loss_units':['u2'],'max_loss_per_day':30000},kit)
-  assert r['ok'] and r['items'][0]['price']==5880 and r['new_loss_reservations'][0]['unit']=='u2'
-  r=run({'inventory':[dict(u,expires_at=now-1)],'ledger_fixture':ledger,'now':now,'catalog_path':cp,'reserve_path':rp},kit)
-  assert r['ok'] and not r['items']
+  p=str(Path(d)/'catalog.json');rp=str(Path(d)/'loss.json');now=1795803873
+  def unit(i,c,t,**kw):return dict(unit=i,sku='Gab7c8b3d',grade='B',name='계란 20구',kind='food',cost=c,expires_at=now+t,supplied_at=now-100,**kw)
+  ret=run({'catalog_path':p,'reserve_path':rp,'now':now,'inventory':[unit('u-expired',100,-1),unit('u-old',5396,50000),unit('u-costly',7069,60000),unit('u-new',5167,70000),unit('u-sold',1,80000,sold=True)],'ledger_fixture':[{'kind':'settle','round':4,'data':{'sku':'Gab7c8b3d','grade':'B','amount':7372}}]},kit)
+  assert ret['ok'] and ret['published'] and ret['count']==1,ret
+  item=ret['items'][0]
+  assert (item['sku'],item['name'],item['grade'],item['price'],item['stock'],item['units'],item['warranty_hours'])==('Gab7c8b3d','계란 20구','B',7224,2,['u-old','u-new'],0),item
+  assert [r['unit'] for r in ret['excluded']]==['u-costly']
+  assert json.loads(Path(p).read_text())['items']==[item]
+  return {'ok':True}

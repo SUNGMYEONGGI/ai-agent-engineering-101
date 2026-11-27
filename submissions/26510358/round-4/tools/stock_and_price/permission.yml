@@ -1,5 +1,5 @@
 name: stock_and_price
-description: 실재고와 원장 거래 중간가로 만료순 카탈로그를 발행합니다. args: max_loss_per_day, loss_units, catalog_path, reserve_path; 테스트는 tmp/test만 사용합니다.
+description: 실재고·동일 등급 원장 중간가로 카탈로그를 발행합니다. args: max_loss_per_day, loss_units, catalog_path, reserve_path.
 permission:
   network: [market.ourolabs.ai]
   write: [public/catalog.json, public/catalog.json.next, loss_reservations.json, loss_reservations.json.next, tmp/test/]
@@ -8,5 +8,5 @@ permission:
   timeout: 35
 logic: logic.py
 test: test.py
-version: 10
-replaces: stock_and_price@9
+version: 11
+replaces: stock_and_price@10
