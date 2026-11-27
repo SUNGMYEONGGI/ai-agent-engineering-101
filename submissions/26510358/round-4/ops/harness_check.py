@@ -70,7 +70,20 @@ def jwt_body(tok):
         return {}
 
 
-def replies(now, ledger):
+def stocked_names(catalog):
+    """Names of goods we hold now (GET /api/shops stock x catalog names)."""
+    try:
+        me = next(x for x in get("/api/shops")["shops"] if x.get("name") == SHOP_NAME)
+    except (StopIteration, KeyError, OSError, ValueError):
+        return []
+    names = {x["sku"]: x.get("name", "") for x in catalog}
+    return [names.get(s, "") for s, n in (me.get("stock") or {}).items() if n]
+
+
+MISSING = re.compile(r"([가-힣A-Za-z0-9]{1,12})(?:\s*[ABC]등급)?(?:은\(는\)|은|는)?\s*없습니다")
+
+
+def replies(now, ledger, held=()):
     gone = {}
     for e in ledger:
         d = e.get("data") or {}
@@ -90,13 +103,18 @@ def replies(now, ledger):
         c["inquiries"] += 1
         c["no_checkout"] += not cos
         c["empty_reply"] += "원하시는 상품명" in text
+        for m in MISSING.finditer(text):
+            k = m.group(1)
+            if len(k) >= 2 and any(k in n for n in held):
+                c["said_missing_but_stocked"] += 1
+                stale.append({"at": time.strftime("%H:%M", time.localtime(t)), "said_missing": k})
         for co in cos:
             u = jwt_body(co.get("checkout_jwt", "")).get("unit") if isinstance(co, dict) else None
             if not (isinstance(co, dict) and co.get("checkout_jwt")):
                 c["unsigned_checkout"] += 1
             if u in gone and gone[u] < t:
                 stale.append({"at": time.strftime("%H:%M", time.localtime(t)), "unit": u})
-    c["checkout_for_gone_unit"] = len(stale)
+    c["checkout_for_gone_unit"] = sum(1 for x in stale if "unit" in x)
     return {**c, "examples": stale[-3:]}
 
 
@@ -170,13 +188,15 @@ def run(now=None, ledger=None, catalog=None):
     now = now or time.time()
     ledger = ledger if ledger is not None else ledger_since(86400, now)
     catalog = catalog if catalog is not None else get("/api/catalog")
-    out = {"at": time.strftime("%F %H:%M", time.localtime(now)), "replies": replies(now, ledger),
+    held = stocked_names(catalog) if catalog else []
+    out = {"at": time.strftime("%F %H:%M", time.localtime(now)), "replies": replies(now, ledger, held),
            "tools": tools(now), "memory": memory(), "restock": restock(now, ledger, catalog)}
     p = out["replies"]
     out["problems"] = [x for x in [
         p.get("checkout_for_gone_unit") and f"팔렸거나 상한 상품으로 결제서 {p['checkout_for_gone_unit']}건",
         p.get("unsigned_checkout") and f"서명 없는 결제서 {p['unsigned_checkout']}건",
         p.get("empty_reply") and f"빈 답('상품명을 알려 주세요') {p['empty_reply']}건",
+        p.get("said_missing_but_stocked") and f"가진 상품을 없다고 답함 {p['said_missing_but_stocked']}건",
         out["tools"]["chains"] and "도구가 이전 버전을 불러 씀: " + ", ".join(out["tools"]["chains"]),
         out["tools"]["pay_outside_guard"] and "pay_guard 밖 송금 코드: " + ", ".join(out["tools"]["pay_outside_guard"]),
         out["memory"]["over_3000"] and f"notes.md {out['memory']['notes_chars']}자 (3,000자 넘으면 앞부분이 잘림)",
