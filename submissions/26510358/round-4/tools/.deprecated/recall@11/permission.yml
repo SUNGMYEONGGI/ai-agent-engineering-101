@@ -1,0 +1,9 @@
+name: recall
+description: 로그·고객 요약 및 소스 분할 조회. mode=read|customer_summary|inspect|stage_test. stage_test는 전달된 소스와 테스트를 tmp/test에 격리해 로컬 시험한다.
+permission:
+  write: [tmp/test/]
+  timeout: 30
+logic: logic.py
+test: test.py
+version: 11
+replaces: recall@10

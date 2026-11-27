@@ -1,0 +1,9 @@
+name: recall
+description: 로그·고객 요약 및 소스 분할 조회. mode=read path offset limit, mode=customer_summary since.
+permission:
+  write: [tmp/test/]
+  timeout: 10
+logic: logic.py
+test: test.py
+version: 10
+replaces: recall@9

@@ -1,0 +1,11 @@
+{
+ "tool": "recall",
+ "version": 11,
+ "forged_at": 1795746409,
+ "kit": "v5.2",
+ "sha256": {
+  "permission.yml": "7ce81bd1c9deb6a2b7c06c175d43e39e91e6b18b6e61f2b10a8203b751d51024",
+  "logic.py": "70333262e389d2789373bac72bf66aea70157696ad0566828b104f55d91a6252",
+  "test.py": "2e0ffbd0c50eb7ced3ec8d19da2f87f76abc7f5366b4dfa40c02a15f874228e2"
+ }
+}
