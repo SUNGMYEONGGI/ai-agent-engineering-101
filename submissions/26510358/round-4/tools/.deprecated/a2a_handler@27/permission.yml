@@ -1,0 +1,13 @@
+name: a2a_handler
+description: 실재고와 정산을 검증하고 수량·품목 조건에 맞는 결제서를 발급하며 실제 등급을 서명 JWT에도 포함합니다.
+permission:
+  network: [market.ourolabs.ai]
+  write: [public/reservations.jsonl, customers.jsonl, customer_replies.jsonl, holds.json, wanted.jsonl, tmp/test/]
+  identity: [shop]
+  wallet: [sign_jwt]
+  timeout: 35
+  handles: [a2a]
+logic: logic.py
+test: test.py
+version: 27
+replaces: a2a_handler@26

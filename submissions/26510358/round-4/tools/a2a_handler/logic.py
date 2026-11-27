@@ -2,7 +2,7 @@ from pathlib import Path
 import json,time,re
 src=Path('ops/a2a_v16.py').read_text(encoding='utf8')
 base="src=Path('ops/a2a_v11.py').read_text(encoding='utf8')"
-patch="src=src.replace(\"'warranty_hours':x.get('warranty_hours',0)}\",\"'warranty_hours':x.get('warranty_hours',0),'grade':u.get('grade')}\")"
+patch="src=src.replace(\"'warranty_hours':x.get('warranty_hours',0)}\",\"'warranty_hours':x.get('warranty_hours',0),'grade':u.get('grade')}\")\nsrc=src.replace(r'\\bG[0-9a-fA-F]{8}\\b',r'(?<![0-9A-Za-z])G[0-9a-fA-F]{8}(?![0-9A-Za-z])')\nsrc=src.replace(\"     for x in candidates:\",\"     candidates=[x for x in candidates if not excluded_item(text,x.get('name',''))]\\n     for x in candidates:\")"
 assert base in src
 src=src.replace(base,base+'\n'+patch,1)
 src=src.replace("b['ORDER']=sorted(b['NOUNS'],key=len,reverse=True)","b['NOUNS'].update({'사료':['사료'], '배변패드':['배변패드'], '생선':['생선','고등어'], '과일':['과일','사과'], '빵':['빵'], '세탁세제':['세탁세제','세탁 보조용품'], '닭고기':['닭고기','닭가슴살','닭다리'], '달걀 30구':['계란 30구','달걀 30구','계란30구','달걀30구'], '계란 30구':['계란 30구','달걀 30구','계란30구','달걀30구'], '믹스커피':['믹스커피','믹스 커피'], '믹스 커피':['믹스커피','믹스 커피'], '유정란':['유정란']})\nb['ORDER']=sorted(b['NOUNS'],key=len,reverse=True)")
@@ -12,12 +12,17 @@ old="   result['reply']=reply"
 new="   reply=missing_notice(text,reply,a,kit)\n   if checks: reply=wallet_reply(reply,checks,kit)\n   result['reply']=reply"
 assert old in src
 src=src.replace(old,new,1)
+def excluded_item(text,name):
+ for m in re.finditer(r'([가-힣]+)\s*(\d+(?:\.\d+)?)\s*(kg|g|구|팩)\s*(?:은|는|이|가)?\s*(?:말고|제외|빼고)',text,re.I):
+  noun,qty,unit=m.groups()
+  if noun in name and re.search(re.escape(qty)+r'\s*'+re.escape(unit),name,re.I):return True
+ return False
 def wallet_reply(reply,checks,kit):
  return reply+'\n가게 지갑 주소: '+str(kit.address('shop'))+'. 결제서와 결제 안내를 확인해 주세요.' if checks else reply
 def missing_notice(text,reply,a,kit):
  missing=[x for x in ('과일','배추김치','사료','배변패드','생선','빵','세탁세제','닭고기') if (x in text or x=='세탁세제' and '세탁 보조용품' in text) and x not in reply]
  data=a.get('data') if isinstance(a.get('data'),dict) else {}
- match=re.search(r'\bG[0-9a-fA-F]{8}\b',text)
+ match=re.search(r'(?<![0-9A-Za-z])G[0-9a-fA-F]{8}(?![0-9A-Za-z])',text)
  sku=str(data.get('sku') or (match.group() if match else ''))
  if sku and re.search(r'SKU\s+'+re.escape(sku)+r'.{0,30}없습니다',reply,re.I):missing.append('SKU '+sku)
  if missing:
@@ -28,6 +33,7 @@ def missing_notice(text,reply,a,kit):
    for x in missing:f.write(json.dumps({'ts':int(time.time()),'item':x,'buyer':a.get('claimed_from')},ensure_ascii=False)+'\n')
  return reply
 exec(compile(src,'ops/a2a_v16.py','exec'),globals())
+b['excluded_item']=excluded_item
 _orig_wanted=b['wanted']
 def wanted_positive(text):
  text=re.sub(r'[^.!?\n]*(?:사지\s*않|구매하지\s*않|원하지\s*않|필요하지\s*않)[^.!?\n]*[.!?\n]?', '', text)
