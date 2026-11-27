@@ -12,6 +12,14 @@ agent.json point llm.base anywhere, so this shim sits on 127.0.0.1 and:
   - stops spending at the owner's daily_tokens (owner_limits.json, set in the app) or SHIM_DAILY_TOKENS total tokens per local day (default 15,000,000, a safety net above the ~6-8M a day expected after the 11-26 sleep rules; 0 = no cap): past the cap it
     answers the kit itself with a sleep move (no API call), so the agent rests until the next day instead of
     retrying. Customers are still answered by the a2a_handler tool, which needs no model.
+  - FORGE ESCALATION (11-27): when the answer's move is forge_tool (the agent writing a tool's code and test, ~3% of
+    steps but the ones that break sales when wrong), the same request goes again to SHIM_FORGE_MODEL (default
+    gpt-6.2-sol, reasoning SHIM_FORGE_EFFORT, default medium) and that answer is returned instead. The kit gives up on
+    a socket silent for 60 s, so the second call gets what is left of SHIM_FORGE_DEADLINE (55 s); if it fails or runs
+    out, the first answer stands. SHIM_FORGE_MODEL= (empty) turns this off.
+  - DECISIONS (11-27): POST /v1/decisions is passed to OpenAI's Decisions API with the key added here, so a forged
+    tool can ask typed questions (choice/predicate/score) on 127.0.0.1:18790 without ever holding the key. The model
+    defaults to SHIM_DECISIONS_MODEL (gpt-6-luna). Usage is logged like the rest and counts toward the daily cap.
 
 SHIM_BACKEND=claude (run_server.sh LLM=claude) answers with Claude Code's CLI instead: `claude -p --model
 $CLAUDE_MODEL --effort $CLAUDE_EFFORT` (default claude-opus-5-5, medium) on the server's claude.ai login, no
@@ -138,8 +146,50 @@ def budget_sleep():
     return json.dumps(out).encode()
 
 
+def openai_post(path, body, timeout):
+    """(status, bytes) from OPENAI_BASE_URL + path with the key; never raises."""
+    base = os.environ.get("OPENAI_BASE_URL", "https://api.openai.com/v1").rstrip("/")
+    req = urllib.request.Request(base + path, data=json.dumps(body).encode(),
+                                 headers={"authorization": "Bearer " + os.environ["OPENAI_API_KEY"],
+                                          "content-type": "application/json"})
+    try:
+        with urllib.request.urlopen(req, timeout=max(1.0, timeout)) as r:
+            return r.status, r.read()
+    except urllib.error.HTTPError as e:
+        return e.code, e.read()
+    except Exception as e:  # network trouble or our own deadline
+        return 502, json.dumps({"error": {"message": f"{type(e).__name__}: {e}"}}).encode()
+
+
+def move_action(out):
+    """The action named by the first JSON object in a chat completion's answer (like the kit's parse), or None."""
+    try:
+        text = json.loads(out)["choices"][0]["message"].get("content") or ""
+    except (ValueError, KeyError, IndexError, TypeError):
+        return None
+    dec, i = json.JSONDecoder(), text.find("{")
+    while i >= 0:
+        try:
+            obj, _ = dec.raw_decode(text, i)
+            if isinstance(obj, dict) and "action" in obj:
+                return str(obj["action"])
+        except ValueError:
+            pass
+        i = text.find("{", i + 1)
+    return None
+
+
+def usage_of(status, out):
+    try:
+        return json.loads(out).get("usage") if status == 200 else None
+    except (ValueError, AttributeError):
+        return None
+
+
 class Handler(BaseHTTPRequestHandler):
     def do_POST(self):
+        if self.path.rstrip("/").endswith("/decisions"):
+            return self.decisions()
         if not self.path.rstrip("/").endswith("/chat/completions"):
             return self.send_error(404)
         raw = self.rfile.read(int(self.headers.get("content-length") or 0))
@@ -157,23 +207,35 @@ class Handler(BaseHTTPRequestHandler):
             self.log_usage(os.environ.get("CLAUDE_MODEL", "claude-opus-5-5"), status, t, usage)
             return self.answer(status, out)
         fell_back = os.environ.get("SHIM_BACKEND") == "claude"
-        base = os.environ.get("OPENAI_BASE_URL", "https://api.openai.com/v1").rstrip("/")
-        req = urllib.request.Request(base + "/chat/completions", data=json.dumps(body).encode(),
-                                     headers={"authorization": "Bearer " + os.environ["OPENAI_API_KEY"],
-                                              "content-type": "application/json"})
-        try:
-            with urllib.request.urlopen(req, timeout=60 if fell_back else 175) as r:
-                status, out = r.status, r.read()
-        except urllib.error.HTTPError as e:
-            status, out = e.code, e.read()
-        except Exception as e:  # network trouble: let the kit retry
-            status, out = 502, json.dumps({"error": {"message": f"{type(e).__name__}: {e}"}}).encode()
-        try:
-            usage = json.loads(out).get("usage") if status == 200 else None
-        except ValueError:
-            usage = None
+        status, out = openai_post("/chat/completions", body, 60 if fell_back else 175)
         tag = f" (claude fallback: {LAST_CLAUDE_ERROR['why']})" if fell_back else ""
-        self.log_usage(body.get("model") + tag, status, t, usage)
+        self.log_usage(body.get("model") + tag, status, t, usage_of(status, out))
+        forge_model = os.environ.get("SHIM_FORGE_MODEL", "gpt-6.2-sol")
+        if status == 200 and forge_model and forge_model != body.get("model") and move_action(out) == "forge_tool":
+            left = float(os.environ.get("SHIM_FORGE_DEADLINE", "55")) - (time.time() - t)
+            if left > 8:
+                t2 = time.time()
+                b2 = dict(body, model=forge_model, reasoning_effort=os.environ.get("SHIM_FORGE_EFFORT", "medium"))
+                s2, o2 = openai_post("/chat/completions", b2, left)
+                ok = s2 == 200 and move_action(o2) is not None
+                self.log_usage(f"{forge_model} (forge{'' if ok else ' failed, first answer kept'})", s2, t2, usage_of(s2, o2))
+                if ok:
+                    status, out = s2, o2
+        self.answer(status, out)
+
+    def decisions(self):
+        raw = self.rfile.read(int(self.headers.get("content-length") or 0))
+        try:
+            body = json.loads(raw)
+            assert isinstance(body, dict)
+        except (ValueError, AssertionError):
+            return self.send_error(400, "bad json")
+        t = time.time()
+        if over_budget():
+            return self.answer(429, json.dumps({"error": {"message": "daily model budget reached"}}).encode())
+        body.setdefault("model", os.environ.get("SHIM_DECISIONS_MODEL", "gpt-6-luna"))
+        status, out = openai_post("/decisions", body, 30)
+        self.log_usage(body["model"] + " (decisions)", status, t, usage_of(status, out))
         self.answer(status, out)
 
     def log_usage(self, model, status, t, usage):
