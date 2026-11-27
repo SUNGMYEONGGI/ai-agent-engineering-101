@@ -849,7 +849,7 @@ function healthRow(r) {
 async function loadHarness() {
   try { hdata = await deskCall('harness') }
   catch (e) { $('hbeat').innerHTML = `<p class="none">하네스를 읽지 못했습니다: ${esc(e.message || e)}. 서버에서 run_server.sh restart 후 다시 열어 주세요.</p>`; return }
-  $('hsub').textContent = hhmm(hdata.ts) + ' 기준, 열려 있는 동안 15초마다 갱신';
+  $('hsub').textContent = hhmm(hdata.ts) + ' 기준, 열려 있는 동안 1분마다 갱신';
   $('hbeat').innerHTML = beat(hdata);
   const open = new Set([...document.querySelectorAll('#hhealth details[open]')].map(d => d.dataset.k));
   $('hhealth').innerHTML = hdata.health.map(r => healthRow(r).replace('<details', `<details data-k="${esc(r.key)}"${open.has(r.key) ? ' open' : ''}`)).join('');
@@ -873,7 +873,7 @@ function drawChanges() {
       `<span>${ls.length} 줄 바뀜</span></summary><ul>${ls.join('')}</ul></details>` }).join('')
     : '<p class="none">아직 없습니다. 메모리와 스킬은 현황 서버가 켜진 뒤의 변경부터 쌓입니다.</p>';
 }
-$('hbtn').onclick = () => { $('harness').hidden = false; loadHarness(); clearInterval(htimer); htimer = setInterval(loadHarness, 15000) };
+$('hbtn').onclick = () => { $('harness').hidden = false; loadHarness(); clearInterval(htimer); htimer = setInterval(loadHarness, 60000) };
 $('act').onclick = () => { fillActivity(); $('activity').hidden = false; loadActivity() };
 
 async function send(text, thread, shown) {
