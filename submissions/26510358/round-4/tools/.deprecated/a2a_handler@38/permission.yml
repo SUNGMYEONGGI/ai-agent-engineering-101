@@ -1,0 +1,13 @@
+name: a2a_handler
+description: DECISIONS와 실시간 재고·카탈로그 가격으로 고객에게 서명 결제서를 제공하고 정산을 전달합니다.
+permission:
+  network: [market.ourolabs.ai, 127.0.0.1]
+  write: [holds.json, customers.jsonl, wanted.jsonl, tmp/test/]
+  identity: [shop]
+  wallet: [sign_jwt]
+  timeout: 35
+  handles: [a2a]
+logic: logic.py
+test: test.py
+version: 38
+replaces: a2a_handler@37

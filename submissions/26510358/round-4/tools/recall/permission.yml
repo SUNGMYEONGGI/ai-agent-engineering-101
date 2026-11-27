@@ -1,9 +1,9 @@
 name: recall
-description: 읽기 전용 점검 및 고객 기록 조회. mode=read(path,offset,limit)|customer_summary(since,now,limit)|search(word).
+description: 읽기 전용 점검 및 고객 기록 조회. mode=read(path,offset,limit)|customer_summary(since,now,limit)|search(word). 고객 요약은 response_data 결제서도 집계.
 permission:
   write: [tmp/test/]
   timeout: 20
 logic: logic.py
 test: test.py
-version: 13
-replaces: recall@12
+version: 14
+replaces: recall@13

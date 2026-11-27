@@ -1,0 +1,13 @@
+name: a2a_handler
+description: 실시간 재고와 카탈로그에 일치하는 단위만 서명 checkout으로 발급하고 mandate 정산 및 고객·부족품을 기록합니다.
+permission:
+  network: [market.ourolabs.ai, 127.0.0.1]
+  write: [holds.json, customers.jsonl, wanted.jsonl, tmp/test/]
+  identity: [shop]
+  wallet: [sign_jwt]
+  timeout: 35
+  handles: [a2a]
+logic: logic.py
+test: test.py
+version: 37
+replaces: a2a_handler@36
