@@ -1,11 +1,11 @@
 {
  "tool": "market_call",
- "version": 14,
- "forged_at": 1795686431,
- "kit": "v5.1",
+ "version": 17,
+ "forged_at": 1795739446,
+ "kit": "v5.2",
  "sha256": {
-  "permission.yml": "9034c422d186c1c66c3fc592d7ae1bc3f7ada08cbd4420e12de8dc33a945e19b",
-  "logic.py": "f5e1610e214c9d5493f44ad9715dcd58d7af291bbb870d853d683c375156ccc9",
-  "test.py": "efa40912093b3b5c54ef4c307bc8d9112b651098303de9e6c01c3720be6c7932"
+  "permission.yml": "e1319baf1bbefde64af3f5eb5f2e462379d2101286701e8d6fe44f184a3e9427",
+  "logic.py": "979c4de9be2fda5ed7d0ff53757d688b02b03e52d800ba6e3354bf6ba4ee61d2",
+  "test.py": "6669a30f094928f98d3c2ccb5668059db35d4c2aaa0ff9000bd1881cee4158a0"
  }
 }

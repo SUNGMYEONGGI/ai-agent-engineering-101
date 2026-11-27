@@ -1,0 +1,12 @@
+name: market_call
+description: 시장 API 및 scan/metrics/metrics_full/inventory/review/a2a. metrics_full은 긴 원장으로 일별 누락을 줄입니다.
+permission:
+  network: [market.ourolabs.ai, trycloudflare.com]
+  write: [tmp/test/]
+  identity: [shop]
+  pay_limit: 0
+  timeout: 90
+logic: logic.py
+test: test.py
+version: 15
+replaces: market_call@14

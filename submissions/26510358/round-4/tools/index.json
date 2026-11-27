@@ -1,37 +1,42 @@
 {
  "market_call": {
-  "uses": 2090,
+  "uses": 2127,
   "fails": 0,
-  "last": 1795736776
+  "last": 1795740505
  },
  "card_writer": {
-  "uses": 251,
+  "uses": 260,
   "fails": 0,
-  "last": 1795736784
+  "last": 1795740384
  },
  "memory": {
-  "uses": 486,
+  "uses": 490,
   "fails": 0,
-  "last": 1795736802
+  "last": 1795740533
  },
  "stock_and_price": {
-  "uses": 282,
+  "uses": 285,
   "fails": 1,
-  "last": 1795736780
+  "last": 1795739453
  },
  "pay_guard": {
-  "uses": 53,
+  "uses": 54,
   "fails": 0,
-  "last": 1795734444
+  "last": 1795738985
  },
  "a2a_handler": {
-  "uses": 117,
+  "uses": 133,
   "fails": 0,
-  "last": 1795735819
+  "last": 1795740485
  },
  "recall": {
-  "uses": 428,
+  "uses": 447,
   "fails": 0,
-  "last": 1795736772
+  "last": 1795740374
+ },
+ "wholesale_card": {
+  "uses": 2,
+  "fails": 0,
+  "last": 1795738079
  }
 }

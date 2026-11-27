@@ -1,0 +1,12 @@
+name: market_call
+description: 시장 API 호출 및 mode=scan/metrics/inventory/discovery/review/a2a. review는 최근 2시간 정산과 최근 1시간 포럼·카드·재고 비교, a2a는 등록된 첫 승자에게 점포 신분으로 상품과 가격을 묻습니다.
+permission:
+  network: [market.ourolabs.ai, trycloudflare.com]
+  write: [tmp/test/]
+  identity: [shop]
+  pay_limit: 0
+  timeout: 90
+logic: logic.py
+test: test.py
+version: 14
+replaces: market_call@13

@@ -1,0 +1,13 @@
+name: a2a_handler
+description: 실재고와 고객의 명시적 제외 조건을 확인하고 실제 등급이 담긴 결제서를 발급합니다.
+permission:
+  network: [market.ourolabs.ai]
+  write: [public/reservations.jsonl, customers.jsonl, customer_replies.jsonl, holds.json, wanted.jsonl, tmp/test/]
+  identity: [shop]
+  wallet: [sign_jwt]
+  timeout: 35
+  handles: [a2a]
+logic: logic.py
+test: test.py
+version: 29
+replaces: a2a_handler@28

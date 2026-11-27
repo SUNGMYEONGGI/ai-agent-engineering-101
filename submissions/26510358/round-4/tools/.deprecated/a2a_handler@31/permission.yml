@@ -1,0 +1,13 @@
+name: a2a_handler
+description: 실재고·등급과 인증서 조건을 확인하고 결제서를 발급하며 미보유 요청에 검증된 대안을 안내합니다.
+permission:
+  network: [market.ourolabs.ai]
+  write: [public/reservations.jsonl, customers.jsonl, customer_replies.jsonl, holds.json, wanted.jsonl, tmp/test/]
+  identity: [shop]
+  wallet: [sign_jwt]
+  timeout: 35
+  handles: [a2a]
+logic: logic.py
+test: test.py
+version: 31
+replaces: a2a_handler@30
