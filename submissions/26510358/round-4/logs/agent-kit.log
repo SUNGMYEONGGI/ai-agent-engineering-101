@@ -7208,3 +7208,73 @@
 00:48:47 [mind] wholesale_card | 정산 계약을 확인한 뒤 기존 서명·보류 동작을 보존할 수 있는지 판단합니다.
 00:49:11 [mind] memory | 공급창은 이미 닫혔고 실험은 01:22 판정 예정입니다. 5kg 오발급이 남은 상태이므로 해결된 것으로 표시하지 않고 다음 재작성 과제로 보존합니다.
 00:49:18 [mind] sleeps 985 s: 다음 공급창 준비 및 미해결 고객 조건 오류 점검
+01:07:17 [mind] app_owner_limits | 도매창이 열려 있어 우선 최신 한도와 수요·재고를 확인하고 포럼을 갱신합니다.
+01:07:23 [mind] card_writer | 앱이 응답하지 않아 재시도하지 않고 기존 승인 한도를 적용합니다. 먼저 포럼과 카드를 갱신합니다.
+01:07:35 [mind] market_call | 최근 퍼널과 도매창 상품을 확인합니다.
+01:07:38 [mind] recall | 결제서 집계는 알려진 누락이 있으므로 실제 고객 기록으로 보정합니다.
+01:07:42 [mind] market_call | 최근 퍼널은 87/10/8/2입니다. 수요가 많은 상품의 도매 견적을 확인합니다.
+01:07:45 [mind] read_tool | 도매창은 닫혀 있고 다음 개장은 01:23:30입니다. 고객이 거절한 규격에 결제서를 발급하는 확인된 실패를 우선 고칩니다.
+01:07:52 [mind] read_tool | 핸들러 코드 출력이 잘려 정산·인증서 구조를 확인하지 못했습니다. 안전한 전체 재작성 전에 읽기 도구의 접근 범위를 확인합니다.
+01:07:56 [mind] recall | 핸들러의 결제서 형식과 실제 인증서 필드를 확인한 뒤 전체 재작성해야 기존 정산을 깨지 않습니다.
+01:08:02 [mind] recall | 기존 결제서 계약과 테스트 환경을 확인해 서명·정산 회귀를 방지합니다.
+01:09:02 [mind] model call failed: TimeoutError: timed out
+01:10:08 [mind] model call failed: TimeoutError: timed out
+01:11:12 [mind] model call failed: TimeoutError: timed out
+01:12:15 [mind] model call failed: TimeoutError: timed out
+01:13:19 [mind] model call failed: TimeoutError: timed out
+01:13:42 [mind] memory | 이번 실행은 종료 직전이므로 미완성 핸들러를 배포하지 않고 확인된 문제와 다음 도매창을 기록합니다.
+01:13:45 [mind] sleeps 960 s: 01:22 실험 판정 후 01:23 도매창 준비
+01:29:52 [mind] card_writer | 실험 판정 시간이 지났으므로 현재 지표를 확인하고, 우선 포럼과 카드를 갱신합니다.
+01:30:03 [mind] market_call | 지난 60분 시장과 정산 지표를 확인합니다.
+01:30:06 [mind] recall | 결제서 수 집계 누락이 알려져 있으므로 실제 고객 기록으로 보정합니다.
+01:30:13 [mind] app_say | 계란 가격 실험 판정 결과 문의·결제·정산이 모두 감소했습니다. 상시 가격 원칙은 유지하되 조건 무시 문제를 다음에 해결합니다.
+01:30:16 [mind] read_tool | 실제 문의에서 소량 계란 요구와 대안 거절을 어긴 핸들러 실패가 확인돼 기존 계약과 테스트를 살펴봅니다.
+01:30:21 [mind] recall | 현재 핸들러의 남은 부분과 회귀시험 계약을 확인해 조건 필터를 안전하게 재작성합니다.
+01:30:24 [mind] recall | 서명 검증 및 실제 메시지 회귀시험의 기존 구조를 확인합니다.
+01:31:24 [mind] model call failed: TimeoutError: timed out
+01:33:06 [mind] app_owner_limits | 이번 실행의 현재 소유자 한도를 확인합니다.
+01:34:06 [mind] model call failed: TimeoutError: timed out
+01:35:14 [mind] model call failed: TimeoutError: timed out
+01:36:21 [mind] model call failed: TimeoutError: timed out
+01:37:28 [mind] model call failed: TimeoutError: timed out
+01:37:53 [mind] memory | 앱 한도는 응답이 없어 재호출하지 않습니다. 실험을 판정하고 발견된 고객 조건 위반을 다음 실행의 최우선 작업으로 남깁니다.
+01:39:56 [mind] recall | 정기 REVIEW가 지났으므로 먼저 harness 점검 결과를 읽습니다.
+01:40:08 [mind] market_call | 최근 퍼널과 정산을 확인합니다.
+01:40:10 [mind] recall | 집계의 결제서 누락을 보정하고 정기 점검 이후 문의를 확인합니다.
+01:40:13 [mind] recall | 조회가 숫자 시각을 요구하므로 Unix 시각으로 다시 조회합니다.
+01:40:18 [mind] read_tool | 수량·대안 금지 위반이 실제 고객 대화에서 재확인되어 기존 핸들러 계약과 데이터 형식을 확인합니다.
+01:40:34 [mind] market_call | 승자 비교와 재고·현재 시세를 조회합니다.
+01:40:41 [mind] card_writer | 포럼 게시 간격이 지났으므로 실재고 기반 카드 작성기를 실행합니다.
+01:40:48 [mind] market_call | 1위 가게의 카드 주소를 확인해 상품과 가격을 묻습니다.
+01:40:54 [mind] market_call | 1위 가게에 상인 신분으로 가격을 묻습니다.
+01:40:58 [mind] recall | 기존 핸들러의 결제서 payload와 회귀시험을 정확히 보존하려면 나머지 소스를 확인해야 합니다.
+01:41:01 [mind] recall | 서명과 재고 선택 로직 전체를 확인합니다.
+01:41:04 [mind] recall | 기존 실제 문의 회귀시험과 서명 검증 방법을 확인합니다.
+01:42:41 [mind] app_owner_limits | 실험과 매입 제한을 확인합니다.
+01:43:41 [mind] model call failed: TimeoutError: timed out
+01:44:45 [mind] model call failed: TimeoutError: timed out
+01:45:51 [mind] model call failed: TimeoutError: timed out
+01:46:56 [mind] model call failed: TimeoutError: timed out
+01:47:03 [mind] recall | 남은 시간에 60분 고객 결제서 수를 보정합니다.
+01:47:24 [mind] memory | 진행한 점검과 해결되지 않은 조건 위반을 명확히 남기고 다음 공급창에 다시 시작합니다.
+01:47:26 [mind] sleeps 210 s: 01:43경 공급창 및 미완료 REVIEW·핸들러 조건 위반 수정 재개
+01:50:59 [mind] recall | 미완료 REVIEW의 최우선 과제인 하니스 문제와 고객 조건 위반을 확인합니다.
+01:51:11 [mind] market_call | 최근 한 시간의 시장·정산 수치를 확인합니다.
+01:51:14 [mind] recall | 결제서 집계 누락이 알려져 있어 고객 요약으로 보정하고 새 문의의 응답을 살핍니다.
+01:51:19 [mind] card_writer | 매 실행의 포럼·카드 갱신을 수행합니다.
+01:51:22 [mind] read_tool | 실제 고객의 포장량·대체 금지 위반이 지속된 것으로 확인되어 기존 처리기 구현을 읽고 자급형 전체 재작성에 필요한 계약을 확인합니다.
+01:51:40 [mind] market_call | REVIEW 미완료 항목의 순위, 재고, 지갑과 비교 정보를 확인합니다.
+01:51:44 [mind] recall | 서명 결제서의 실제 계약과 정산에 필요한 데이터를 고객 로그에서 확인합니다.
+01:51:49 [mind] recall | 도구 출력이 잘려 결제서 구조를 직접 확인하지 못했습니다. 실패한 조회의 대안으로 기록을 검색합니다.
+01:51:53 [mind] recall | 결제서·재고 처리의 나머지 계약을 확인하기 위해 현재 코드의 후반부를 읽습니다.
+01:51:58 [mind] recall | 가용 단위와 카탈로그 연결 방식을 확인합니다.
+01:52:02 [mind] recall | 회귀시험에 넣을 실제 고객 표현을 확보합니다.
+01:53:02 [mind] model call failed: TimeoutError: timed out
+01:53:13 [mind] recall | 기존 검사에서 지갑 서명 검증 방법을 확인합니다.
+01:54:13 [mind] model call failed: TimeoutError: timed out
+01:54:19 [mind] recall | 기존 테스트의 서명 검증 방식을 확인합니다.
+01:55:19 [mind] model call failed: TimeoutError: timed out
+01:56:23 [mind] model call failed: TimeoutError: timed out
+01:57:30 [mind] model call failed: TimeoutError: timed out
+01:58:36 [mind] model call failed: TimeoutError: timed out
+01:59:00 [mind] memory | 포럼은 게시됐고 최근 1시간은 103/3/2/1입니다. 처리기 조건 위반이 확인되어 실험을 임의로 성공 처리하지 않고 다음 실행의 최우선 작업으로 남깁니다.
