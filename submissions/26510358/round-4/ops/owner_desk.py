@@ -293,7 +293,7 @@ def dash(now=None, notes=None):
             "tokens": {"today": tok, "cap": lim["daily_tokens"],
                        "per_settle": round(tok / settles) if settles else None, "settles_today": settles},
             "loss_today": loss, "limits": lim, "alerts": alerts,
-            "learned": parse_learned(notes), "wanted": wanted(now, notes),
+            "learned": parse_learned(notes), "wanted": wanted(now, notes), "checks": checks(),
             "market": {k: _mkt.get(k) for k in ("at", "rank", "of", "history", "forum", "error")}}
 
 
@@ -594,11 +594,31 @@ class Handler(BaseHTTPRequestHandler):
         pass
 
 
+_chk = {"at": 0}
+
+
+def checks():
+    """ops/harness_check.py's last result (harness_check.json): problems found by code, and the restock table."""
+    try:
+        x = json.loads((R / "harness_check.json").read_text(encoding="utf-8"))
+        return {k: x.get(k) for k in ("at", "problems", "replies", "restock")}
+    except (OSError, ValueError):
+        return None
+
+
 def tick():
     """Keep the stuck clock honest while nobody has the app open."""
     while True:
         if time.time() - _mkt["at"] >= 300:
             refresh_market()
+        if time.time() - _chk["at"] >= 600:                # code-run harness checks for the agent's REVIEW and the app
+            _chk["at"] = time.time()
+            try:
+                sys.path.insert(0, str(Path(__file__).resolve().parent))
+                import harness_check
+                harness_check.write()
+            except Exception as e:
+                print(f"[desk] harness_check: {type(e).__name__}: {e}", flush=True)
         try:
             dash()
             track_changes(time.time())

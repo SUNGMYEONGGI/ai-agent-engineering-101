@@ -410,6 +410,8 @@ body{font-size:15.5px;line-height:1.62;letter-spacing:-.012em;font-feature-setti
   <div class="sec">순위와 포럼</div><div id="rank"></div>
   <div class="sec">손님이 찾았는데 없던 상품</div><div id="want"></div>
   <div class="sec">에이전트가 배운 것</div><div id="learn"></div>
+  <div class="sec">하네스 점검 (코드가 10분마다)</div><div id="chk"></div>
+  <div class="sec">없던 상품, 매입할까</div><div id="rst"></div>
 </div></div>
 <div class="shade" id="ask" hidden><div class="sheet" role="dialog" aria-modal="true">
   <div class="grip"></div>
@@ -538,7 +540,7 @@ function judgeLeft(e) {
   return min > 0 ? `판정까지 ${min}분` : `판정 시각 ${e.judge} 지남`;
 }
 function fillDash() {
-  if (!desk) { $('dashsub').textContent = '현황 서버(/owner)에 닿지 못했습니다.'; ['exps', 'wins', 'toks', 'rank', 'want', 'learn'].forEach(id => $(id).innerHTML = ''); return; }
+  if (!desk) { $('dashsub').textContent = '현황 서버(/owner)에 닿지 못했습니다.'; ['exps', 'wins', 'toks', 'rank', 'want', 'learn', 'chk', 'rst'].forEach(id => $(id).innerHTML = ''); return; }
   const f = desk.funnel, l = readLimits();
   $('dashsub').textContent = (f ? `FUNNEL ${f.at} 기준 (최근 60분)` : 'FUNNEL 없음') +
     ` · 오늘 처분 손실 ${num(desk.loss_today)} / ${num(l.max_loss_per_day)} credits`;
@@ -570,6 +572,11 @@ function fillDash() {
   const w2 = desk.wanted || {};
   list($('want'), (w2.items || []).map(x => [x.item, x.n ? `최근 24시간 ${x.n}번` : '에이전트 메모(WANTED)']));
   list($('learn'), (desk.learned || []).map(x => [x, '']));
+  const ck = desk.checks || {}, rp = ck.replies || {};
+  list($('chk'), ck.at ? [[(ck.problems || []).length ? (ck.problems || []).join(' / ') : '문제 없음',
+    `${ck.at} 기준 최근 2시간: 문의 ${num(rp.inquiries)}건, 결제서 없는 답 ${num(rp.no_checkout)}건`]] : [['아직 점검 전입니다', '']]);
+  list($('rst'), (ck.restock || []).map(r => [`${r.item} · 24시간 ${r.asks_24h}번 찾음 → ${r.verdict}`,
+    r.net_margin != null ? `시장 B 중간가 ${num(r.median_b)}, 원가 ${num(r.unit_cost)}, 1개 남는 돈 ${num(r.net_margin)}, 우리 폐기 ${r.our_expired_24h}개` : '시세 표본 부족']));
 }
 async function veto(b) {
   if (b.dataset.armed !== '1') { b.dataset.armed = '1'; b.textContent = '한 번 더 눌러 확정'; return; }
