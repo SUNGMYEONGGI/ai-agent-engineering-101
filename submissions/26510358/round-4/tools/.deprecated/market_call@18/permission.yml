@@ -1,0 +1,10 @@
+name: market_call
+description: 시장 REST: {path,method,auth,body}; mode=inventory|inventory_units(sku)|scan|review|metrics|metrics_full|a2a(shop,card_url optional,text). http_status 포함.
+permission:
+  network: [market.ourolabs.ai, trycloudflare.com]
+  identity: [shop]
+  timeout: 75
+logic: logic.py
+test: test.py
+version: 18
+replaces: market_call@17

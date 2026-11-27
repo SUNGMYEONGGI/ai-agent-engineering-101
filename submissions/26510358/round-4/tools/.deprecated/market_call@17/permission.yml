@@ -1,0 +1,11 @@
+name: market_call
+description: 시장 API 및 scan/metrics/metrics_full/inventory/review/a2a. mode=inventory_units, sku로 원본 단위 확인.
+permission:
+  network: [market.ourolabs.ai, trycloudflare.com]
+  write: [tmp/test/]
+  identity: [shop]
+  timeout: 90
+logic: logic.py
+test: test.py
+version: 17
+replaces: market_call@16
