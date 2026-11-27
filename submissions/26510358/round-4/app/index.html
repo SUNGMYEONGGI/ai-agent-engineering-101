@@ -8,6 +8,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="icon" href="/icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
@@ -289,8 +290,6 @@ form{background:var(--raised);border:1px solid var(--line);border-radius:999px;b
 .atool b{display:block;font-size:14px}.atool span{font-size:12px;color:var(--text-mute)}
 .atool small{font-size:11px;color:var(--text-mute);white-space:nowrap}.atool.on small{color:var(--ok)}
 .when{text-align:center;font-size:12px;color:var(--text-mute);margin:18px 0 8px}
-.first{font-size:12px;font-weight:600;color:var(--ow,#db2777);margin:10px 0 2px 4px}
-.row.told .bubble{box-shadow:inset 3px 0 0 #db2777}
 .thlink{display:flex;gap:8px;align-items:baseline;border:0;background:none;padding:2px 0 10px 14px;font-size:13px;color:var(--text-mute)}
 .thlink b{color:var(--focus);font-weight:650}.thlink:hover b,.thlink:hover span{text-decoration:underline}
 .card{margin-bottom:4px}
@@ -302,6 +301,38 @@ form{background:var(--raised);border:1px solid var(--line);border-radius:999px;b
 .thn{font-size:12px;color:var(--text-mute);margin:8px 0 6px;padding-bottom:6px;border-bottom:1px solid var(--line)}
 #thf{display:flex;align-items:flex-end;gap:8px;background:var(--card);border-radius:22px;padding:5px 5px 5px 16px;margin-top:6px}
 #thf textarea{flex:1;border:0;outline:0;resize:none;background:transparent;color:var(--text);font:inherit;font-size:16px;padding:7px 0;max-height:120px}
+/* Chat, second pass: Pretendard, agent words as plain text (no grey box), owner's in dark bubbles, cards flat with a
+   title row and line items, one quiet "먼저 알림" tag, threads under their root, a right-click menu */
+body{font-size:15.5px;line-height:1.62;letter-spacing:-.012em;font-feature-settings:"ss06"}
+#log{display:flex;flex-direction:column;gap:2px}
+.item{border-radius:14px;margin:0 -8px;padding:4px 8px;transition:background .15s}
+.item.picked,.item:hover{background:color-mix(in srgb,var(--text) 4%,transparent)}
+.item.mine:hover{background:none}
+.msg{max-width:88%;padding:4px 0;white-space:pre-wrap;overflow-wrap:anywhere;color:var(--text);animation:in .2s var(--ease)}
+.msg small{display:block;font-size:12px;color:var(--text-mute)}
+.row.me{margin:6px 0}
+.me .bubble{background:var(--text);color:var(--bg);padding:9px 15px;border-radius:20px 20px 6px 20px;max-width:78%}
+.first{display:flex;align-items:center;gap:5px;font-size:12px;font-weight:600;color:var(--warn);margin-top:8px}
+.card{margin:6px 0;max-width:88%;background:var(--raised);border:1px solid var(--line);box-shadow:none;border-radius:16px;padding:12px 16px 10px}
+.card .ch{display:flex;align-items:baseline;gap:8px;padding-bottom:8px;border-bottom:1px solid var(--line)}
+.card .ch b{font-size:15px;font-weight:650;margin:0}
+.card .ch time{margin-left:auto;font-size:12px;color:var(--text-mute);font-variant-numeric:tabular-nums}
+.card ul{list-style:none;margin:8px 0 0;padding:0;display:grid;gap:4px;font-size:14px;color:var(--text-soft)}
+.card li{padding-left:12px;position:relative}.card li::before{content:"";position:absolute;left:0;top:.7em;width:4px;height:4px;border-radius:50%;background:var(--line-strong)}
+.card.root{max-width:none;margin-top:4px}
+.thlink{display:inline-flex;gap:8px;align-items:baseline;border:0;background:none;padding:2px 0 6px;font-size:13px;color:var(--text-mute);cursor:pointer}
+.thlink b{color:var(--focus);font-weight:650}.thlink:hover b{text-decoration:underline}
+.when{text-align:center;font-size:12px;color:var(--text-mute);margin:20px 0 8px}
+.busy{font-size:13px;color:var(--text-mute);margin:4px 0}
+.busy .again{margin-left:4px;border:0;background:none;padding:0;font-size:13px;font-weight:650;color:var(--focus);text-decoration:underline;text-underline-offset:3px}
+.typing{display:flex;gap:4px;padding:10px 0}.typing i{width:6px;height:6px;border-radius:50%;background:var(--text-mute);animation:pulse 1.2s infinite}
+.typing i:nth-child(2){animation-delay:.15s}.typing i:nth-child(3){animation-delay:.3s}
+.msg.root{max-width:none;padding:10px 0;border-bottom:1px solid var(--line)}.msg.root time{display:block;font-size:12px;color:var(--text-mute)}
+.ctx{position:fixed;z-index:30;min-width:168px;padding:5px;border-radius:12px;background:var(--raised);border:1px solid var(--line);
+  box-shadow:0 12px 32px -8px rgb(0 0 0/.22);animation:pop .12s var(--ease)}
+.ctx button{display:block;width:100%;text-align:left;border:0;background:none;padding:8px 12px;border-radius:8px;font-size:14px}
+.ctx button:hover,.ctx button:focus-visible{background:var(--hover);outline:0}
+@keyframes pop{from{opacity:0;transform:scale(.96)}}
 </style>
 </head>
 <body>
@@ -421,7 +452,7 @@ miniapp.offer('show_card', 'show the owner a card in the chat (a deal, a daily s
 let replyTo = null;
 const threadReply = (c, text) =>
   `[스레드 답장 · 카드 ${c.id}: ${c.title.replace(/\s+/g, ' ')} —${c.text.replace(/\s+/g, ' ').slice(0, 120)}]\n${text}`;
-const THREAD = /^\[스레드 답장 · 카드 [^:\]]*: ([^\n]*)\]\n/;
+const THREAD = /^\[스레드 답장 · (?:카드|메시지) [^:\]]*: ([^\n]*)\]\n/;
 function setReply(c) {
   replyTo = c;
   $('rp').hidden = !c;
@@ -630,58 +661,73 @@ function saveHist() {
   fresh.forEach(m => histKeys.add(ckey(m)));
   deskCall('chatlog', {items: fresh}).catch(() => fresh.forEach(m => histKeys.delete(ckey(m))));
 }
-// Threads (Slack style): a reply to a card and the agent's answer to it leave the main chat and sit under the card
-// as "답글 N개"; tapping it opens the thread with its own message box.
+// Threads (Slack style). Any card or agent message can start one: right-click it (long-press on a phone) and pick
+// 스레드로 답하기. The owner's reply carries the root on its first line, so the agent knows what it answers; that reply
+// and the agent's answer to it leave the main chat and sit under the root as "답글 N개".
 const BUSY = '(the agent is busy; ask again)';
+const flat = x => String(x || '').replace(/\s+/g, ' ').trim();
+const rootKey = m => m.who === 'card' ? 'card:' + m.title : 'msg:' + Math.floor(m.ts);
+const rootTag = m => m.who === 'card' ? `카드 ${m.id}: ${flat(m.title)} —${flat(m.text).slice(0, 120)}` : `메시지 ${hhmm(m.ts)}: ${flat(m.text).slice(0, 60)}`;
+function findRoot(items, quoted) {
+  return items.find(m => m.who === 'card' && quoted.startsWith(flat(m.title)))
+      || items.find(m => m.who === 'agent' && !m.thread && m.text !== BUSY && quoted.startsWith(flat(m.text).slice(0, 60)));
+}
 function split(items) {
-  const main = [], threads = new Map(), cardsBy = items.filter(m => m.who === 'card');
+  const main = [], threads = new Map();
   let open = null;                                     // the thread the owner just wrote in: the agent's next words go there
   for (const m of items) {
     const th = m.who !== 'card' && m.who !== 'agent' ? (m.text || '').match(THREAD) : null;
     if (th) {
-      const c = cardsBy.find(c => th[1].startsWith(c.title.replace(/\s+/g, ' ')));
-      open = c ? c.title : null;
-      if (c) { (threads.get(open) || threads.set(open, []).get(open)).push(Object.assign({}, m, {text: m.text.slice(th[0].length)})); continue }
+      const r = findRoot(main, th[1]);
+      open = r ? rootKey(r) : null;
+      if (r) { (threads.get(open) || threads.set(open, []).get(open)).push(Object.assign({}, m, {text: m.text.slice(th[0].length)})); continue }
     } else if (m.who === 'agent' && open) {
-      threads.get(open).push(m); if (m.text !== BUSY) open = null; continue;
+      threads.get(open).push(Object.assign({}, m, {thread: true})); if (m.text !== BUSY) open = null; continue;
     } else if (m.who !== 'agent') open = null;
     main.push(m);
   }
   return {main, threads};
 }
-let threadOpen = null;
-function bubbleFor(m, name) {
-  if (m.text === BUSY) return `<div class="busy">에이전트가 다른 일을 하느라 2분 안에 답하지 못했습니다.<button type="button" class="again">다시 보내기</button></div>`;
-  const mine = m.who === me || /^(owner|guest)-/.test(m.who);
-  return `<div class="row ${mine ? 'me' : 'agent'}"><div class="bubble">${esc(m.text)}</div></div>`;
+let threadOpen = null, lastThread = null;
+const isMine = m => m.who === me || /^(owner|guest)-/.test(m.who);
+function bubbleFor(m) {
+  if (m.text === BUSY) return `<div class="busy">에이전트가 다른 일을 하느라 2분 안에 답하지 못했습니다. <button type="button" class="again">다시 보내기</button></div>`;
+  return isMine(m) ? `<div class="row me"><div class="bubble">${esc(m.text)}</div></div>` : `<div class="msg">${esc(m.text)}</div>`;
+}
+function cardHtml(m, extra = '') {
+  return `<article class="card${extra}"><div class="ch"><b>${esc(m.title)}</b><time>${hhmm(m.ts)}</time></div>` +
+    `<ul>${String(m.text).split('\n').filter(Boolean).map(l => `<li>${esc(l)}</li>`).join('')}</ul></article>`;
+}
+function repliesLink(key, threads) {
+  const rs = (threads.get(key) || []).filter(r => r.text !== BUSY);
+  return rs.length ? `<button type="button" class="thlink" data-root="${esc(key)}"><b>답글 ${rs.length}개</b><span>${hhmm(rs.at(-1).ts)}</span></button>` : '';
 }
 function drawThread() {
   if ($('thread').hidden || !threadOpen) return;
-  const {threads} = split(allItems()), c = allItems().find(m => m.who === 'card' && m.title === threadOpen);
-  if (!c) return;
-  const list = threads.get(threadOpen) || [];
+  const all = allItems(), {main, threads} = split(all), r = main.find(m => rootKey(m) === threadOpen);
+  if (!r) return;
+  const list = threads.get(threadOpen) || [], n = list.filter(x => x.text !== BUSY).length;
   const tp = pending.filter(p => p.thread === threadOpen);
-  $('thbody').innerHTML = `<div class="card root"><div class="k">${esc(view.agent || 'Agent')}, ${hhmm(c.ts)}</div><b>${esc(c.title)}</b><div>${esc(c.text)}</div></div>` +
-    `<div class="thn">${list.filter(r => r.text !== BUSY).length ? '답글 ' + list.filter(r => r.text !== BUSY).length + '개' : '아직 답글이 없습니다. 이 카드에 대해 물어보세요.'}</div>` +
-    list.map(m => bubbleFor(m)).join('') + tp.map(p => `<div class="row me pending"><div class="bubble">${esc(p.text)}</div></div>`).join('') +
-    (tp.length || (waiting && lastThread === threadOpen) ? '<div class="row agent typing"><div class="bubble"><i></i><i></i><i></i></div></div>' : '');
+  $('thbody').innerHTML = (r.who === 'card' ? cardHtml(r, ' root') : `<div class="msg root"><time>${hhmm(r.ts)}</time>${esc(r.text)}</div>`) +
+    `<div class="thn">${n ? '답글 ' + n + '개' : '이 내용에 대해 물어보세요. 에이전트는 무엇에 대한 답인지 알고 답합니다.'}</div>` +
+    list.map(bubbleFor).join('') + tp.map(p => `<div class="row me pending"><div class="bubble">${esc(p.text)}</div></div>`).join('') +
+    (tp.length || (waitingThread && lastThread === threadOpen) ? '<div class="typing"><i></i><i></i><i></i></div>' : '');
   wireAgain($('thbody'), list);
   const b = $('thbody'); b.scrollTop = b.scrollHeight;
 }
-let lastThread = null;
 function wireAgain(root, msgs) {
   root.querySelectorAll('.again').forEach((btn, i) => btn.onclick = () => {
     const busy = msgs.filter(m => m.text === BUSY)[i], k = msgs.indexOf(busy);
     const asked = msgs.slice(0, k).reverse().find(m => m.who !== 'agent' && m.who !== 'card');
-    if (asked) root === $('thbody') ? sendThread(asked.text) : send(asked.text);
+    if (asked) root === $('thbody') ? sendThread((asked.text.match(THREAD) ? asked.text.slice(asked.text.match(THREAD)[0].length) : asked.text)) : send(asked.text);
   });
 }
-function openThread(title) { threadOpen = title; $('thread').hidden = false; drawThread(); if (!touch) $('tht').focus() }
+function openThread(key) { threadOpen = key; $('thread').hidden = false; drawThread(); if (!touch) setTimeout(() => $('tht').focus(), 50) }
 function sendThread(text) {
-  const c = allItems().find(m => m.who === 'card' && m.title === threadOpen);
-  if (!c || !text.trim()) return;
+  const r = split(allItems()).main.find(m => rootKey(m) === threadOpen);
+  if (!r || !text.trim()) return;
   lastThread = threadOpen;
-  send(threadReply(c, text.trim()), threadOpen, text.trim());
+  send(`[스레드 답장 · ${rootTag(r)}]\n${text.trim()}`, threadOpen, text.trim());
 }
 function draw() {
   const all = allItems(), {main, threads} = split(all), items = main;
@@ -692,7 +738,6 @@ function draw() {
   drawn = key;
   drawThread();
   const sc = $('scroll'), atEnd = sc.scrollHeight - sc.scrollTop - sc.clientHeight < 80;
-  const name = view.agent || 'Agent';
   if (!items.length && !pending.length) {
     $('log').innerHTML = `<div class="empty"><h2>안녕하세요, 호가예요</h2>
       <p>Hermes Shop을 대신 운영하고 있어요.<br>궁금한 걸 물어보거나 아래에서 골라 주세요.</p>
@@ -700,39 +745,29 @@ function draw() {
     $('log').querySelectorAll('.chip').forEach(b => b.onclick = () => send(b.querySelector('span').textContent));
     return;
   }
-  let html = '', last = '', lastTs = 0;
+  let html = '', lastTs = 0;
   for (const m of items) {
-    if (m.ts - lastTs > 1800) {                       // a time mark when the chat picks up again after half an hour
-      html += `<div class="when">${new Date(m.ts * 1000).toLocaleString('ko-KR', {month: 'numeric', day: 'numeric', weekday: 'short', hour: 'numeric', minute: '2-digit'})}</div>`;
-      last = '';
-    }
+    if (m.ts - lastTs > 1800)                       // a time mark when the chat picks up again after half an hour
+      html += `<div class="when">${new Date(m.ts * 1000).toLocaleString('ko-KR', {month: 'long', day: 'numeric', weekday: 'short', hour: 'numeric', minute: '2-digit'})}</div>`;
     lastTs = m.ts;
+    const k = esc(rootKey(m));
     if (m.who === 'card') {
-      const rs = (threads.get(m.title) || []).filter(r => r.text !== BUSY);
-      html += `<div class="card"><div class="k">${esc(name)}, ${hhmm(m.ts)}</div><b>${esc(m.title)}</b><div>${esc(m.text)}</div></div>` +
-              `<button type="button" class="thlink" data-title="${esc(m.title)}">${rs.length ? `<b>답글 ${rs.length}개</b><span>마지막 ${hhmm(rs.at(-1).ts)}</span>` : '<span>스레드에서 답하기</span>'}</button>`;
+      html += `<div class="item" data-root="${k}">${cardHtml(m)}${repliesLink(rootKey(m), threads)}</div>`;
     } else if (m.who === 'kit') {
       html += `<div class="sys">${esc(m.text)}</div>`;
-    } else if (m.who === me || /^(owner|guest)-/.test(m.who)) {   // the owner's own words from any device
-      const th = m.text.match(THREAD);
-      if (th) html += `<div class="quote">↳ ${esc(th[1])}</div>`;
-      html += `<div class="row me"><div class="bubble">${esc(th ? m.text.slice(th[0].length) : m.text)}</div></div>`;
+    } else if (isMine(m)) {
+      html += `<div class="item mine" data-text="${esc(m.text)}"><div class="row me"><div class="bubble">${esc(m.text)}</div></div></div>`;
     } else if (m.text === BUSY) {
       html += bubbleFor(m);
     } else {
-      const cls = m.who === 'agent' ? 'agent' : 'other';
-      if (cls === 'other' && last !== m.who) html += `<div class="name">${esc(m.who)}</div>`;
-      if (cls === 'agent' && last && last !== m.who && last !== me && last !== 'card' && last !== 'kit')
-        html += `<div class="name">${esc(name)}</div>`;
-      if (m.first) html += `<div class="first">먼저 알림, ${hhmm(m.ts)}</div>`;
-      html += `<div class="row ${cls}${m.first ? ' told' : ''}"><div class="bubble">${esc(m.text)}</div></div>`;
+      html += `<div class="item" data-root="${k}">` + (m.first ? `<div class="first"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a6 6 0 0 0-6 6v4l-2 3v1h16v-1l-2-3V8a6 6 0 0 0-6-6zm0 20a3 3 0 0 0 3-3H9a3 3 0 0 0 3 3z"/></svg>먼저 알림 ${hhmm(m.ts)}</div>` : '') +
+        `<div class="msg${m.who === 'agent' ? '' : ' other'}">${m.who !== 'agent' ? `<small>${esc(m.who)}</small>` : ''}${esc(m.text)}</div>${repliesLink(rootKey(m), threads)}</div>`;
     }
-    last = m.who;
   }
   for (const p of pending.filter(p => !p.thread)) html += `<div class="row me pending"><div class="bubble">${esc(p.text)}</div></div>`;
-  if (waiting > waitingThread) html += `<div class="row agent typing"><div class="bubble"><i></i><i></i><i></i></div></div>`;
+  if (waiting > waitingThread) html += '<div class="typing"><i></i><i></i><i></i></div>';
   $('log').innerHTML = html;
-  $('log').querySelectorAll('.thlink').forEach(b => b.onclick = () => openThread(b.dataset.title));
+  $('log').querySelectorAll('.thlink').forEach(b => b.onclick = () => openThread(b.dataset.root));
   wireAgain($('log'), items);
   if (atEnd || pending.length) sc.scrollTop = sc.scrollHeight;
 }
@@ -951,12 +986,37 @@ document.querySelectorAll('.shade').forEach(sh => {
     if (dy > 90) closeSheet(sh); else sheet.style.transform = '' });
 });
 if (location.hash === '#activity') setTimeout(() => $('act').click(), 300);
-if (location.hash.startsWith('#thread=')) setTimeout(() => openThread(decodeURIComponent(location.hash.slice(8))), 1500);
+if (location.hash.startsWith('#thread=')) setTimeout(() => openThread('card:' + decodeURIComponent(location.hash.slice(8))), 1500);
 document.addEventListener('keydown', e => { if (e.key !== 'Escape') return;
   const open = [...document.querySelectorAll('.shade')].filter(x => !x.hidden).pop(); if (open) closeSheet(open) });
 document.querySelector('.tabs button:not([id])').onclick = () => document.querySelectorAll('.shade').forEach(closeSheet);
 $('thf').onsubmit = e => { e.preventDefault(); const v = $('tht').value; $('tht').value = ''; sendThread(v) };
 enterSends($('tht'), () => $('thf').requestSubmit());
+// Right-click (long-press on a phone) on a message: reply in a thread, copy, send again.
+const menu = document.createElement('div');
+menu.className = 'ctx'; menu.setAttribute('role', 'menu'); menu.hidden = true; document.body.append(menu);
+function showMenu(item, x, y) {
+  const root = item.dataset.root, text = item.dataset.text || item.innerText;
+  const acts = [];
+  if (root) acts.push(['스레드로 답하기', () => openThread(root)]);
+  acts.push(['복사', () => navigator.clipboard && navigator.clipboard.writeText(text.trim())]);
+  if (item.classList.contains('mine')) acts.push(['다시 보내기', () => send(item.dataset.text)]);
+  menu.innerHTML = acts.map(([l], i) => `<button type="button" role="menuitem" data-i="${i}">${l}</button>`).join('');
+  menu.querySelectorAll('button').forEach(b => b.onclick = () => { hideMenu(); acts[+b.dataset.i][1]() });
+  menu.hidden = false;
+  const r = menu.getBoundingClientRect();
+  menu.style.left = Math.min(x, innerWidth - r.width - 8) + 'px'; menu.style.top = Math.min(y, innerHeight - r.height - 8) + 'px';
+  item.classList.add('picked'); menu._item = item; menu.querySelector('button').focus({preventScroll: true});
+}
+function hideMenu() { if (menu.hidden) return; menu.hidden = true; menu._item && menu._item.classList.remove('picked') }
+$('log').addEventListener('contextmenu', e => { const it = e.target.closest('.item'); if (!it) return; e.preventDefault(); showMenu(it, e.clientX, e.clientY) });
+let press = 0;
+$('log').addEventListener('touchstart', e => { const it = e.target.closest('.item'); if (!it) return; const t0 = e.touches[0];
+  press = setTimeout(() => { navigator.vibrate && navigator.vibrate(8); showMenu(it, t0.clientX, t0.clientY) }, 450) }, {passive: true});
+['touchend', 'touchmove', 'touchcancel'].forEach(ev => $('log').addEventListener(ev, () => clearTimeout(press), {passive: true}));
+document.addEventListener('pointerdown', e => { if (!menu.contains(e.target)) hideMenu() });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') hideMenu() });
+$('scroll').addEventListener('scroll', hideMenu, {passive: true});
 loadHist();
 loadDesk().then(() => { if (location.hash === '#dash') openDash(); else if (location.hash === '#settings') openSettings(); else if (location.hash === '#harness') $('hbtn').click(); });
 </script>
