@@ -83,6 +83,20 @@ def stocked_names(catalog):
 MISSING = re.compile(r"([가-힣A-Za-z0-9]{1,12})(?:\s*[ABC]등급)?(?:은\(는\)|은|는)?\s*없습니다")
 
 
+EMPTY = ("원하시는 상품명", "요청을 정확히 확인하지 못했습니다")
+
+
+def reply_of(r):
+    """(reply text, checkouts) from a customers.jsonl row; a2a_handler changed its log format at v40
+    (reply as a string plus response_data) from v11-v34 (reply as {reply, data})."""
+    rep = r.get("reply")
+    if isinstance(rep, dict):
+        data = rep.get("data") if isinstance(rep.get("data"), dict) else {}
+        return str(rep.get("reply") or ""), data.get("checkouts") or []
+    data = r.get("response_data") if isinstance(r.get("response_data"), dict) else {}
+    return str(rep or r.get("you") or ""), data.get("checkouts") or []
+
+
 def replies(now, ledger, held=()):
     gone = {}
     for e in ledger:
@@ -97,12 +111,23 @@ def replies(now, ledger, held=()):
         t = r.get("at") or r.get("ts") or 0
         if now - t > 7200:
             continue
-        rep = r.get("reply") if isinstance(r.get("reply"), dict) else {}
-        text = str(rep.get("reply") or r.get("you") or "")
-        cos = ((rep.get("data") or {}).get("checkouts") or []) if isinstance(rep.get("data"), dict) else []
+        text, cos = reply_of(r)
         c["inquiries"] += 1
         c["no_checkout"] += not cos
-        c["empty_reply"] += "원하시는 상품명" in text
+        c["empty_reply"] += any(x in text for x in EMPTY)
+        q = str(r.get("text") or "")
+        floor = re.search(r"([AB])\s?등급\s?이상", q)
+        for co in cos:
+            g = str((co or {}).get("grade") or jwt_body((co or {}).get("checkout_jwt", "")).get("grade") or "")
+            if floor and g and g > floor.group(1):
+                c["below_asked_grade"] += 1
+                stale.append({"at": time.strftime("%H:%M", time.localtime(t)), "asked": floor.group(0), "sent": g})
+            for ex in re.findall(r"([ABC])\s?등급\s?(?:은|는)?\s?(?:제외|말고|빼고|안\s?사)", q):
+                if g == ex:
+                    c["excluded_grade_sent"] += 1
+        refused = re.findall(r"([가-힣]{2,4})(?:랑|와|과|은|는)?\s?[^.?!]{0,12}(?:안 살|사지 않|찾는 게 아니|필요 없)", q)
+        if refused and any(any(w in str((co or {}).get("name") or "") for w in refused) for co in cos):
+            c["refused_item_sent"] += 1
         for m in MISSING.finditer(text):
             k = m.group(1)
             if len(k) >= 2 and any(k in n for n in held):
@@ -138,18 +163,28 @@ KEYS = ["계란", "두부", "취나물", "시금치", "김치", "우유", "콩�
 def restock(now, ledger, catalog):
     asks = Counter()
     for r in lines(R / "wanted.jsonl"):
-        if now - float(r.get("ts") or 0) <= 86400:
+        if now - float(r.get("ts") or r.get("at") or 0) <= 86400:     # v40 writes "at", v12-v34 wrote "ts"
             item = str(r.get("item") or "")
             k = next((k for k in KEYS if k in item or (k == "계란" and ("달걀" in item or "유정란" in item))), None)
             asks[k or item[:12]] += 1
     names = {x["sku"]: x.get("name", "") for x in catalog}
-    price, cost, ours_exp = defaultdict(list), defaultdict(list), Counter()
+    price, cost, ours_exp, ours_sold, held = defaultdict(list), defaultdict(list), Counter(), Counter(), Counter()
+    try:
+        me = next(x for x in get("/api/shops")["shops"] if x.get("name") == SHOP_NAME)
+        for sku, q in (me.get("stock") or {}).items():
+            k = next((k for k in KEYS if k in names.get(sku, "")), None)
+            if k:
+                held[k] += q
+    except (StopIteration, KeyError, OSError, ValueError):
+        pass
     for e in ledger:
         d = e.get("data") or {}
         n = d.get("name") or names.get(d.get("sku"), "")
         k = next((k for k in KEYS if k in n), None)
         if e.get("kind") == "settle" and k and d.get("grade") == "B" and now - e["ts"] <= 43200:
             price[k].append(d.get("amount") or 0)
+        if e.get("kind") == "settle" and k and d.get("shop") == SHOP_URL and now - e["ts"] <= 86400:
+            ours_sold[k] += 1
         if e.get("kind") == "supply" and d.get("qty"):
             k = next((k for k in KEYS if k in names.get(d.get("sku"), "")), None)
             if k:
@@ -163,16 +198,19 @@ def restock(now, ledger, catalog):
         p = int(statistics.median(price[k])) if price.get(k) else None
         c = int(statistics.median(cost[k])) if cost.get(k) else None
         net = p - p // 100 - 210 - c if p and c else None
-        if net is None or len(price.get(k, [])) < 5:
+        if held[k] and held[k] >= max(2, 2 * ours_sold[k]):
+            verdict = f"보유 {held[k]}개가 우리 하루 판매({ours_sold[k]}개)의 2배 이상: 매입 중지, 먼저 팔기"
+        elif net is None or len(price.get(k, [])) < 5:
             verdict = "시세 표본이 적음(5건 미만): 1~2개 시험 매입"
         elif net < 150:
             verdict = "이윤이 얇음: 문의가 올 때만 1개"
         elif ours_exp.get(k):
             verdict = "이윤은 있지만 폐기 이력: 하루 안에 팔 만큼(2~3개)"
         else:
-            verdict = "매입 우선: 공급창마다 4~5개"
+            verdict = f"매입: 보유가 하루 판매({ours_sold[k]}개)만큼 될 때까지, 한 번에 2~3개"
         rows.append({"item": k, "asks_24h": n, "market_b_settles_12h": len(price.get(k, [])), "median_b": p,
-                     "unit_cost": c, "net_margin": net, "our_expired_24h": ours_exp.get(k, 0), "verdict": verdict})
+                     "unit_cost": c, "net_margin": net, "our_expired_24h": ours_exp.get(k, 0),
+                     "held_now": held[k], "our_sold_24h": ours_sold[k], "verdict": verdict})
     return rows
 
 
@@ -195,7 +233,11 @@ def run(now=None, ledger=None, catalog=None):
     out["problems"] = [x for x in [
         p.get("checkout_for_gone_unit") and f"팔렸거나 상한 상품으로 결제서 {p['checkout_for_gone_unit']}건",
         p.get("unsigned_checkout") and f"서명 없는 결제서 {p['unsigned_checkout']}건",
-        p.get("empty_reply") and f"빈 답('상품명을 알려 주세요') {p['empty_reply']}건",
+        p.get("empty_reply") and f"빈 답('상품명을 알려 주세요'/'요청을 정확히 확인하지 못했습니다') {p['empty_reply']}건",
+        p.get("inquiries", 0) >= 5 and p.get("no_checkout", 0) >= 0.8 * p["inquiries"] and f"최근 2시간 문의 {p['inquiries']}건 중 {p['no_checkout']}건에 결제서 없음",
+        p.get("below_asked_grade") and f"손님이 원한 등급보다 낮은 결제서 {p['below_asked_grade']}건",
+        p.get("excluded_grade_sent") and f"손님이 뺀 등급의 결제서 {p['excluded_grade_sent']}건",
+        p.get("refused_item_sent") and f"손님이 안 산다고 한 상품의 결제서 {p['refused_item_sent']}건",
         p.get("said_missing_but_stocked") and f"가진 상품을 없다고 답함 {p['said_missing_but_stocked']}건",
         out["tools"]["chains"] and "도구가 이전 버전을 불러 씀: " + ", ".join(out["tools"]["chains"]),
         out["tools"]["pay_outside_guard"] and "pay_guard 밖 송금 코드: " + ", ".join(out["tools"]["pay_outside_guard"]),

@@ -146,7 +146,7 @@ def wanted(now, notes):
             r = json.loads(line)
         except ValueError:
             continue
-        if isinstance(r, dict) and now - float(r.get("ts") or 0) <= 86400 and str(r.get("item") or "").strip():
+        if isinstance(r, dict) and now - float(r.get("ts") or r.get("at") or 0) <= 86400 and str(r.get("item") or "").strip():
             k = str(r["item"]).strip()[:40]
             n[k] = n.get(k, 0) + 1
     if n:
