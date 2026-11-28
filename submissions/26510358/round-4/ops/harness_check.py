@@ -214,6 +214,29 @@ def restock(now, ledger, catalog):
     return rows
 
 
+def agent_limits_check(now):
+    """The agent must keep agent_limits.json fresh (every REVIEW) and inside the owner's ceilings."""
+    try:
+        a = json.loads((R / "agent_limits.json").read_text(encoding="utf-8"))
+        own = json.loads((R / "owner_limits.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return ["에이전트 운영 한도(agent_limits.json)가 없음"]
+    out = []
+    try:
+        age = now - time.mktime(time.strptime(str(a.get("set_at"))[:16], "%Y-%m-%d %H:%M"))
+        if age > 3 * 3600:
+            out.append(f"에이전트 운영 한도를 {int(age // 3600)}시간째 갱신하지 않음")
+    except ValueError:
+        out.append("agent_limits.json set_at 형식 오류")
+    for k in ("max_loss_per_day", "max_pay_per_call", "max_pay_per_day"):
+        try:
+            if int(a.get(k, 0)) > int(own.get(k, 0)):
+                out.append(f"에이전트 {k}가 주인 상한을 넘음")
+        except (TypeError, ValueError):
+            out.append(f"agent_limits.json {k} 값 오류")
+    return out
+
+
 def memory():
     try:
         n = len((R / "notes.md").read_text(encoding="utf-8"))
@@ -242,7 +265,7 @@ def run(now=None, ledger=None, catalog=None):
         out["tools"]["chains"] and "도구가 이전 버전을 불러 씀: " + ", ".join(out["tools"]["chains"]),
         out["tools"]["pay_outside_guard"] and "pay_guard 밖 송금 코드: " + ", ".join(out["tools"]["pay_outside_guard"]),
         out["memory"]["over_3000"] and f"notes.md {out['memory']['notes_chars']}자 (3,000자 넘으면 앞부분이 잘림)",
-    ] if x]
+    ] if x] + agent_limits_check(now)
     return out
 
 

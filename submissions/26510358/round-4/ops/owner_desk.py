@@ -75,6 +75,36 @@ def limits():
     return {k: saved.get(k, v) for k, v in DEFAULT_LIMITS.items()}
 
 
+AGENT_KEYS = ("max_loss_per_day", "max_pay_per_call", "max_pay_per_day")
+
+
+def agent_limits(now=None):
+    """The agent's own operating limits (agent_limits.json, written by the agent each REVIEW), clamped to the owner's
+    ceilings in owner_limits.json. The owner sets how far the agent may go; the agent sets how far it goes today."""
+    now = now or time.time()
+    try:
+        a = json.loads(read("agent_limits.json", "{}"))
+    except ValueError:
+        a = {}
+    if not isinstance(a, dict) or not a:
+        return None
+    ceil = limits()
+    out = {"reason": str(a.get("reason") or "")[:300], "set_at": str(a.get("set_at") or ""), "over_ceiling": []}
+    for k in AGENT_KEYS:
+        try:
+            v = int(a.get(k))
+        except (TypeError, ValueError):
+            continue
+        if v > ceil[k]:
+            out["over_ceiling"].append(k)
+        out[k] = max(0, min(v, ceil[k]))
+    try:
+        out["age_min"] = int((now - time.mktime(time.strptime(out["set_at"][:16], "%Y-%m-%d %H:%M"))) // 60)
+    except ValueError:
+        out["age_min"] = None
+    return out
+
+
 def clean_limits(body):
     """Owner input at a trust boundary: whole numbers inside BOUNDS, a short note. Raises ValueError."""
     out = limits()
@@ -300,7 +330,7 @@ def dash(now=None, notes=None):
             "stages": STAGES, "experiments": parse_experiments(notes, vetoes()), "winners": parse_winners(notes),
             "tokens": {"today": tok, "cap": lim["daily_tokens"],
                        "per_settle": round(tok / settles) if settles else None, "settles_today": settles},
-            "loss_today": loss, "limits": lim, "alerts": alerts,
+            "loss_today": loss, "limits": lim, "agent_limits": agent_limits(now), "alerts": alerts,
             "learned": parse_learned(notes), "wanted": wanted(now, notes), "checks": checks(),
             "market": {k: _mkt.get(k) for k in ("at", "rank", "of", "history", "forum", "error")}}
 

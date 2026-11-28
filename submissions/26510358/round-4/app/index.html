@@ -452,6 +452,7 @@ body{font-size:15.5px;line-height:1.62;letter-spacing:-.012em;font-feature-setti
   <h4>잘 팔리는 가게와 비교</h4><div id="wins"></div>
   <h4>실험</h4><div id="exps"></div>
   <h4>모델 토큰</h4><div id="toks"></div>
+  <h4>에이전트 운영 한도</h4><div id="alim"></div>
   <h4>하네스 점검</h4><div id="chk"></div>
   <h4>에이전트가 배운 것</h4><div id="learn"></div>
 </div></div>
@@ -625,7 +626,7 @@ function rankChart(all, rank, of, now) {
     `<p class="cap">${all.length ? lab(all[0][0]) + '부터 순위가 바뀐 ' + all.length + '번' : ''}, 위쪽이 1위</p></div>`;
 }
 function fillDash() {
-  if (!desk) { $('dashsub').textContent = '현황 서버(/owner)에 닿지 못했습니다.'; ['exps', 'wins', 'toks', 'rank', 'want', 'learn', 'chk', 'rst'].forEach(id => $(id).innerHTML = ''); return; }
+  if (!desk) { $('dashsub').textContent = '현황 서버(/owner)에 닿지 못했습니다.'; ['exps', 'wins', 'toks', 'rank', 'want', 'learn', 'chk', 'rst', 'alim'].forEach(id => $(id).innerHTML = ''); return; }
   const f = desk.funnel, l = readLimits();
   $('dashsub').textContent = (f ? `FUNNEL ${f.at} 기준 (최근 60분)` : 'FUNNEL 없음') +
     `, 처분 손실 ${num(desk.loss_today)} / ${num(l.max_loss_per_day)}`;
@@ -660,6 +661,11 @@ function fillDash() {
   $('want').innerHTML = (w2.items || []).length ? (w2.items[0].n != null ? hbars(w2.items.map(x => [x.item, x.n]), '번') :
     `<p class="none">${esc(w2.items[0].item)}</p>`) + `<p class="cap">최근 24시간, 손님이 물었는데 재고가 없던 횟수</p>` : '<p class="none">없습니다.</p>';
   $('learn').innerHTML = (desk.learned || []).length ? `<ul class="learn">${desk.learned.map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : '<p class="none">아직 없습니다.</p>';
+  const al = desk.agent_limits, ol = readLimits();
+  $('alim').innerHTML = al ? hbars([['처분 손실/일', al.max_loss_per_day || 0], ['매입/회', al.max_pay_per_call || 0], ['매입/일', al.max_pay_per_day || 0]], '') +
+    `<p class="cap">사장님 상한: 처분 ${num(ol.max_loss_per_day)} · 회당 ${num(ol.max_pay_per_call)} · 하루 ${num(ol.max_pay_per_day)}. ` +
+    `${esc(al.set_at)} 에이전트 설정${al.age_min != null ? ` (${al.age_min}분 전)` : ''}: ${esc(al.reason)}</p>`
+    : '<p class="none">아직 정하지 않았습니다. 에이전트가 다음 REVIEW에서 정합니다.</p>';
   const ck = desk.checks || {}, rp = ck.replies || {}, probs = ck.problems || [];
   $('chk').innerHTML = ck.at ? `<div class="ck ${probs.length ? 'bad' : 'ok'}"><i></i><div><b>${probs.length ? '문제 ' + probs.length + '개' : '문제 없음'}</b>` +
     `<span>${esc(ck.at)} 기준 최근 2시간, 문의 ${num(rp.inquiries)}건 중 결제서 없는 답 ${num(rp.no_checkout)}건</span>` +
