@@ -43,7 +43,7 @@ R = Path(os.environ.get("DESK_ROOT") or Path(__file__).resolve().parent.parent) 
 PORT = int(os.environ.get("DESK_PORT", "8801"))
 DEFAULT_LIMITS = {"max_loss_per_day": 30000, "max_pay_per_call": 20000, "max_pay_per_day": 200000,
                   "daily_tokens": 15_000_000, "note": "", "set_at": ""}
-BOUNDS = {"max_loss_per_day": (0, 200_000), "max_pay_per_call": (0, 100_000), "max_pay_per_day": (0, 1_000_000),
+BOUNDS = {"max_loss_per_day": (0, 200_000), "max_pay_per_call": (0, 600_000), "max_pay_per_day": (0, 1_000_000),
           "daily_tokens": (0, 100_000_000)}
 STAGES = [("m", "시장 정산"), ("i", "문의"), ("c", "결제서"), ("s", "정산")]
 STUCK_ALERT_S = 2 * 3600
@@ -86,6 +86,8 @@ def limits():
         saved = {}
     out = {k: saved.get(k, v) for k, v in DEFAULT_LIMITS.items()}
     out["mode"] = saved.get("mode", "fixed")
+    out["min_balance"] = int(saved.get("min_balance", 1_000_000))
+    out["round_end_estimate"] = str(saved.get("round_end_estimate", ""))
     pct = dict(AUTO_PCT, **(saved.get("auto_pct") or {}))
     out["auto_pct"] = pct
     cr = credits_now()
@@ -152,6 +154,11 @@ def clean_limits(body):
             out[k] = v
     if "note" in body:
         out["note"] = str(body["note"]).strip()[:500]
+    if "min_balance" in body:
+        v = int(body["min_balance"])
+        if not 0 <= v <= 5_000_000:
+            raise ValueError("min_balance must be 0..5000000")
+        out["min_balance"] = v
     if body.get("mode") in ("auto", "fixed"):
         out["mode"] = body["mode"]
     if isinstance(body.get("auto_pct"), dict):

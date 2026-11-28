@@ -239,6 +239,17 @@ def agent_limits_check(now):
     return out
 
 
+def big_payments(now, over=50_000):
+    """Any shop payment above 50,000 credits in the last 24 h is worth a look (pay_log.json, written by pay_guard)."""
+    try:
+        log = json.loads((R / "pay_log.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return []
+    rows = log if isinstance(log, list) else log.get("log") or log.get("payments") or []
+    big = [r for r in rows if isinstance(r, dict) and now - float(r.get("ts") or 0) <= 86400 and int(r.get("credits") or 0) > over]
+    return [f"5만 넘는 송금 {len(big)}건 (최대 {max(int(r['credits']) for r in big):,})"] if big else []
+
+
 def memory():
     try:
         n = len((R / "notes.md").read_text(encoding="utf-8"))
@@ -267,7 +278,7 @@ def run(now=None, ledger=None, catalog=None):
         out["tools"]["chains"] and "도구가 이전 버전을 불러 씀: " + ", ".join(out["tools"]["chains"]),
         out["tools"]["pay_outside_guard"] and "pay_guard 밖 송금 코드: " + ", ".join(out["tools"]["pay_outside_guard"]),
         out["memory"]["over_3000"] and f"notes.md {out['memory']['notes_chars']}자 (3,000자 넘으면 앞부분이 잘림)",
-    ] if x] + agent_limits_check(now)
+    ] if x] + agent_limits_check(now) + big_payments(now)
     return out
 
 
