@@ -29,6 +29,7 @@ Sources (all written by the agent through its memory tool, formats fixed in agen
   logs/llm-shim.jsonl  token usage per model call (the shim reads owner_limits.json's daily_tokens as its cap)
 """
 import json
+import urllib.parse
 import os
 import re
 import secrets
@@ -584,6 +585,35 @@ def chatlog_add(items):
     return len(new)
 
 
+def customers(now=None, who=None):
+    """customers.jsonl grouped by buyer (claimed_from): visits, conversations, days, checkouts and the replies that
+    repeated themselves. With who, that buyer's whole conversation."""
+    now = now or time.time()
+    by = {}
+    for c in jsonl("customers.jsonl"):
+        c["at"] = c.get("at") or c.get("ts") or 0
+        by.setdefault(str(c.get("claimed_from") or "이름 없음"), []).append(c)
+    reply = lambda c: str((c.get("reply") or {}).get("reply", "") if isinstance(c.get("reply"), dict) else c.get("reply") or "")
+    checkouts = lambda c: len((c.get("response_data") or {}).get("checkouts") or [])
+    if who is not None:
+        return {"who": who, "messages": [{"ts": c["at"], "text": str(c.get("text", ""))[:600], "reply": reply(c)[:600],
+                                          "checkouts": checkouts(c), "task": str(c.get("task_id") or "")[:8]} for c in by.get(who, [])[-60:]]}
+    rows = []
+    for name, cs in by.items():
+        cs.sort(key=lambda c: c["at"])
+        days = {time.strftime("%m-%d", time.localtime(c["at"])) for c in cs if c["at"]}
+        convs = {c.get("task_id") for c in cs}
+        repeats = sum(1 for a, b in zip(cs, cs[1:]) if reply(a) and reply(a) == reply(b) and a.get("task_id") == b.get("task_id"))
+        rows.append({"who": name, "msgs": len(cs), "convs": len(convs), "days": len(days), "first": cs[0]["at"], "last": cs[-1]["at"],
+                     "checkouts": sum(checkouts(c) for c in cs), "repeats": repeats,
+                     "last_text": str(cs[-1].get("text", ""))[:160], "last_reply": reply(cs[-1])[:160]})
+    rows.sort(key=lambda r: -r["last"])
+    summary = {"customers": len(rows), "returning": sum(r["convs"] > 1 for r in rows), "multi_day": sum(r["days"] > 1 for r in rows),
+               "bought": sum(r["checkouts"] > 0 for r in rows), "repeats": sum(r["repeats"] for r in rows),
+               "today": sum(r["last"] > now - 86400 for r in rows)}
+    return {"summary": summary, "list": rows[:150]}
+
+
 def activity(now=None, notes=None):
     now = now or time.time()
     notes = read("notes.md") if notes is None else notes
@@ -651,6 +681,9 @@ class Handler(BaseHTTPRequestHandler):
             return self.reply(200, {"items": chatlog()})
         if self.path.split("?")[0] == "/owner/activity":
             return self.reply(200, activity())
+        if self.path.split("?")[0] == "/owner/customers":
+            q = urllib.parse.parse_qs(urllib.parse.urlsplit(self.path).query)
+            return self.reply(200, customers(who=q["who"][0][:80] if "who" in q else None))
         if self.path.split("?")[0] == "/owner/harness":
             return self.reply(200, harness())
         self.reply(404, {"error": "not found"})

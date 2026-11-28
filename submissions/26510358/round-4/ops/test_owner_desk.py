@@ -117,3 +117,14 @@ th = d.thin(h, 400)
 assert len(th) <= 401 and th[0] == h[0] and th[-1] == h[-1], len(th)
 assert d.thin(h[:10], 400) == h[:10]
 print("thin ok")
+
+(tmp / "customers.jsonl").write_text("\n".join(json.dumps(r, ensure_ascii=False) for r in [
+    {"at": day0 - 90000, "claimed_from": "a", "task_id": "t1", "text": "계란", "reply": "있어요", "response_data": {"checkouts": [1]}},
+    {"at": day0 - 60, "claimed_from": "a", "task_id": "t2", "text": "쌀", "reply": "없음"},
+    {"at": day0 - 30, "claimed_from": "a", "task_id": "t2", "text": "쌀 말고", "reply": "없음"},
+    {"at": day0 - 10, "claimed_from": "b", "task_id": "t3", "text": "두부", "reply": "x"}]) + "\n")
+cu = d.customers(now=day0)
+assert cu["summary"] == {"customers": 2, "returning": 1, "multi_day": 1, "bought": 1, "repeats": 1, "today": 2}, cu["summary"]
+assert cu["list"][0]["who"] == "b" and cu["list"][1]["convs"] == 2
+assert len(d.customers(who="a")["messages"]) == 3 and d.customers(who="zz")["messages"] == []
+print("customers ok")

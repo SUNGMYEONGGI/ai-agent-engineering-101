@@ -464,6 +464,27 @@ body{font-size:15.5px;line-height:1.62;letter-spacing:-.012em;font-feature-setti
 .fold summary::-webkit-details-marker{display:none}.fold summary::after{content:"＋";color:var(--text-mute)}.fold[open] summary::after{content:"－"}
 .ck li.warn{color:var(--warn);font-weight:600}
 .hb.al div{grid-template-columns:84px 1fr 120px}.hb.al em{background:var(--text-soft)}
+/* Customers */
+.csum{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px}
+.csum div{background:var(--raised);border:1px solid var(--line);border-radius:12px;padding:8px 10px;display:grid;gap:1px;min-width:0}
+.csum b{font-size:18px;font-variant-numeric:tabular-nums}.csum span{font-size:11px;color:var(--text-mute);line-height:1.3}
+.csum .bad b{color:var(--warn)}
+.csort{margin-bottom:6px}
+.clist{display:grid}.clist .more{display:none}.clist.all .more{display:flex}
+.cust{display:flex;gap:10px;align-items:flex-start;width:100%;text-align:left;border:0;border-top:1px solid var(--line);background:none;padding:12px 2px;cursor:pointer}
+.cust:hover{background:var(--hover)}
+.cav{flex:none;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:14px;
+  background:color-mix(in srgb,var(--mk) 14%,var(--bg));color:var(--mk)}
+.av.cav{width:28px;height:28px;font-size:12px;border:0}
+.cbody{flex:1;min-width:0;display:grid;gap:2px}
+.ctop{display:flex;align-items:center;gap:6px;min-width:0}.ctop b{font-size:15px}.ctop time{margin-left:auto;font-size:12px;color:var(--text-mute);flex:none}
+.ctop em{font-style:normal;font-size:11px;font-weight:650;padding:1px 7px;border-radius:999px;flex:none}
+.t-loyal{background:color-mix(in srgb,var(--bd) 14%,transparent);color:var(--bd)}
+.t-buy{background:color-mix(in srgb,var(--ok) 14%,transparent);color:var(--ok)}
+.t-stuck{background:color-mix(in srgb,var(--warn) 16%,transparent);color:var(--warn)}
+.cmeta{font-size:12px;color:var(--text-mute)}
+.clast{font-size:13px;color:var(--text-soft);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#cbody .msgrow{margin-top:8px}.bub.same{outline:2px solid var(--warn);outline-offset:1px}.warnt{color:var(--warn)}
 </style>
 </head>
 <body>
@@ -510,7 +531,7 @@ body{font-size:15.5px;line-height:1.62;letter-spacing:-.012em;font-feature-setti
 <div class="shade" id="activity" hidden><div class="sheet hs" role="dialog" aria-modal="true" aria-labelledby="atitle">
   <div class="grip"></div>
   <h3 id="atitle">활동</h3>
-  <p class="sub">이틀 동안 가게에서 일어난 일, 최근 것부터</p>
+  <p class="sub" id="asub">이틀 동안 가게에서 일어난 일, 최근 것부터</p>
   <div class="opts" id="afilter"></div>
   <div id="afeed"></div>
   <h4>한도</h4>
@@ -519,6 +540,12 @@ body{font-size:15.5px;line-height:1.62;letter-spacing:-.012em;font-feature-setti
   <div class="credit">Built with the agent market mini app kit, inspired by
     <a href="https://github.com/Q00/meshkit" target="_blank" rel="noopener">MeshKit</a> and
     <a href="https://github.com/Q00/ouroboros" target="_blank" rel="noopener">Ouroboros</a></div>
+</div></div>
+<div class="shade" id="cust" hidden><div class="sheet hs" role="dialog" aria-modal="true" aria-labelledby="cname">
+  <div class="grip"></div>
+  <h3 id="cname"></h3>
+  <p class="sub" id="cinfo"></p>
+  <div id="cbody"></div>
 </div></div>
 <div class="shade" id="harness" hidden><div class="sheet hs" role="dialog" aria-modal="true" aria-labelledby="htitle">
   <div class="grip"></div>
@@ -1066,15 +1093,64 @@ const APPTOOLS = {app_show_card: ['카드 보내기', 'REVIEW 요약이나 경�
   app_ask_owner: ['주인에게 묻기', '위험하거나 애매한 결정은 선택지를 붙여 물어봅니다.'],
   app_say: ['먼저 말하기', '첫 정산, 실험 판정, 멈춘 FUNNEL 같은 일이 생기면 묻지 않아도 알려 줍니다.']};
 let adata = null, akind = 'all';
+// 손님: grouped by buyer instead of a timeline - who came back, who got a checkout, where the reply repeated itself.
+let cdata = null, csort = 'recent';
+const CSORT = {recent: '최근', loyal: '다시 온 손님', lost: '결제 못 한 손님', stuck: '같은 답 반복'};
+const pname = w => String(w).replace(/-[0-9a-f]{4}$/i, '');
+const loyal = r => r.convs > 1 && r.days > 1 || r.convs >= 3;
+async function drawCustomers() {
+  if (!cdata) { $('afeed').innerHTML = '<p class="none">불러오는 중</p>';
+    try { cdata = await deskCall('customers') } catch (e) { $('afeed').innerHTML = `<p class="none">손님 기록을 읽지 못했습니다: ${esc(e.message || e)}</p>`; return } }
+  const sm = cdata.summary, pc = n => sm.customers ? Math.round(100 * n / sm.customers) + '%' : '-';
+  let rows = cdata.list.slice();
+  if (csort === 'loyal') rows = rows.filter(r => r.convs > 1).sort((a, b) => b.convs - a.convs || b.days - a.days);
+  if (csort === 'lost') rows = rows.filter(r => !r.checkouts && r.msgs > 1);
+  if (csort === 'stuck') rows = rows.filter(r => r.repeats).sort((a, b) => b.repeats - a.repeats);
+  $('afeed').innerHTML = `<div class="csum"><div><b>${num(sm.customers)}</b><span>손님</span></div>` +
+    `<div><b>${pc(sm.returning)}</b><span>다시 온 손님 ${num(sm.returning)}</span></div>` +
+    `<div><b>${pc(sm.bought)}</b><span>결제서 받음 ${num(sm.bought)}</span></div>` +
+    `<div class="${sm.repeats ? 'bad' : ''}"><b>${num(sm.repeats)}</b><span>같은 답 반복</span></div></div>` +
+    `<div class="opts csort">${Object.entries(CSORT).map(([k, v]) => `<button type="button" class="chip${k === csort ? ' on' : ''}" data-k="${k}" aria-pressed="${k === csort}">${v}</button>`).join('')}</div>` +
+    (rows.length ? `<div class="clist">${rows.map((r, i) => `<button type="button" class="cust${i >= 25 ? ' more' : ''}" data-w="${esc(r.who)}">` +
+      `<span class="cav">${esc(pname(r.who).slice(0, 1))}</span><span class="cbody"><span class="ctop"><b>${esc(pname(r.who))}</b>` +
+      (loyal(r) ? '<em class="t-loyal">단골</em>' : '') + (r.checkouts ? `<em class="t-buy">결제서 ${r.checkouts}</em>` : '') +
+      (r.repeats ? `<em class="t-stuck">같은 답 ${r.repeats}번</em>` : '') + `<time>${rel(r.last)}</time></span>` +
+      `<span class="cmeta">대화 ${r.convs}번, ${r.days}일, 메시지 ${r.msgs}개</span><span class="clast">${esc(r.last_text)}</span></span></button>`).join('')}` +
+      (rows.length > 25 ? `<button type="button" class="morebtn">${rows.length - 25}명 더 보기</button>` : '') + '</div>'
+      : '<p class="none">해당하는 손님이 없습니다.</p>');
+  $('afeed').querySelectorAll('.csort button').forEach(b => b.onclick = () => { csort = b.dataset.k; drawCustomers() });
+  $('afeed').querySelectorAll('.cust').forEach(b => b.onclick = () => openCustomer(b.dataset.w));
+  const cl = $('afeed').querySelector('.clist'); if (cl) wireMore(cl);
+}
+async function openCustomer(who) {
+  const r = cdata.list.find(x => x.who === who) || {};
+  $('cname').textContent = pname(who);
+  $('cinfo').textContent = `대화 ${r.convs}번, ${r.days}일, 처음 ${new Date(r.first * 1000).toLocaleString('ko-KR', {month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit'})}`;
+  $('cbody').innerHTML = '<p class="none">불러오는 중</p>';
+  $('cust').hidden = false;
+  let ms = [];
+  try { ms = (await deskCall('customers?who=' + encodeURIComponent(who))).messages } catch (e) { $('cbody').innerHTML = `<p class="none">${esc(e.message || e)}</p>`; return }
+  let task = '', n = 0, prev = '';
+  $('cbody').innerHTML = ms.map(m => {
+    const head = m.task !== task ? `<div class="mk sep">대화 ${++n}, ${new Date(m.ts * 1000).toLocaleString('ko-KR', {month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit'})}</div>` : '';
+    const same = m.task === task && m.reply && m.reply === prev; task = m.task; prev = m.reply;
+    return head + `<div class="msgrow ag"><div class="mrow"><span class="av cav">${esc(pname(who).slice(0, 1))}</span><div class="mcol"><div class="bub">${esc(m.text)}</div></div></div></div>` +
+      (m.reply ? `<div class="msgrow me"><div class="mcol"><div class="bub${same ? ' same' : ''}">${esc(m.reply)}</div>` +
+        `<div class="mfoot">${hhmm(m.ts)}${m.checkouts ? `, 결제서 ${m.checkouts}장` : ''}${same ? ', <b class="warnt">바로 앞과 같은 답</b>' : ''}</div></div></div>` : '');
+  }).join('') || '<p class="none">기록이 없습니다.</p>';
+}
 async function loadActivity() {
+  cdata = null;
   try { adata = await deskCall('activity') } catch (e) { $('afeed').innerHTML = `<p class="none">활동을 읽지 못했습니다: ${esc(e.message || e)}</p>` }
   drawActivity();
 }
 function drawActivity() {
   const evs = adata ? adata.events : [], have = new Set(evs.map(e => e.kind));
-  $('afilter').innerHTML = Object.entries(AKINDS).filter(([k]) => k === 'all' || have.has(k)).map(([k, v]) =>
+  $('afilter').innerHTML = Object.entries(AKINDS).filter(([k]) => k === 'all' || k === 'customer' || have.has(k)).map(([k, v]) =>
     `<button type="button" class="chip${k === akind ? ' on' : ''}" data-k="${k}" aria-pressed="${k === akind}">${v}</button>`).join('');
   $('afilter').querySelectorAll('button').forEach(b => b.onclick = () => { akind = b.dataset.k; drawActivity() });
+  $('asub').textContent = akind === 'customer' ? '문의한 손님 전체, 마지막으로 온 순서' : '이틀 동안 가게에서 일어난 일, 최근 것부터';
+  if (akind === 'customer') return drawCustomers();
   let day = '';
   const rows = evs.filter(e => akind === 'all' || e.kind === akind).slice(0, 50);
   $('afeed').innerHTML = rows.length ? rows.map(e => {
@@ -1241,6 +1317,7 @@ document.querySelectorAll('.shade').forEach(sh => {
     if (dy > 90) closeSheet(sh); else sheet.style.transform = '' });
 });
 if (location.hash === '#activity') setTimeout(() => $('act').click(), 300);
+if (location.hash === '#customers') setTimeout(() => { akind = 'customer'; $('act').click() }, 300);
 if (location.hash.startsWith('#thread=')) setTimeout(() => openThread('card:' + decodeURIComponent(location.hash.slice(8))), 1500);
 document.addEventListener('keydown', e => { if (e.key !== 'Escape') return;
   const open = [...document.querySelectorAll('.shade')].filter(x => !x.hidden).pop(); if (open) closeSheet(open) });
