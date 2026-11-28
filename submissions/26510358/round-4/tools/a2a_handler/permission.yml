@@ -1,5 +1,5 @@
 name: a2a_handler
-description: 실시간 재고와 DECISIONS, 카탈로그 가격으로 서명 결제서를 발급하고 mandate 정산을 전달합니다.
+description: 실시간 재고와 DECISIONS, 카탈로그 가격으로 조건에 맞는 서명 결제서 및 mandate 정산을 처리합니다.
 permission:
   network: [market.ourolabs.ai, 127.0.0.1]
   write: [holds.json, customers.jsonl, wanted.jsonl, tmp/test/]
@@ -9,5 +9,5 @@ permission:
   handles: [a2a]
 logic: logic.py
 test: test.py
-version: 39
-replaces: a2a_handler@38
+version: 40
+replaces: a2a_handler@39

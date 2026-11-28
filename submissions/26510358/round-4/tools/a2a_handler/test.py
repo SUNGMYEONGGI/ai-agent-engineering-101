@@ -1,6 +1,5 @@
 import json,time,uuid,base64
 from pathlib import Path
-
 def test(run,kit):
  root=Path('tmp/test')/uuid.uuid4().hex;root.mkdir(parents=True);now=time.time();goods=[('G001','한계란 난각번호 1번 계란 무항생제 유정란 20구','B',7340),('G002','동서 둥굴레차 50T 60g','B',3051),('G003','실큰두부 300g','B',2793),('G004','국내산 시금치 1kg','B',6000),('G005','[반찬천국] 취나물','B',2374),('G006','총각김치 2kg','C',5827),('G007','요거트 400g','C',6164),('G008','자반고등어 800g','C',4950)];items=[];units=[]
  for sku,name,g,price in goods:
@@ -12,5 +11,7 @@ def test(run,kit):
   for c in out:
    assert c['name'] in r['reply'] and c['grade']+'등급' in r['reply'] and str(c['price']) in r['reply'];parts=c['checkout_jwt'].split('.');assert len(parts)==3;payload=json.loads(base64.urlsafe_b64decode(parts[1]+'='*((-len(parts[1]))%4)));assert payload['item']==c['sku'] and payload['unit']==c['unit'] and payload['price']==c['price'];assert c['checkout_jwt']==kit.sign_jwt(payload,'shop') and kit.address('shop')
   assert 'wallets.shop' in r['reply'] and '인증서에는 등급이 없으며' in r['reply']
- a={'text':'계란 B등급 결제서 주세요','catalog_path':str(root/'catalog.json'),'holds_path':str(root/'gone.json'),'customers_path':str(root/'customers.jsonl'),'wanted_path':str(root/'wanted.jsonl'),'inventory_fixture':{'units':units},'fresh_inventory_fixture':{'units':units[1:]},'decision_fixture':{'answers':[{'choice':'G001:B','probability':0.9}]}};r=run(a,kit);assert not r['data']['checkouts'];a['fresh_inventory_fixture']={'units':[dict(units[0],sold=True)]};assert not run(a,kit)['data']['checkouts'];a['fresh_inventory_fixture']={'units':units};assert len(run(a,kit)['data']['checkouts'])==1;assert not run(a,kit)['data']['checkouts'];assert (root/'customers.jsonl').exists() and (root/'wanted.jsonl').exists()
+ a={'text':'집에서 먹을 김치와 계란을 찾습니다. 실제 재고와 가격·등급·소비기한을 알려 주세요. 계란은 A등급, 김치는 C등급이 아닌 것만 보겠습니다. 등급이 명시되고 가게 지갑에서 유효하게 서명된 결제서가 가능하면 보내 주세요.','catalog_path':str(root/'catalog.json'),'holds_path':str(root/'special.json'),'customers_path':str(root/'customers.jsonl'),'wanted_path':str(root/'wanted.jsonl'),'inventory_fixture':{'units':units},'decision_fixture':{'answers':[{'choice':'G006:C','probability':0.9}]}};r=run(a,kit);assert not r['data']['checkouts'],r
+ a['text']='계란 B등급 가격을 확인한 뒤에 결제서를 발급하지 마세요';r=run(a,kit);assert not r['data']['checkouts'] and '7340' in r['reply'],r
+ a['text']='계란 B등급 결제서 주세요';a['fresh_inventory_fixture']={'units':units[1:]};r=run(a,kit);assert not r['data']['checkouts'];a['fresh_inventory_fixture']={'units':[dict(units[0],sold=True)]};assert not run(a,kit)['data']['checkouts'];a['fresh_inventory_fixture']={'units':units};assert len(run(a,kit)['data']['checkouts'])==1;assert not run(a,kit)['data']['checkouts'];assert (root/'customers.jsonl').exists() and (root/'wanted.jsonl').exists()
  a['data']={'order':{'id':'test'},'checkout_jwt':'jwt','checkout_mandate':{'mandate':{},'sig':'x'},'payment_mandate':{'mandate':{'tx_hash':'0x123','fee_tx_hash':'0x456'},'sig':'x'}};a['settle_fixture']={'settled':True,'checks':{}};assert run(a,kit)['state']=='completed';a['settle_fixture']={'settled':False};assert run(a,kit)['state']=='input_required'

@@ -1,7 +1,6 @@
 import json,time,uuid,re,fcntl,datetime
 from pathlib import Path
 import httpx
-
 ALIASES={'계란':['계란','달걀','유정란'],'둥굴레차':['둥굴레차'],'두부':['두부'],'시금치':['시금치'],'취나물':['취나물'],'총각김치':['총각김치','알타리김치'],'김치':['김치'],'우유':['우유'],'두유':['두유'],'요거트':['요거트','요구르트'],'고등어':['고등어'],'가자미':['가자미'],'생선':['생선','가자미','고등어'],'콩나물':['콩나물'],'커피':['커피','원두','드립백'],'쌀':['쌀','백미'],'생수':['생수'],'스파게티':['스파게티','파스타']}
 WALLET='결제서는 Hermes Shop 지갑 0x593F…F00C로 서명했습니다(에이전트 카드 wallets.shop과 같음).'
 FOOD='식품의 시장 인증서에는 등급이 없으며 식품 등급은 남은 소비기한을 따릅니다. 안내 등급은 현재 재고 기준입니다.'
@@ -28,16 +27,20 @@ def requests(text):
  for n,words in ALIASES.items():
   for w in words:
    for m in re.finditer(re.escape(w),text,re.I):hits.append((m.start(),m.end(),n))
- hits.sort(key=lambda z:(z[0],z[0]-z[1]));used=[];out=[]
+ hits.sort(key=lambda z:(z[0],z[0]-z[1]));used=[];out={}
  for s,e,n in hits:
   if any(s<y and e>x for x,y in used):continue
-  used.append((s,e));tail=text[e:e+30]
+  used.append((s,e));tail=text[e:e+40]
   if re.match(r'\s*(?:은|는|이|가)?\s*(?:찾는\s*게\s*아니|찾지|말고|아니|안\s*찾|재고\s*확인이\s*안)',tail):continue
-  g=re.search(r'(?<![a-z])([ABC])\s*(?:등급|급)',tail,re.I)
-  if n not in [z[0] for z in out]:out.append((n,g.group(1).upper() if g else None))
- return out
-def matches(n,x):
- name=str(x.get('name','')).lower();return any(w.lower() in name for w in ALIASES[n])
+  if n not in out:out[n]={'allowed':set('ABC')}
+  m=re.match(r'\s*(?:은|는|이|가|은요|는요)?\s*([ABC])\s*(?:등급|급)',tail,re.I)
+  if m:
+   g=m.group(1).upper();after=tail[m.end():]
+   if re.match(r'\s*(?:이|가|은|는)?\s*(?:아닌|아니|제외|말고|빼)',after):out[n]['allowed'].discard(g)
+   elif re.match(r'\s*(?:이상)',after):out[n]['allowed'].intersection_update(set('ABC'[:'ABC'.index(g)+1]))
+   else:out[n]['allowed'].intersection_update({g})
+ return list(out.items())
+def matches(n,x):return any(w.lower() in str(x.get('name','')).lower() for w in ALIASES[n])
 def run(a,kit):
  text=str(a.get('text') or '');data=a.get('data') if isinstance(a.get('data'),dict) else {};now=time.time();lp=None
  try:
@@ -82,17 +85,18 @@ def run(a,kit):
     available.sort(key=lambda z:(stamp(z[1].get('expires_at')) or float('inf'),stamp(z[1].get('supplied_at'))));selected=[];missing=[];unpriced=[];req=requests(text)
     if prob>=0.6 and choice and choice!='none':
      picks=[z for z in available if str(z[0]['sku'])+':'+str(z[0]['grade'])==choice]
-     if picks and (not req or any(matches(n,picks[0][0]) and (not g or g==picks[0][1]['grade']) for n,g in req)):selected.append(picks[0])
-    for n,g in req:
-     if any(matches(n,x) and (not g or u.get('grade')==g) for x,u in selected):continue
-     candidates=[z for z in available if matches(n,z[0]) and (not g or z[1].get('grade')==g) and z[1]['unit'] not in [p[1]['unit'] for p in selected]]
+     if picks and (not req or any(matches(n,picks[0][0]) and picks[0][1]['grade'] in cond['allowed'] for n,cond in req)):selected.append(picks[0])
+    for n,cond in req:
+     allowed=cond['allowed']
+     if any(matches(n,x) and u.get('grade') in allowed for x,u in selected):continue
+     candidates=[z for z in available if matches(n,z[0]) and z[1].get('grade') in allowed and z[1]['unit'] not in [p[1]['unit'] for p in selected]]
      if n=='두부' and re.search('멸균두부.{0,5}(?:제외|말고)|연두부.{0,5}(?:제외|말고)',text):candidates=[z for z in candidates if not re.search('멸균두부|연두부',z[0]['name'])]
      if n=='커피' and re.search('드립백|원두',text):candidates=[z for z in candidates if re.search('드립백|원두',z[0]['name'])]
      if candidates:selected.append(candidates[0]);continue
-     held=[u for u in live if matches(n,u) and (not g or u.get('grade')==g)]
+     held=[u for u in live if matches(n,u) and u.get('grade') in allowed]
      if held:unpriced.append(n);continue
-     missing.append(n+((' '+g+'등급') if g else ''));log(wp,{'at':now,'item':n,'text':text})
-    out=[];lines=[];no_checkout=bool(re.search('결제서.{0,12}(?:보내지|발급하지|주지)\s*말',text))
+     missing.append(n+(' ('+'/'.join(sorted(allowed))+'등급)' if allowed!=set('ABC') else ''));log(wp,{'at':now,'item':n,'text':text})
+    out=[];lines=[];no_checkout=bool(re.search(r'(?:결제서|주문서).{0,30}(?:보내지|발급하지|주지|만들지|발행하지)\s*(?:말|마)',text) or re.search(r'(?:확인|동의|선택).{0,18}(?:전|까지).{0,35}(?:결제서|주문서).{0,15}(?:금지|말|마|없)',text))
     for x,u in selected:
      ex=stamp(u.get('expires_at'));date=datetime.datetime.fromtimestamp(ex,datetime.timezone(datetime.timedelta(hours=9))).strftime('%Y-%m-%d %H:%M KST') if ex else '표시 없음';remaining=(' (약 %.1f시간 남음)'%((ex-now)/3600)) if ex else '';line='%s / %s등급 / %s credits / 소비기한 %s%s / 보증 %s시간.'%(x['name'],u['grade'],x['price'],date,remaining,x.get('warranty_hours',0))
      if '취나물' in x['name'] and re.search('중량|무게|포장량|몇 g',text,re.I) and not re.search(r'\d+\s*(?:g|kg|그램)',x['name'],re.I):line+=' 포장 중량은 확인되지 않았습니다.'
@@ -109,7 +113,7 @@ def run(a,kit):
      if s not in alts:alts.append(s)
      if len(alts)==2:break
     lines.append('요청을 정확히 확인하지 못했습니다.'+(' 현재 판매 가능한 대안: '+' · '.join(alts) if alts else ' 현재 판매 가능한 재고가 없습니다.'))
-   lines.append(WALLET)
+   if out:lines.append(WALLET)
    if any(u.get('kind')=='food' for x,u in selected):lines.append(FOOD)
    r={'reply':'\n'.join(lines),'data':{'checkouts':out},'state':'input_required'}
    if len(out)==1:r['data'].update(out[0])
