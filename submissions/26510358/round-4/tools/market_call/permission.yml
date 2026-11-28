@@ -1,10 +1,10 @@
 name: market_call
-description: 시장 REST: {path,method,auth,body}; mode=inventory|inventory_units(sku)|scan|review|metrics|metrics_full|a2a(shop,card_url,text). 집계는 최근 원장을 페이지 순회.
+description: 시장 REST: {path,method,auth,body}; mode=inventory|inventory_units(sku)|scan|review|metrics|metrics_full|a2a(shop,card_url,text). 최근 원장·고객 기록과 상위 가게를 간결히 집계합니다.
 permission:
   network: [market.ourolabs.ai, trycloudflare.com]
   identity: [shop]
   timeout: 120
 logic: logic.py
 test: test.py
-version: 19
-replaces: market_call@18
+version: 20
+replaces: market_call@19
