@@ -90,7 +90,7 @@ form{display:flex;align-items:flex-end;gap:8px;background:var(--card);border:1px
   padding:5px 5px 5px 16px;transition:border-color .12s}
 form:focus-within{border-color:var(--line-strong)}
 textarea{flex:1;min-width:0;border:0;outline:0;resize:none;background:transparent;color:var(--text);font:inherit;font-size:16px;
-  line-height:1.4;padding:7px 0;max-height:140px}
+  line-height:1.45;padding:7px 0;max-height:140px;overflow-y:auto;scrollbar-width:thin}
 textarea::placeholder{color:var(--text-mute)}
 .send{flex:none;width:34px;height:34px;border-radius:50%;border:0;background:var(--primary);color:var(--primary-ink);display:grid;place-items:center;
   transition:opacity .12s}
@@ -190,7 +190,7 @@ header #askbtn{position:absolute;right:16px;top:calc(16px + env(safe-area-inset-
 .chips{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;width:100%;margin-top:18px}
 .chip{display:flex;flex-direction:column;align-items:flex-start;gap:12px;text-align:left;padding:16px;min-height:96px;border-radius:20px;
   border:1px solid var(--line);background:var(--raised);font-size:15px;color:var(--text)}
-form{background:var(--raised);border:1px solid var(--line);border-radius:999px;box-shadow:0 2px 8px rgb(0 0 0/.04)}
+form{background:var(--raised);border:1px solid var(--line);border-radius:24px;box-shadow:0 2px 8px rgb(0 0 0/.04)}
 .tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin:10px auto 0;max-width:420px;padding:5px;border-radius:999px;
   background:var(--raised);border:1px solid var(--line);box-shadow:var(--shadow-2)}
 .tabs button{display:flex;flex-direction:column;align-items:center;gap:2px;border:0;background:none;padding:6px 0;border-radius:999px;font-size:11px;font-weight:600}
@@ -343,7 +343,7 @@ body{font-size:15.5px;line-height:1.62;letter-spacing:-.012em;font-feature-setti
 .rk .big em.down{color:var(--fail);background:color-mix(in srgb,var(--fail) 12%,transparent)}
 .rk svg{display:block;width:100%;height:auto;margin-top:8px;overflow:visible}
 .rk svg text{font-size:10px;fill:var(--text-mute);font-family:var(--font)}
-.rk .gl{stroke:var(--line);stroke-dasharray:3 3}.rk .ln{fill:none;stroke:var(--text);stroke-width:2;stroke-linejoin:round}
+.rk .gl{stroke:var(--line);stroke-dasharray:3 3}.rk .gl.v{stroke-dasharray:none;opacity:.6}.rk .ar{fill:color-mix(in srgb,var(--text) 5%,transparent)}.rr{margin:10px 0 0}.rk .ln{fill:none;stroke:var(--text);stroke-width:2;stroke-linejoin:round}
 .rk .pt{fill:var(--raised);stroke:var(--text);stroke-width:1.2}.rk .now{fill:#2563eb;stroke:var(--raised);stroke-width:2}
 .hb{display:grid;gap:6px}
 .hb div{display:grid;grid-template-columns:92px 1fr 52px;gap:10px;align-items:center;font-size:13px}
@@ -587,25 +587,42 @@ function hbars(rows, unit) {
   return `<div class="hb">` + rows.map(([k, n, us]) => `<div class="${us ? 'us' : ''}"><span>${esc(k)}</span>` +
     `<em style="--w:${Math.max(n ? 3 : 0, 100 * (n || 0) / max)}%"></em><b>${num(n)}<small>${unit}</small></b></div>`).join('') + '</div>';
 }
-function rankChart(hist, rank, of, now) {
-  // board rank over time as a step line; 1st place at the top
+let rankRange = 'all';
+const RANGES = {h6: ['6시간', 6 * 3600], d1: ['하루', 86400], all: ['전체', Infinity]};
+function rankChart(all, rank, of, now) {
+  // board rank over the whole record (or the chosen range) as a step line; 1st place at the top
+  const span = RANGES[rankRange][1];
+  const before = all.filter(p => p[0] < now - span).at(-1);       // where the line stood when the range starts
+  let hist = all.filter(p => p[0] >= now - span);
+  if (before) hist = [[now - span, before[1]]].concat(hist);
   const pts = hist.length ? hist.concat([[now, hist.at(-1)[1]]]) : [[now - 3600, rank], [now, rank]];
-  const W = 340, H = 120, L = 28, R = 8, T = 10, B = 22;
+  const W = 340, H = 130, L = 28, R = 8, T = 10, B = 24;
   const rs = pts.map(p => p[1]), lo = Math.min(...rs), hi = Math.max(...rs, lo + 1);
   const t0 = pts[0][0], t1 = Math.max(now, t0 + 60);
   const x = t => L + (t - t0) / (t1 - t0) * (W - L - R), y = r => T + (r - lo) / (hi - lo) * (H - T - B);
   let d = `M${x(pts[0][0]).toFixed(1)} ${y(pts[0][1]).toFixed(1)}`;
   for (let i = 1; i < pts.length; i++) d += ` H${x(pts[i][0]).toFixed(1)} V${y(pts[i][1]).toFixed(1)}`;
-  const prev = hist.length > 1 ? hist.at(-2)[1] : rank, dl = prev - rank;
-  const tm = ts => new Date(ts * 1000).toLocaleTimeString('ko-KR', {hour: '2-digit', minute: '2-digit', hour12: false});
+  const area = d + ` V${H - B} H${x(pts[0][0]).toFixed(1)} Z`;
+  const prev = all.length > 1 ? all.at(-2)[1] : rank, dl = prev - rank;
+  const long = t1 - t0 > 36 * 3600;
+  const lab = ts => new Date(ts * 1000).toLocaleString('ko-KR', long ? {month: 'numeric', day: 'numeric'} : {hour: '2-digit', minute: '2-digit', hour12: false});
+  // day ticks (midnight) when the range is longer than a day and a half, else four even ticks
+  const ticks = [];
+  if (long) { const m = new Date(t0 * 1000); m.setHours(24, 0, 0, 0); for (let t = m / 1000; t < t1; t += 86400) ticks.push(t) }
+  else for (let k = 1; k < 4; k++) ticks.push(t0 + (t1 - t0) * k / 4);
+  const best = Math.min(...all.map(p => p[1]).concat(rank));
   return `<div class="rk"><div class="big"><b>${rank}<small>위</small></b><span>${of}개 가게 중</span>` +
-    (dl ? `<em class="${dl > 0 ? 'up' : 'down'}">${dl > 0 ? '▲' : '▼'} ${Math.abs(dl)}</em>` : '') + `<span class="best">기록 중 최고 ${lo}위</span></div>` +
-    `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="순위 변화, ${tm(t0)}부터 지금까지 ${lo}위에서 ${hi}위 사이">` +
+    (dl ? `<em class="${dl > 0 ? 'up' : 'down'}">${dl > 0 ? '▲' : '▼'} ${Math.abs(dl)}</em>` : '') + `<span class="best">기록 중 최고 ${best}위</span></div>` +
+    `<div class="opts rr">${Object.entries(RANGES).map(([k, [l]]) => `<button type="button" class="chip${k === rankRange ? ' on' : ''}" data-r="${k}" aria-pressed="${k === rankRange}">${l}</button>`).join('')}</div>` +
+    `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="순위 변화, ${lab(t0)}부터 지금까지 ${lo}위에서 ${hi}위 사이">` +
     `<line x1="${L}" x2="${W - R}" y1="${y(lo)}" y2="${y(lo)}" class="gl"/><line x1="${L}" x2="${W - R}" y1="${y(hi)}" y2="${y(hi)}" class="gl"/>` +
+    ticks.map(t => `<line x1="${x(t).toFixed(1)}" x2="${x(t).toFixed(1)}" y1="${T}" y2="${H - B}" class="gl v"/><text x="${x(t).toFixed(1)}" y="${H - 7}" text-anchor="middle">${lab(t)}</text>`).join('') +
     `<text x="${L - 6}" y="${y(lo) + 4}" text-anchor="end">${lo}</text><text x="${L - 6}" y="${y(hi) + 4}" text-anchor="end">${hi}</text>` +
-    `<path d="${d}" class="ln"/>` + hist.map(([t, r]) => `<circle cx="${x(t).toFixed(1)}" cy="${y(r).toFixed(1)}" r="2.2" class="pt"/>`).join('') +
+    `<path d="${area}" class="ar"/><path d="${d}" class="ln"/>` +
+    (hist.length <= 60 ? hist.map(([t, r]) => `<circle cx="${x(t).toFixed(1)}" cy="${y(r).toFixed(1)}" r="2.2" class="pt"/>`).join('') : '') +
     `<circle cx="${x(now).toFixed(1)}" cy="${y(rank).toFixed(1)}" r="4.5" class="now"/>` +
-    `<text x="${L}" y="${H - 6}">${tm(t0)}</text><text x="${W - R}" y="${H - 6}" text-anchor="end">지금</text></svg></div>`;
+    `<text x="${L}" y="${H - 7}">${lab(t0)}</text></svg>` +
+    `<p class="cap">${all.length ? lab(all[0][0]) + '부터 순위가 바뀐 ' + all.length + '번' : ''}, 위쪽이 1위</p></div>`;
 }
 function fillDash() {
   if (!desk) { $('dashsub').textContent = '현황 서버(/owner)에 닿지 못했습니다.'; ['exps', 'wins', 'toks', 'rank', 'want', 'learn', 'chk', 'rst'].forEach(id => $(id).innerHTML = ''); return; }
@@ -638,6 +655,7 @@ function fillDash() {
   $('rank').innerHTML = mk.rank ? rankChart(mk.history || [], mk.rank, mk.of, desk.ts) +
     `<h4>포럼 글, 최근 1시간</h4>` + hbars([['우리', fo.ours || 0, true]].concat((fo.top || []).map(x => [x.shop, x.n])), '건')
     : `<p class="none">${mk.error ? '시장에 닿지 못했습니다: ' + esc(mk.error) : '순위는 5분마다 읽습니다. 잠시 뒤 다시 열어 주세요.'}</p>`;
+  $('rank').querySelectorAll('.rr button').forEach(b => b.onclick = () => { rankRange = b.dataset.r; fillDash() });
   const w2 = desk.wanted || {};
   $('want').innerHTML = (w2.items || []).length ? (w2.items[0].n != null ? hbars(w2.items.map(x => [x.item, x.n]), '번') :
     `<p class="none">${esc(w2.items[0].item)}</p>`) + `<p class="cap">최근 24시간, 손님이 물었는데 재고가 없던 횟수</p>` : '<p class="none">없습니다.</p>';

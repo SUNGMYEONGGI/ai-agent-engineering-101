@@ -111,3 +111,9 @@ a = d.activity(now=day0 + 60, notes=NOTES)
 kinds = {e["kind"] for e in a["events"]}
 assert {"say", "card", "exp", "tool"} <= kinds, kinds
 print("activity ok")
+
+h = [[i, i % 30 + 1] for i in range(1000)]
+th = d.thin(h, 400)
+assert len(th) <= 401 and th[0] == h[0] and th[-1] == h[-1], len(th)
+assert d.thin(h[:10], 400) == h[:10]
+print("thin ok")

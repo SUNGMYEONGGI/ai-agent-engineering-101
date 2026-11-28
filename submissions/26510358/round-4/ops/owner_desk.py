@@ -175,6 +175,14 @@ def count_talks(talks, now):
     return {"ours": n.get(SHOP_NAME, 0), "top": [{"shop": k, "n": v} for k, v in top], "shops": len(n)}
 
 
+def thin(hist, n):
+    """At most n points for the chart: every k-th change, always the first and the last."""
+    if len(hist) <= n:
+        return hist
+    k = -(-len(hist) // n)
+    return hist[::k] + ([hist[-1]] if (len(hist) - 1) % k else [])
+
+
 def refresh_market(now=None, board=None, forum=None, talks=None):
     """Our board rank (with a history of changes) and shop forum posts in the last hour. Network only here."""
     now = now or time.time()
@@ -201,10 +209,10 @@ def refresh_market(now=None, board=None, forum=None, talks=None):
         except (OSError, ValueError):
             hist = []
         if me and (not hist or hist[-1][1] != me["rank"]):
-            hist = (hist + [[int(now), me["rank"]]])[-50:]
+            hist = (hist + [[int(now), me["rank"]]])[-20000:]   # every change since the desk started (was 50)
             RANKS.parent.mkdir(exist_ok=True)
             RANKS.write_text(json.dumps(hist), encoding="utf-8")
-    _mkt.update(at=int(now), rank=me and me["rank"], of=len(ranked), history=hist[-12:], error="", talks=count_talks(talks, now),
+    _mkt.update(at=int(now), rank=me and me["rank"], of=len(ranked), history=thin(hist, 400), error="", talks=count_talks(talks, now),
                 forum={"ours": posts.get(SHOP_NAME, 0), "top": [{"shop": k, "n": v} for k, v in top]})
     return _mkt
 
