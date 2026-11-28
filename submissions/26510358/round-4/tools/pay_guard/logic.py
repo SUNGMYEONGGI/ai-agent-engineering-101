@@ -1,28 +1,41 @@
-import json, os, time, httpx
+import json,re,time,fcntl,datetime
+from pathlib import Path
+import httpx
 
-def run(args,kit):
- if args.get('role','shop')!='shop': return {'ok':False,'error':'role_not_permitted'}
- try: n=int(args.get('credits',0))
- except (ValueError,TypeError): return {'ok':False,'error':'invalid_amount'}
- lim=args.get('app_owner_limits') or {}; call=int(lim.get('max_pay_per_call',20000)); day=int(lim.get('max_pay_per_day',200000))
- if n<=0 or n>min(20000,call): return {'ok':False,'error':'call_limit'}
+def run(a,k):
+ def fail(s):return {'ok':False,'error':s}
  try:
-  c=args['chain'] if kit.testing else httpx.get(kit.market.rstrip('/')+'/api/chain',timeout=10).json()
-  wei=int(c['credit_wei']); fee=int(c['network_fee_credits']); bps=int(c['market_fee_bps']); assert wei>0 and fee>=0 and bps>=0
- except Exception: return {'ok':False,'error':'chain_unavailable'}
- p=args.get('log_path','pay_log.json'); now=time.time()
- try:
-  with open(p) as f: logs=json.load(f)
- except FileNotFoundError: logs=[]
- except Exception: return {'ok':False,'error':'log_unreadable'}
- logs=[x for x in logs if now-x.get('ts',0)<86400]
- if sum(int(x['credits']) for x in logs)+n>day: return {'ok':False,'error':'daily_limit'}
- entry={'ts':now,'credits':n,'to':args.get('to'),'data_hex':args.get('data_hex','0x'),'state':'pending'}
- if any(x.get('state')=='pending' and x.get('to')==entry['to'] and x.get('data_hex')==entry['data_hex'] for x in logs): return {'ok':False,'error':'pending_duplicate'}
- logs.append(entry); os.makedirs(os.path.dirname(p) or '.',exist_ok=True)
- with open(p,'w') as f: json.dump(logs,f)
- try: tx=kit.pay(entry['to'],n*wei,entry['data_hex'],role='shop')
- except Exception as e: return {'ok':False,'error':'payment_uncertain','detail':str(e)[:200]}
- entry.update(state='sent',tx_hash=tx)
- with open(p,'w') as f: json.dump(logs,f)
- return {'ok':True,'tx_hash':tx,'credits':n,'credit_wei':wei,'network_fee_credits':fee,'market_fee_bps':bps}
+  if a.get('role','shop')!='shop':return fail('role_not_permitted')
+  n=a.get('credits');to=a.get('to','');data=a.get('data_hex','0x')
+  if type(n) is not int or n<=0 or not re.fullmatch('0x[0-9a-fA-F]{40}',to) or not re.fullmatch('0x(?:[0-9a-fA-F]{2})*',data):return fail('invalid_payment')
+  now=time.time();base=Path('tmp/test') if k.testing else Path('.')
+  def read(name):return json.loads((base/name).read_text())
+  def get(path,auth=False):
+   r=httpx.get(k.market.rstrip('/')+path,headers={'Authorization':'Bearer '+k.token('shop')} if auth else {},timeout=8);r.raise_for_status();return r.json()
+  op=a['operating_fixture'] if k.testing else read('agent_limits.json')
+  if not k.testing:
+   t=datetime.datetime.strptime(op['set_at'],'%Y-%m-%d %H:%M').replace(tzinfo=datetime.timezone(datetime.timedelta(hours=9))).timestamp()
+   if not -60<=now-t<=10800:return fail('stale_operating_limits')
+  try:owner=a.get('owner_fixture',{}) if k.testing else read('owner_limits.json')
+  except FileNotFoundError:owner={}
+  inline=a.get('app_owner_limits') or {}
+  def lim(key,default):return min(int(op[key]),int(owner.get(key,default)),int(inline.get(key,owner.get(key,default))))
+  if n>lim('max_pay_per_call',20000) or n>20000:return fail('call_limit')
+  day=lim('max_pay_per_day',200000)
+  c=a['chain'] if k.testing else get('/api/chain');wei=int(c['credit_wei']);fee=int(c['network_fee_credits']);bps=int(c['market_fee_bps'])
+  if not (wei>0 and fee>=0 and 0<=bps<=10000):return fail('chain_unavailable')
+  inv=a['inventory_fixture'] if k.testing else get('/api/inventory',True)
+  if int(inv['balance'])-n-fee-int(inv.get('storage_due_with_next_lot',0))<1000000:return fail('balance_floor')
+  base.mkdir(parents=True,exist_ok=True)
+  with (base/'pay_log.json').open('a+',encoding='utf8') as f:
+   fcntl.flock(f,fcntl.LOCK_EX);f.seek(0);raw=f.read();logs=json.loads(raw) if raw else []
+   logs=[x for x in logs if now-float(x['ts'])<86400]
+   if sum(int(x['credits']) for x in logs)+n>day:return fail('daily_limit')
+   if any(x.get('state')=='pending' and str(x['to']).lower()==to.lower() and str(x['data_hex']).lower()==data.lower() for x in logs):return fail('pending_duplicate')
+   def store():f.seek(0);f.truncate();json.dump(logs,f);f.flush();__import__('os').fsync(f.fileno())
+   row={'ts':now,'credits':n,'to':to,'data_hex':data,'state':'pending'};logs.append(row);store()
+   try:tx=k.pay(to,n*wei,data,role='shop')
+   except Exception:return fail('payment_uncertain')
+   row.update(state='sent',tx_hash=tx);store()
+  return {'ok':True,'tx_hash':tx,'credits':n,'credit_wei':wei,'network_fee_credits':fee,'market_fee_bps':bps}
+ except Exception as e:return fail(str(e)[:160])

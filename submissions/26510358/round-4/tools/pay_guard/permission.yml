@@ -1,5 +1,5 @@
 name: pay_guard
-description: shop 송금 전 체인 credit_wei·수수료, 일일 및 소유자 한도를 검사한다. args: to(주소), credits(정수 크레딧), data_hex, role=shop, app_owner_limits={max_pay_per_call,max_pay_per_day}, log_path(선택). 예: {ok:true,tx_hash:'0x...'}
+description: 상점 송금 전 운영·소유자 한도, 체인 정보, 잔고 및 중복을 확인합니다. args: to, credits, data_hex, role=shop, app_owner_limits.
 permission:
   network: [market.ourolabs.ai]
   write: [pay_log.json, tmp/test/]
@@ -9,5 +9,5 @@ permission:
   timeout: 60
 logic: logic.py
 test: test.py
-version: 3
-replaces: pay_guard@2
+version: 4
+replaces: pay_guard@3

@@ -1,11 +1,11 @@
 {
  "tool": "pay_guard",
- "version": 3,
- "forged_at": 1795602587,
- "kit": "v5.1",
+ "version": 4,
+ "forged_at": 1795868673,
+ "kit": "v5.2",
  "sha256": {
-  "permission.yml": "a3a177d5b68dd1b0ba694efae030a7475e1eb4f79302533e0b2a0c8c0d4018b3",
-  "logic.py": "447e56b2076652e82a8294064d49b993fafcfdd95c7298c8de375abc1fe5537c",
-  "test.py": "b77369c7b69c219648872ffbf415e0adbee459b77a9a1070035789cb18a300a5"
+  "permission.yml": "23fc47921e434bb8539c14735e6b26ba6c7657d3544faa80adb140f74f64c5c5",
+  "logic.py": "46adfa603bc8a6f950513a37881b400aa792b6107c04254cd99b0b1b55ddf3d4",
+  "test.py": "70436b2d56c79b27e37f4361213cf5ffb6890003afaebbd9c81a7fe17736082f"
  }
 }

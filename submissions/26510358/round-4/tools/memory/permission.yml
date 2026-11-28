@@ -1,10 +1,11 @@
 name: memory
-description: RULES/NOW/FAILED 세 섹션으로 notes.md를 2500자 이하로 갱신합니다. args: {rules, now, failed}.
+description: RULES/NOW/FAILED를 2500자 미만으로 저장합니다. mode=limits는 원장과 재고에서 운영 한도 및 book을 산출합니다. 옵션 restock_unit_cost는 검증된 우선 매입품의 단가입니다.
 permission:
-  write: [notes.md]
+  network: [market.ourolabs.ai]
+  write: [notes.md, agent_limits.json, tmp/test/]
   identity: [shop]
-  pay_limit: 0
-  timeout: 10
+  timeout: 60
 logic: logic.py
 test: test.py
-version: 1
+version: 2
+replaces: memory@1

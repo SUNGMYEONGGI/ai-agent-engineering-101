@@ -1,0 +1,10 @@
+name: memory
+description: RULES/NOW/FAILED 세 섹션으로 notes.md를 2500자 이하로 갱신합니다. args: {rules, now, failed}.
+permission:
+  write: [notes.md]
+  identity: [shop]
+  pay_limit: 0
+  timeout: 10
+logic: logic.py
+test: test.py
+version: 1
