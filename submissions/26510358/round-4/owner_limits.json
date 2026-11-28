@@ -1,8 +1,17 @@
 {
- "max_loss_per_day": 30000,
- "max_pay_per_call": 20000,
- "max_pay_per_day": 200000,
- "daily_tokens": 30000000,
- "note": "11-26 21시: 포럼 효과 확인 후 토큰 상한 2,000만",
- "set_at": "2026-11-27 10:12"
+ "max_loss_per_day": 28330,
+ "max_pay_per_call": 472180,
+ "max_pay_per_day": 613834,
+ "daily_tokens": 50000000,
+ "note": "11-28 22시: 돈 상한 잔액 비례(하루 13%, 회당 10%, 처분 0.6%), 잔액 하한 350만, 토큰 5,000만",
+ "set_at": "2026-11-28 22:17",
+ "mode": "auto",
+ "auto_pct": {
+  "max_pay_per_day": 13.0,
+  "max_pay_per_call": 10.0,
+  "max_loss_per_day": 0.6
+ },
+ "auto_from_credits": 4721802,
+ "min_balance": 3500000,
+ "round_end_estimate": "2026-12-06 23:59"
 }

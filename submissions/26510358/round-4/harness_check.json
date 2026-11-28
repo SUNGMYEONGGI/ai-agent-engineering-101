@@ -1,0 +1,126 @@
+{
+ "at": "2026-11-28 22:27",
+ "replies": {
+  "inquiries": 6,
+  "no_checkout": 4,
+  "empty_reply": 1,
+  "checkout_for_gone_unit": 0,
+  "examples": []
+ },
+ "tools": {
+  "chains": [],
+  "pay_outside_guard": [],
+  "forges_24h": {
+   "stock_and_price": 1,
+   "market_call": 1,
+   "a2a_handler": 1,
+   "memory": 1,
+   "pay_guard": 1
+  }
+ },
+ "memory": {
+  "notes_chars": 2075,
+  "over_3000": false
+ },
+ "restock": [
+  {
+   "item": "두부",
+   "asks_24h": 8,
+   "market_b_settles_12h": 12,
+   "median_b": 3122,
+   "unit_cost": 2517,
+   "net_margin": 364,
+   "our_expired_24h": 0,
+   "held_now": 2,
+   "our_sold_24h": 0,
+   "verdict": "보유 2개가 우리 하루 판매(0개)의 2배 이상: 매입 중지, 먼저 팔기"
+  },
+  {
+   "item": "두유",
+   "asks_24h": 4,
+   "market_b_settles_12h": 0,
+   "median_b": null,
+   "unit_cost": null,
+   "net_margin": null,
+   "our_expired_24h": 0,
+   "held_now": 0,
+   "our_sold_24h": 0,
+   "verdict": "시세 표본이 적음(5건 미만): 1~2개 시험 매입"
+  },
+  {
+   "item": "요거트",
+   "asks_24h": 3,
+   "market_b_settles_12h": 0,
+   "median_b": null,
+   "unit_cost": null,
+   "net_margin": null,
+   "our_expired_24h": 0,
+   "held_now": 0,
+   "our_sold_24h": 0,
+   "verdict": "시세 표본이 적음(5건 미만): 1~2개 시험 매입"
+  },
+  {
+   "item": "생선",
+   "asks_24h": 2,
+   "market_b_settles_12h": 0,
+   "median_b": null,
+   "unit_cost": null,
+   "net_margin": null,
+   "our_expired_24h": 0,
+   "held_now": 0,
+   "our_sold_24h": 0,
+   "verdict": "시세 표본이 적음(5건 미만): 1~2개 시험 매입"
+  },
+  {
+   "item": "둥굴레차",
+   "asks_24h": 2,
+   "market_b_settles_12h": 0,
+   "median_b": null,
+   "unit_cost": null,
+   "net_margin": null,
+   "our_expired_24h": 0,
+   "held_now": 0,
+   "our_sold_24h": 0,
+   "verdict": "시세 표본이 적음(5건 미만): 1~2개 시험 매입"
+  },
+  {
+   "item": "우유",
+   "asks_24h": 2,
+   "market_b_settles_12h": 2,
+   "median_b": 12995,
+   "unit_cost": 9653,
+   "net_margin": 3003,
+   "our_expired_24h": 0,
+   "held_now": 0,
+   "our_sold_24h": 0,
+   "verdict": "시세 표본이 적음(5건 미만): 1~2개 시험 매입"
+  },
+  {
+   "item": "쌀",
+   "asks_24h": 2,
+   "market_b_settles_12h": 57,
+   "median_b": 15208,
+   "unit_cost": 9760,
+   "net_margin": 5086,
+   "our_expired_24h": 0,
+   "held_now": 0,
+   "our_sold_24h": 4,
+   "verdict": "매입: 보유가 하루 판매(4개)만큼 될 때까지, 한 번에 2~3개"
+  },
+  {
+   "item": "커피",
+   "asks_24h": 1,
+   "market_b_settles_12h": 20,
+   "median_b": 5817,
+   "unit_cost": 4865,
+   "net_margin": 684,
+   "our_expired_24h": 0,
+   "held_now": 5,
+   "our_sold_24h": 0,
+   "verdict": "보유 5개가 우리 하루 판매(0개)의 2배 이상: 매입 중지, 먼저 팔기"
+  }
+ ],
+ "problems": [
+  "빈 답('상품명을 알려 주세요'/'요청을 정확히 확인하지 못했습니다') 1건"
+ ]
+}
