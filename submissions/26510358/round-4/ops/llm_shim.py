@@ -15,7 +15,7 @@ agent.json point llm.base anywhere, so this shim sits on 127.0.0.1 and:
   - FORGE ESCALATION (11-27): when the answer's move is forge_tool (the agent writing a tool's code and test, ~3% of
     steps but the ones that break sales when wrong), the same request goes again to SHIM_FORGE_MODEL (default
     gpt-6.2-sol, reasoning SHIM_FORGE_EFFORT, default medium) and that answer is returned instead. The kit gives up on
-    a socket silent for 60 s, so the second call gets what is left of SHIM_FORGE_DEADLINE (55 s); if it fails or runs
+    a socket silent for 60 s, so the shim answers 200 at once and sends a space every 15 s while it waits (11-28); the second call gets what is left of SHIM_FORGE_DEADLINE (165 s, under the kit's own 180 s cap); if it fails or runs
     out, the first answer stands. SHIM_FORGE_MODEL= (empty) turns this off.
   - DECISIONS (11-27): POST /v1/decisions is passed to OpenAI's Decisions API with the key added here, so a forged
     tool can ask typed questions (choice/predicate/score) on 127.0.0.1:18790 without ever holding the key. The model
@@ -38,6 +38,7 @@ import os
 import shutil
 import subprocess
 import tempfile
+import threading
 import time
 import urllib.error
 import urllib.request
@@ -207,12 +208,13 @@ class Handler(BaseHTTPRequestHandler):
             self.log_usage(os.environ.get("CLAUDE_MODEL", "claude-opus-5-5"), status, t, usage)
             return self.answer(status, out)
         fell_back = os.environ.get("SHIM_BACKEND") == "claude"
-        status, out = openai_post("/chat/completions", body, 60 if fell_back else 175)
+        beat = self.keepalive()                            # the kit drops a socket silent for 60 s (11-28: 6,000-token
+        status, out = openai_post("/chat/completions", body, 60 if fell_back else 150)   # answers took 68-74 s)
         tag = f" (claude fallback: {LAST_CLAUDE_ERROR['why']})" if fell_back else ""
         self.log_usage(body.get("model") + tag, status, t, usage_of(status, out))
         forge_model = os.environ.get("SHIM_FORGE_MODEL", "gpt-6.2-sol")
         if status == 200 and forge_model and forge_model != body.get("model") and move_action(out) == "forge_tool":
-            left = float(os.environ.get("SHIM_FORGE_DEADLINE", "55")) - (time.time() - t)
+            left = float(os.environ.get("SHIM_FORGE_DEADLINE", "165")) - (time.time() - t)
             if left > 8:
                 t2 = time.time()
                 b2 = dict(body, model=forge_model, reasoning_effort=os.environ.get("SHIM_FORGE_EFFORT", "medium"))
@@ -221,7 +223,32 @@ class Handler(BaseHTTPRequestHandler):
                 self.log_usage(f"{forge_model} (forge{'' if ok else ' failed, first answer kept'})", s2, t2, usage_of(s2, o2))
                 if ok:
                     status, out = s2, o2
-        self.answer(status, out)
+        with self._wlock:
+            beat.set()
+            self.wfile.write(out)                              # status 200 was already sent; an error body makes the kit retry
+
+    def keepalive(self):
+        """Send 200 and headers now, then a space every 15 s until the answer is ready. The kit reads the body with
+        json.load, which skips leading whitespace, and caps the whole call at 180 s itself."""
+        self.send_response(200)
+        self.send_header("content-type", "application/json")
+        self.send_header("connection", "close")
+        self.end_headers()
+        self.wfile.flush()
+        done, self._wlock = threading.Event(), threading.Lock()
+
+        def beat():
+            while not done.wait(15):
+                with self._wlock:
+                    if done.is_set():
+                        return
+                    try:
+                        self.wfile.write(b" ")
+                        self.wfile.flush()
+                    except OSError:
+                        return
+        threading.Thread(target=beat, daemon=True).start()
+        return done
 
     def decisions(self):
         raw = self.rfile.read(int(self.headers.get("content-length") or 0))
