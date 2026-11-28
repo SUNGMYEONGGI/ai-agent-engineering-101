@@ -385,7 +385,7 @@ def dash(now=None, notes=None):
             "tokens": {"today": tok, "cap": lim["daily_tokens"],
                        "per_settle": round(tok / settles) if settles else None, "settles_today": settles},
             "loss_today": loss, "limits": lim, "agent_limits": agent_limits(now), "alerts": alerts,
-            "learned": parse_learned(notes), "wanted": wanted(now, notes), "checks": checks(),
+            "learned": parse_learned(notes), "wanted": wanted(now, notes), "checks": checks(), "benchmark": benchmark(),
             "market": {k: _mkt.get(k) for k in ("at", "rank", "of", "history", "forum", "error")}}
 
 
@@ -687,6 +687,15 @@ class Handler(BaseHTTPRequestHandler):
 
 
 _chk = {"at": 0}
+_bm = {"at": 0}
+
+
+def benchmark():
+    try:
+        x = json.loads((R / "benchmark.json").read_text(encoding="utf-8"))
+        return {k: x.get(k) for k in ("at", "shops", "gaps")}
+    except (OSError, ValueError):
+        return None
 
 
 def checks():
@@ -707,6 +716,14 @@ def tick():
             materialize_limits()
         except Exception as e:
             print(f"[desk] limits: {type(e).__name__}: {e}", flush=True)
+        if time.time() - _bm["at"] >= 1800:                # leaders vs us, for COPY THE WINNERS and the app
+            _bm["at"] = time.time()
+            try:
+                sys.path.insert(0, str(Path(__file__).resolve().parent))
+                import benchmark as bm
+                bm.write()
+            except Exception as e:
+                print(f"[desk] benchmark: {type(e).__name__}: {e}", flush=True)
         if time.time() - _chk["at"] >= 600:                # code-run harness checks for the agent's REVIEW and the app
             _chk["at"] = time.time()
             try:
