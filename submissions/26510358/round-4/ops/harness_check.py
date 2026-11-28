@@ -230,6 +230,8 @@ def agent_limits_check(now):
         out.append("agent_limits.json set_at 형식 오류")
     for k in ("max_loss_per_day", "max_pay_per_call", "max_pay_per_day"):
         try:
+            if k == "max_pay_per_call" and int(a.get(k, 0)) == 0 and "중지" not in str(a.get("reason", "")):
+                out.append("에이전트 회당 매입 한도가 0: 모든 매입이 막힘 (의도라면 reason에 '매입 중지'라고 적기)")
             if int(a.get(k, 0)) > int(own.get(k, 0)):
                 out.append(f"에이전트 {k}가 주인 상한을 넘음")
         except (TypeError, ValueError):
