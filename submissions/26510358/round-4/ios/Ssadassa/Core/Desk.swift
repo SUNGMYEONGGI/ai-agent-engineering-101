@@ -42,6 +42,29 @@ public struct Dash: Decodable, Sendable {
         public var id: String { key }
     }
 
+    /// The agent's own operating limits (agent_limits.json), clamped by the server to the owner's ceilings.
+    public struct AgentLimits: Decodable, Sendable {
+        public let reason: String
+        public let setAt: String
+        public let maxLossPerDay, maxPayPerCall, maxPayPerDay: Int?
+        public let ageMin: Int?
+        public let overCeiling: [String]?
+        public func value(_ key: String) -> Int? {
+            switch key { case "max_pay_per_day": return maxPayPerDay; case "max_pay_per_call": return maxPayPerCall; default: return maxLossPerDay }
+        }
+    }
+
+    /// ops/harness_check.py's last result: problems found by code.
+    public struct Checks: Decodable, Sendable {
+        public let at: String?
+        public let problems: [String]?
+    }
+
+    public struct Market: Decodable, Sendable {
+        public let rank: Int?
+        public let of: Int?
+    }
+
     public let funnel: Funnel?
     public let stages: [[String]]
     public let experiments: [Experiment]
@@ -50,6 +73,9 @@ public struct Dash: Decodable, Sendable {
     public let lossToday: Int
     public let limits: OwnerLimits
     public let alerts: [Alert]
+    public let agentLimits: AgentLimits?
+    public let checks: Checks?
+    public let market: Market?
 
     public static func decode(_ data: Data) throws -> Dash {
         let d = JSONDecoder()

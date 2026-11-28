@@ -18,6 +18,15 @@ guard CommandLine.arguments.count > 1, let link = AppLink(CommandLine.arguments[
 check("AppLink parses the kit's line", AppLink("[app] open https://a-b.trycloudflare.com/?k=XYZ")?.accessCode == "XYZ"
       && AppLink("[app] open https://a-b.trycloudflare.com/?k=XYZ")?.base.absoluteString == "https://a-b.trycloudflare.com")
 
+let limJSON = #"{"max_pay_per_call":0,"max_pay_per_day":0,"max_loss_per_day":4000,"daily_tokens":50000000,"mode":"fixed","auto_pct":{"max_pay_per_day":13,"max_pay_per_call":10,"max_loss_per_day":0.6},"min_balance":1000000,"round_end_estimate":"2099-12-05 18:00","unknown":1}"#
+let snake = JSONDecoder(); snake.keyDecodingStrategy = .convertFromSnakeCase
+let lim = try snake.decode(OwnerLimits.self, from: Data(limJSON.utf8))
+check("owner limits: auto fields, stop state, round end", lim.isStopped && lim.autoPct.maxLossPerDay == 0.6 && lim.minBalance == 1_000_000
+      && lim.untilEnd().hasPrefix("종료까지 ") && OwnerLimits().autoPct.maxPayPerDay == 13, lim.untilEnd())
+let dashJSON = #"{"funnel":null,"stages":[],"experiments":[],"winners":[],"tokens":{"today":1,"cap":2,"per_settle":null,"settles_today":0},"loss_today":0,"limits":\#(limJSON),"alerts":[],"agent_limits":{"reason":"r","set_at":"x","max_pay_per_day":72944,"age_min":5,"over_ceiling":[]},"checks":{"at":"a","problems":["5만 넘는 송금 2건"]},"market":{"rank":18,"of":44}}"#
+let dz = try Dash.decode(Data(dashJSON.utf8))
+check("dash: agent limits, checks, market", dz.agentLimits?.value("max_pay_per_day") == 72944 && dz.checks?.problems?.first == "5만 넘는 송금 2건" && dz.market?.rank == 18)
+
 let demo = DemoData.state()
 check("demo data", demo.chat.count == 4 && demo.moves.count == 6 && DemoData.consent().argPairs.count == 2
       && DemoData.question.options.count == 3)

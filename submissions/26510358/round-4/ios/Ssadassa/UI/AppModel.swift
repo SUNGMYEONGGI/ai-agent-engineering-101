@@ -287,6 +287,10 @@ final class AppModel: ObservableObject {
             ("매입 한도 (회당)", old.maxPayPerCall.formatted(), new.maxPayPerCall.formatted()),
             ("매입 한도 (하루)", old.maxPayPerDay.formatted(), new.maxPayPerDay.formatted()),
             ("하루 토큰 상한", old.dailyTokens.formatted(), new.dailyTokens.formatted()),
+            ("잔액 비례 자동", old.isAuto ? "켬" : "끔", new.isAuto ? "켬" : "끔"),
+            ("비율 (하루·회당·손실 %)", String(format: "%.1f·%.1f·%.1f", old.autoPct.maxPayPerDay, old.autoPct.maxPayPerCall, old.autoPct.maxLossPerDay),
+             String(format: "%.1f·%.1f·%.1f", new.autoPct.maxPayPerDay, new.autoPct.maxPayPerCall, new.autoPct.maxLossPerDay)),
+            ("잔액 하한", old.minBalance.formatted(), new.minBalance.formatted()),
             ("남길 말", old.note.isEmpty ? "없음" : old.note, new.note.isEmpty ? "없음" : new.note),
         ]
         let rows = changes.filter { $0.1 != $0.2 }.map { ($0.0, "\($0.1) → \($0.2)") }

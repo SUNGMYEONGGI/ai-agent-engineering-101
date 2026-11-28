@@ -7,6 +7,8 @@ struct SettingsView: View {
     let disconnect: () -> Void
     @State private var draft = OwnerLimits()
     @State private var saved = false
+    @State private var confirmStop = false
+    @State private var editingFloor = false
 
     var body: some View {
         ScrollView {
@@ -66,17 +68,68 @@ struct SettingsView: View {
 
     // MARK: limits
 
+    /// The money ceilings come from the server (auto: a share of the wallet, every 10 minutes). The owner turns auto
+    /// on or off, nudges the shares, stops restocking at once, and sets the token cap.
     private var limitsSection: some View {
-        VStack(spacing: 12) {
-            SectionTitle(text: "주인이 정한 한도")
+        let cur = model.limits
+        return VStack(spacing: 12) {
+            SectionTitle(text: "돈 상한")
+            if cur.isStopped {
+                Label("매입이 정지되어 있어요. 에이전트는 송금하지 않아요.", systemImage: "pause.circle.fill")
+                    .font(Theme.rounded(.footnote, .semibold)).foregroundStyle(Theme.fail)
+                    .frame(maxWidth: .infinity, alignment: .leading).padding(12)
+                    .background(Theme.fail.opacity(0.12), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+            }
             SoftCard(padding: 0) {
                 VStack(spacing: 0) {
-                    sliderRow("원가 아래 처분 손실 한도 (하루)", $draft.maxLossPerDay, 0...100_000, 5_000, "credits")
+                    Toggle(isOn: Binding(get: { draft.mode == "auto" }, set: { draft.mode = $0 ? "auto" : "fixed" })) {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("잔액 비례 자동").font(Theme.rounded(.subheadline, .medium))
+                            Text("지갑 잔액의 일정 비율로 서버가 정해요").font(Theme.rounded(.caption)).foregroundStyle(Theme.mute)
+                        }
+                    }
+                    .tint(Theme.ok).padding(.horizontal, 18).padding(.vertical, 12)
                     Divider().padding(.leading, 18)
-                    sliderRow("매입 한도 (회당)", $draft.maxPayPerCall, 0...50_000, 1_000, "credits")
+                    HStack(spacing: 0) {
+                        stat("하루 매입", cur.maxPayPerDay)
+                        stat("회당 매입", cur.maxPayPerCall)
+                        stat("처분 손실/일", cur.maxLossPerDay)
+                    }
+                    .padding(.vertical, 12)
+                    if cur.isAuto, let c = cur.autoFromCredits {
+                        Text("최근 잔액 \(c.formatted()) 기준, 10분마다 다시 계산").font(Theme.rounded(.caption)).foregroundStyle(Theme.mute)
+                            .frame(maxWidth: .infinity, alignment: .leading).padding(.horizontal, 18).padding(.bottom, 12)
+                    }
                     Divider().padding(.leading, 18)
-                    sliderRow("매입 한도 (하루)", $draft.maxPayPerDay, 0...500_000, 10_000, "credits")
+                    DisclosureGroup("비율 조정") {
+                        VStack(spacing: 8) {
+                            pctRow("하루 매입", $draft.autoPct.maxPayPerDay)
+                            pctRow("회당 매입", $draft.autoPct.maxPayPerCall)
+                            pctRow("처분 손실/일", $draft.autoPct.maxLossPerDay)
+                        }
+                        .padding(.top, 8)
+                    }
+                    .font(Theme.rounded(.subheadline, .medium)).tint(Theme.ink)
+                    .padding(.horizontal, 18).padding(.vertical, 12)
                     Divider().padding(.leading, 18)
+                    minBalanceRow
+                }
+            }
+            Button(cur.isStopped ? "매입 다시 시작" : "매입 즉시 정지") {
+                if cur.isStopped { Task { await resume() } } else { confirmStop = true }
+            }
+            .buttonStyle(PillButtonStyle(filled: cur.isStopped))
+            .foregroundStyle(cur.isStopped ? Theme.inkOn : Theme.fail)
+            .frame(maxWidth: .infinity)
+            .confirmationDialog("매입을 지금 멈출까요?", isPresented: $confirmStop, titleVisibility: .visible) {
+                Button("매입 정지", role: .destructive) { Task { await stop() } }
+            } message: {
+                Text("회당·하루 매입 한도를 0으로 고정해요. 에이전트는 다시 시작할 때까지 송금하지 않아요.")
+            }
+
+            SectionTitle(text: "토큰과 남길 말")
+            SoftCard(padding: 0) {
+                VStack(spacing: 0) {
                     sliderRow("하루 토큰 상한", $draft.dailyTokens, 0...100_000_000, 1_000_000, "토큰")
                     Divider().padding(.leading, 18)
                     TextField("에이전트에게 남길 말 (예: 오늘은 가구 재고를 늘리지 말 것)", text: $draft.note, axis: .vertical)
@@ -86,7 +139,7 @@ struct SettingsView: View {
                 }
             }
             HStack {
-                Text("서버에 저장돼요. 에이전트는 다음 실행 때 읽고, 토큰 상한은 바로 적용돼요. 재시작은 필요 없어요.")
+                Text("서버에 저장돼요. 에이전트는 다음 실행 때 읽고, 토큰 상한은 바로 적용돼요.")
                     .font(Theme.rounded(.caption)).foregroundStyle(Theme.mute)
                 Spacer()
                 Button(saved ? "저장됨" : "저장") {
@@ -99,6 +152,57 @@ struct SettingsView: View {
                 .disabled(draft == model.limits && !saved)
             }
         }
+    }
+
+    private func stat(_ title: String, _ v: Int) -> some View {
+        VStack(spacing: 2) {
+            Text(v.formatted()).font(Theme.rounded(.headline, .bold)).monospacedDigit().lineLimit(1).minimumScaleFactor(0.7)
+            Text(title).font(Theme.rounded(.caption2)).foregroundStyle(Theme.mute)
+        }
+        .frame(maxWidth: .infinity)
+        .accessibilityElement(children: .combine)
+    }
+
+    private func pctRow(_ title: String, _ v: Binding<Double>) -> some View {
+        Stepper(value: Binding(get: { v.wrappedValue }, set: { v.wrappedValue = (($0 * 10).rounded() / 10) }), in: 0...20, step: 0.1) {
+            HStack {
+                Text(title).font(Theme.rounded(.subheadline))
+                Spacer()
+                Text(String(format: "%.1f%%", v.wrappedValue)).font(Theme.rounded(.subheadline, .bold)).monospacedDigit()
+            }
+        }
+    }
+
+    /// The floor the agent keeps in the wallet: shown as one number, edited only after a long press.
+    private var minBalanceRow: some View {
+        HStack {
+            Text("잔액 하한").font(Theme.rounded(.subheadline, .medium))
+            Spacer()
+            if editingFloor {
+                TextField("0", value: $draft.minBalance, format: .number)
+                    .keyboardType(.numberPad).multilineTextAlignment(.trailing).frame(width: 140)
+                    .font(Theme.rounded(.subheadline, .bold)).monospacedDigit()
+                    .onChange(of: draft.minBalance) { v in draft.minBalance = max(0, min(5_000_000, v)) }
+            } else {
+                Text(draft.minBalance.formatted()).font(Theme.rounded(.subheadline, .bold)).monospacedDigit()
+            }
+        }
+        .padding(.horizontal, 18).padding(.vertical, 14)
+        .contentShape(Rectangle())
+        .onLongPressGesture(minimumDuration: 0.6) { editingFloor = true; UIImpactFeedbackGenerator(style: .medium).impactOccurred() }
+        .accessibilityHint("길게 누르면 고칠 수 있어요")
+    }
+
+    private func stop() async {
+        var v = model.limits
+        v.mode = "fixed"; v.maxPayPerCall = 0; v.maxPayPerDay = 0
+        if await model.save(limits: v) { draft = model.limits }
+    }
+
+    private func resume() async {
+        var v = model.limits
+        v.mode = "auto"
+        if await model.save(limits: v) { draft = model.limits }
     }
 
     private func sliderRow(_ title: String, _ value: Binding<Int>, _ range: ClosedRange<Int>, _ step: Int,

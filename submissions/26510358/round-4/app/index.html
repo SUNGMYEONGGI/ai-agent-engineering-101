@@ -206,6 +206,7 @@ form{background:var(--raised);border:1px solid var(--line);border-radius:24px;bo
 }
 .bubble{border-radius:20px}
 /* Harness sheet: one heartbeat chart, then quiet rows that open on tap */
+:root{--mk:#2563eb;--sl:#0f9d6b;--mo:#c2780a;--th:#8b8fa3;--bd:#7c4dff;--ow:#db2777}
 .hs{--mk:#2563eb;--sl:#0f9d6b;--mo:#c2780a;--th:#8b8fa3;--bd:#7c4dff;--ow:#db2777;--zz:var(--line-strong)}
 .hs h4{margin:24px 0 8px;font-size:15px;font-weight:650;letter-spacing:-.01em}
 .hs .c-mk{background:var(--mk)}.hs .c-sl{background:var(--sl)}.hs .c-mo{background:var(--mo)}.hs .c-th{background:var(--th)}
@@ -375,6 +376,94 @@ body{font-size:15.5px;line-height:1.62;letter-spacing:-.012em;font-feature-setti
 .rs .vd{grid-row:1;grid-column:2;align-self:start;font-size:12px;font-weight:650;padding:2px 9px;border-radius:999px;background:var(--hover);color:var(--text-soft)}
 .rs .vd.go{background:color-mix(in srgb,var(--ok) 14%,transparent);color:var(--ok)}
 .learn{margin:0;padding-left:18px;font-size:13px;color:var(--text-soft);display:grid;gap:4px}
+/* Limits (settings) */
+.setcard{background:var(--raised);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.sw{display:flex;align-items:center;gap:12px;padding:12px 14px;cursor:pointer}
+.sw span{flex:1;display:grid}.sw b{font-size:15px;font-weight:600}.sw small{font-size:12px;color:var(--text-mute)}
+.sw input{position:absolute;opacity:0;width:1px;height:1px}
+.sw i{flex:none;width:44px;height:26px;border-radius:13px;background:var(--line-strong);position:relative;transition:background .2s}
+.sw i::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgb(0 0 0/.25);transition:transform .2s var(--ease)}
+.sw input:checked+i{background:var(--ok)}.sw input:checked+i::after{transform:translateX(18px)}
+.sw input:focus-visible+i{outline:2px solid var(--focus);outline-offset:2px}
+.ceil{display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid var(--line)}
+.ceil div{padding:12px 8px;text-align:center;display:grid;gap:2px}.ceil div+div{border-left:1px solid var(--line)}
+.ceil b{font-size:17px;font-variant-numeric:tabular-nums;letter-spacing:-.01em}.ceil span{font-size:12px;color:var(--text-mute)}
+.cap2{margin:0;padding:0 14px 12px;font-size:12px;color:var(--text-mute);text-align:center}
+.adj{border-top:1px solid var(--line)}.adj summary{padding:12px 14px;font-size:14px;font-weight:600;cursor:pointer}
+.step2{display:grid;grid-template-columns:1fr 34px 64px 34px;align-items:center;gap:6px;padding:4px 14px}
+.step2:last-child{padding-bottom:12px}.step2 span{font-size:14px;color:var(--text-soft)}
+.step2 button{width:34px;height:34px;border-radius:50%;border:1px solid var(--line-strong);background:var(--bg);font-size:18px;line-height:1}
+.step2 b{text-align:center;font-variant-numeric:tabular-nums}
+.floor{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-top:1px solid var(--line);user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+.floor span{display:grid;font-size:14px}.floor small{font-size:11px;color:var(--text-mute)}.floor b{font-variant-numeric:tabular-nums}
+.floor input{width:130px;text-align:right;font:inherit;font-weight:700;border:1px solid var(--line-strong);border-radius:8px;padding:4px 8px;background:var(--bg);color:var(--text)}
+.stopbtn{display:block;width:100%;margin-top:10px;padding:12px;border-radius:14px;border:1px solid color-mix(in srgb,var(--fail) 45%,transparent);
+  background:color-mix(in srgb,var(--fail) 8%,transparent);color:var(--fail);font-weight:650;font-size:15px}
+.stopbtn.go{background:var(--text);color:var(--bg);border-color:transparent}
+.confirm{margin-top:8px;padding:12px 14px;border-radius:14px;background:var(--card)}.confirm p{margin:0 0 4px;font-size:13px;color:var(--text-soft)}
+.yes.danger{background:var(--fail)!important;color:#fff!important}
+.stopband{width:100%;text-align:left;border:0;font-weight:600;cursor:pointer}
+/* Strip under the header: funnel with conversion, three numbers */
+.funnel .arr{display:inline-flex;flex-direction:column;align-items:center;color:var(--text-mute);gap:0;min-width:22px}
+.funnel .arr small{font-size:10px;font-variant-numeric:tabular-nums;line-height:1}
+.kpis{display:grid;grid-template-columns:1fr 1.25fr 1fr;gap:8px;border:0;background:none;padding:0;text-align:left;cursor:pointer}
+.kpis>span{display:grid;gap:1px;padding:8px 10px;border-radius:12px;background:var(--raised);border:1px solid var(--line);min-width:0}
+.kpis small{font-size:11px;color:var(--text-mute)}
+.kpis b{font-size:17px;font-variant-numeric:tabular-nums;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kpis b.sm{font-size:15px}.kpis b i{font-style:normal;font-size:12px;font-weight:500;color:var(--text-mute);margin-left:1px}
+.kpis em{font-style:normal;font-size:11px;font-weight:700;margin-left:5px}.kpis em.up{color:var(--ok)}.kpis em.down{color:var(--fail)}
+.kpis u{display:block;height:4px;border-radius:2px;background:var(--hover);overflow:hidden;margin-top:3px}
+.kpis u i{display:block;height:100%;background:var(--text-soft);border-radius:2px}.kpis .hot u i{background:var(--fail)}
+/* Chat rows in the shape of shadcn Message: avatar at the bottom of a group, name on top, time and copy below */
+.msgrow{margin-top:14px}.msgrow.cont{margin-top:3px}
+.item.msgrow{margin-left:-8px;margin-right:-8px}.item.msgrow:hover{background:none}
+.mrow{display:flex;align-items:flex-start;gap:8px}
+.av{flex:none;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;color:var(--text)}
+.av:not(:empty){background:var(--raised);border:1px solid var(--line)}.av svg{width:17px;height:17px}
+.mname{font-size:12.5px;font-weight:650;color:var(--text);margin:4px 0 0 4px;line-height:1.2}
+.mcol{min-width:0;max-width:84%;display:flex;flex-direction:column;align-items:flex-start;gap:4px}
+.bub{padding:9px 14px;border-radius:18px;background:color-mix(in srgb,var(--text) 6%,var(--bg));white-space:pre-wrap;overflow-wrap:anywhere;animation:in .2s var(--ease)}
+.ag .bub{border-top-left-radius:6px}
+.me .mcol{margin-left:auto;align-items:flex-end}
+.me .bub{background:var(--text);color:var(--bg);border-top-right-radius:6px}
+.me.pending .bub{opacity:.55}
+.mcol .card{margin:0;max-width:none;width:100%}
+.mfoot{display:flex;gap:4px;align-items:center;font-size:11.5px;color:var(--text-mute);padding:0 6px;font-variant-numeric:tabular-nums}
+.mfoot .cp{display:grid;place-items:center;width:24px;height:24px;border:0;background:none;padding:0;border-radius:6px;color:var(--text-mute);opacity:0;transition:opacity .15s}
+.item:hover .cp,.cp:focus-visible{opacity:1}.cp:hover{background:var(--hover)}.cp.done{color:var(--ok);opacity:1}
+@media (pointer:coarse){.mfoot .cp{display:none}}
+.mk{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--text-mute);margin:8px 0}
+.mk.sep{margin:24px 0 4px}.mk.sep::before,.mk.sep::after{content:"";flex:1;height:1px;background:var(--line)}
+.mk.first{color:var(--warn);font-weight:600;margin:0 0 0 4px}
+.mk.busy{flex-wrap:wrap;padding-left:36px}
+.mk .again{border:0;background:none;padding:0;font-size:12.5px;font-weight:650;color:var(--focus);text-decoration:underline;text-underline-offset:3px}
+.trace{border:1px solid var(--line);border-radius:6px 16px 16px 16px;background:var(--raised);padding:8px 12px;width:min(320px,100%)}
+.tr{display:flex;gap:8px;align-items:center;font-size:13px;padding:3px 0;min-width:0}
+.tr i{width:7px;height:7px;border-radius:50%;flex:none}
+.tr b{font-weight:600;flex:none}.tr span{color:var(--text-mute);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tr.run b{background:linear-gradient(90deg,var(--text) 35%,var(--text-mute) 50%,var(--text) 65%);background-size:200% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:shim 1.6s linear infinite}
+.c-mk{background:var(--mk)}.c-sl{background:var(--sl)}.c-mo{background:var(--mo)}.c-th{background:var(--th)}.c-bd{background:var(--bd)}.c-ow{background:var(--ow)}.c-zz{background:var(--line-strong)}
+@keyframes shim{to{background-position:-200% 0}}
+@media (prefers-reduced-motion:reduce){.tr.run b{animation:none;color:var(--text);background:none}}
+#thbody .msgrow{margin-top:8px}
+/* Harness: status tiles, lists that open on request */
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.hr.tile{border:1px solid var(--line)!important;border-radius:14px;background:var(--raised);padding:0}
+.hr.tile[open]{grid-column:1/-1}
+.hr.tile summary{display:grid;gap:2px;padding:10px 12px;list-style:none;cursor:pointer}.hr.tile summary::-webkit-details-marker{display:none}
+.hr.tile summary span{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-mute)}
+.hr.tile summary i{width:8px;height:8px}
+.hr.tile summary b{margin:0;text-align:left;font-size:17px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hr.tile .mt,.hr.tile .cmp{margin:0 12px 8px}.hr.tile p{margin:0 12px 12px}
+#hsteps .more,#hchanges .more{display:none}#hsteps.all .more,#hchanges.all .more{display:block}
+.morebtn{display:block;width:100%;margin-top:6px;padding:9px;border:1px solid var(--line);border-radius:10px;background:none;font-size:13px;color:var(--text-soft)}
+.bempty{padding:18px 0;text-align:center}
+/* Activity */
+.lmode{grid-column:1/3;margin:0;padding:10px 12px;background:var(--raised);font-size:13px;font-weight:600;color:var(--ok)}.lmode.stop{color:var(--fail)}
+.fold summary{list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between}
+.fold summary::-webkit-details-marker{display:none}.fold summary::after{content:"＋";color:var(--text-mute)}.fold[open] summary::after{content:"－"}
+.ck li.warn{color:var(--warn);font-weight:600}
+.hb.al div{grid-template-columns:84px 1fr 120px}.hb.al em{background:var(--text-soft)}
 </style>
 </head>
 <body>
@@ -426,8 +515,7 @@ body{font-size:15.5px;line-height:1.62;letter-spacing:-.012em;font-feature-setti
   <div id="afeed"></div>
   <h4>한도</h4>
   <div class="lims" id="limitsview"></div>
-  <h4>이 앱이 에이전트에게 준 일</h4>
-  <div id="apptools"></div>
+  <details class="fold"><summary><h4>이 앱이 에이전트에게 준 일</h4></summary><div id="apptools"></div></details>
   <div class="credit">Built with the agent market mini app kit, inspired by
     <a href="https://github.com/Q00/meshkit" target="_blank" rel="noopener">MeshKit</a> and
     <a href="https://github.com/Q00/ouroboros" target="_blank" rel="noopener">Ouroboros</a></div>
@@ -464,10 +552,10 @@ body{font-size:15.5px;line-height:1.62;letter-spacing:-.012em;font-feature-setti
   <label class="field"><span>직접 답하기</span><textarea id="askfree" placeholder="답을 적어 주세요"></textarea></label>
   <div class="actions"><button type="button" id="asklater">나중에</button><button type="button" class="yes" id="asksend">보내기</button></div>
 </div></div>
-<div class="shade" id="settings" hidden><div class="sheet" role="dialog" aria-modal="true">
+<div class="shade" id="settings" hidden><div class="sheet hs" role="dialog" aria-modal="true" aria-labelledby="stitle">
   <div class="grip"></div>
-  <h3>주인 설정</h3>
-  <p class="sub">서버에 저장되고, 에이전트는 다음 실행 때 <span class="mono">app_owner_limits</span>로 읽습니다. kit 재시작은 필요 없습니다.</p>
+  <h3 id="stitle">주인 설정</h3>
+  <p class="sub">서버에 저장됩니다. 에이전트는 다음 실행 때 읽고, 토큰 상한은 바로 적용됩니다.</p>
   <div id="sliders"></div>
   <p class="sub" id="lerr" hidden></p>
   <label class="field"><span>에이전트에게 남길 말</span><textarea id="lnote" placeholder="예: 오늘은 가구 재고를 늘리지 말 것"></textarea></label>
@@ -535,31 +623,29 @@ miniapp.offer('owner_limits', 'the owner\'s current limits: {max_loss_per_day, m
 
 function drawDesk() {
   if (!desk) { $('desk').innerHTML = deskErr ? `<div class="meter">현황 서버에 닿지 못했습니다 (${esc(deskErr)}).</div>` : ''; return; }
-  const f = desk.funnel, t = desk.tokens || {};
-  let h = (desk.alerts || []).map(a => `<div class="alert">${esc(a.text)}</div>`).join('');
-  h += f ? `<button class="funnel" type="button" id="fun" aria-label="FUNNEL, 최근 60분">` + desk.stages.map(([k, label], i) =>
-             (i ? '<span class="arr">→</span>' : '') +
-             `<span class="st st-${k}${f.blocked === k ? ' bad' : ''}"><small>${esc(label)}</small><b>${num(f[k])}</b></span>`).join('') + '</button>'
-         : '<div class="meter">FUNNEL 줄이 아직 없습니다. 에이전트의 다음 실행 뒤에 보입니다.</div>';
-  if (t.cap) {
-    const pct = Math.min(100, t.today / t.cap * 100);
-    h += `<div class="meter${pct >= 80 ? ' hot' : ''}"><span>토큰 ${(t.today / 1e6).toFixed(1)}M / ${(t.cap / 1e6).toFixed(1)}M</span>` +
-         `<span class="bar"><i style="width:${pct.toFixed(1)}%"></i></span>` +
-         `<span>${t.per_settle ? '정산당 ' + num(t.per_settle) : '오늘 정산 0건'}</span></div>`;
-  }
-  const mk = desk.market || {};
-  if (mk.rank) {
-    const hi = mk.history || [], prev = hi.length > 1 ? hi[hi.length - 2][1] : null, d = prev ? prev - mk.rank : 0;
-    h += `<div class="meter"><span>순위 <b>${num(mk.rank)}</b> / ${num(mk.of)}${d ? (d > 0 ? ` <b class="up">▲${d}</b>` : ` <b class="down">▼${-d}</b>`) : ''}</span>` +
-         `<span>포럼 1시간 우리 ${num((mk.forum || {}).ours)}건${(mk.forum && mk.forum.top && mk.forum.top[0]) ? ` · 1위 ${esc(mk.forum.top[0].shop)} ${num(mk.forum.top[0].n)}건` : ''}</span></div>`;
-  }
+  const f = desk.funnel, t = desk.tokens || {}, l = desk.limits || {};
+  let h = stopped(l) ? '<button type="button" class="alert stopband" id="stopband">매입 정지 중입니다. 에이전트는 송금하지 않습니다. 눌러서 다시 시작</button>' : '';
+  h += (desk.alerts || []).map(a => `<div class="alert">${esc(a.text)}</div>`).join('');
+  // the funnel with the share that made it to the next stage between the steps
+  h += f ? `<button class="funnel" type="button" id="fun" aria-label="FUNNEL, 최근 60분">` + desk.stages.map(([k, label], i) => {
+      const pk = i ? desk.stages[i - 1][0] : null, r = pk && f[pk] ? Math.round(100 * f[k] / f[pk]) : null;
+      return (i ? `<span class="arr"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>${r != null ? `<small>${r}%</small>` : ''}</span>` : '') +
+        `<span class="st st-${k}${f.blocked === k ? ' bad' : ''}"><small>${esc(label)}</small><b>${num(f[k])}</b></span>` }).join('') + '</button>'
+    : '<div class="meter">FUNNEL 줄이 아직 없습니다. 에이전트의 다음 실행 뒤에 보입니다.</div>';
+  const mk = desk.market || {}, hi = mk.history || [], prev = hi.length > 1 ? hi[hi.length - 2][1] : null, d = prev && mk.rank ? prev - mk.rank : 0;
+  const pct = t.cap ? Math.min(100, t.today / t.cap * 100) : 0, end = untilEnd(l.round_end_estimate);
+  h += `<button type="button" class="kpis" id="kpis" aria-label="가게 현황 열기">` +
+    `<span><small>순위</small><b>${mk.rank ? num(mk.rank) : '-'}<i>/${num(mk.of)}</i>${d ? `<em class="${d > 0 ? 'up' : 'down'}">${d > 0 ? '▲' : '▼'}${Math.abs(d)}</em>` : ''}</b></span>` +
+    `<span class="tok${pct >= 80 ? ' hot' : ''}"><small>토큰 ${t.cap ? Math.round(pct) + '%' : ''}</small><b>${(t.today / 1e6 || 0).toFixed(1)}<i>/${(t.cap / 1e6 || 0).toFixed(0)}M</i></b><u><i style="width:${pct.toFixed(1)}%"></i></u></span>` +
+    `<span><small>${end ? '라운드' : '정산당 토큰'}</small><b class="sm">${end ? esc(end.replace('종료까지 ', '')) + '<i> 남음</i>' : t.per_settle ? (t.per_settle / 1e6).toFixed(2) + '<i>M</i>' : '-'}</b></span></button>`;
   if (desk.stale) h += '<div class="meter">현황 서버에 닿지 못해 마지막 값을 보여 줍니다.</div>';
   $('desk').innerHTML = h;
   if ($('fun')) $('fun').onclick = openDash;
+  $('kpis').onclick = openDash;
+  if ($('stopband')) $('stopband').onclick = openSettings;
   notifyAlerts(desk.alerts || []);
 }
 
-// The three alerts come from the desk (funnel stuck 2 h, loss 80%, token cap); each one rings once per device.
 function notifyAlerts(alerts) {
   let seen = [];
   try { seen = JSON.parse(localStorage.getItem('hermes-alerts-seen') || '[]') } catch (e) {}
@@ -661,15 +747,15 @@ function fillDash() {
   $('want').innerHTML = (w2.items || []).length ? (w2.items[0].n != null ? hbars(w2.items.map(x => [x.item, x.n]), '번') :
     `<p class="none">${esc(w2.items[0].item)}</p>`) + `<p class="cap">최근 24시간, 손님이 물었는데 재고가 없던 횟수</p>` : '<p class="none">없습니다.</p>';
   $('learn').innerHTML = (desk.learned || []).length ? `<ul class="learn">${desk.learned.map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : '<p class="none">아직 없습니다.</p>';
-  const al = desk.agent_limits, ol = readLimits();
-  $('alim').innerHTML = al ? hbars([['처분 손실/일', al.max_loss_per_day || 0], ['매입/회', al.max_pay_per_call || 0], ['매입/일', al.max_pay_per_day || 0]], '') +
-    `<p class="cap">사장님 상한: 처분 ${num(ol.max_loss_per_day)} · 회당 ${num(ol.max_pay_per_call)} · 하루 ${num(ol.max_pay_per_day)}. ` +
-    `${esc(al.set_at)} 에이전트 설정${al.age_min != null ? ` (${al.age_min}분 전)` : ''}: ${esc(al.reason)}</p>`
-    : '<p class="none">아직 정하지 않았습니다. 에이전트가 다음 REVIEW에서 정합니다.</p>';
+  const agl = desk.agent_limits, lim = desk.limits || {};
+  $('alim').innerHTML = agl ? `<div class="hb al">` + PCT.map(([k, lab]) => { const v = agl[k] || 0, c = +lim[k] || 0;
+      return `<div><span>${lab}</span><em style="--w:${c ? Math.max(v ? 2 : 0, Math.min(100, 100 * v / c)) : 0}%"></em><b>${num(v)}<small> / ${num(c)}</small></b></div>` }).join('') + '</div>' +
+    `<p class="cap">${esc(agl.reason || '이유 없음')}${agl.age_min != null ? `, ${agl.age_min < 60 ? agl.age_min + '분' : Math.floor(agl.age_min / 60) + '시간'} 전 설정` : ''}` +
+    `${(agl.over_ceiling || []).length ? ' (상한을 넘게 적어 상한으로 잘림)' : ''}</p>` : '<p class="none">아직 정하지 않았습니다.</p>';
   const ck = desk.checks || {}, rp = ck.replies || {}, probs = ck.problems || [];
   $('chk').innerHTML = ck.at ? `<div class="ck ${probs.length ? 'bad' : 'ok'}"><i></i><div><b>${probs.length ? '문제 ' + probs.length + '개' : '문제 없음'}</b>` +
     `<span>${esc(ck.at)} 기준 최근 2시간, 문의 ${num(rp.inquiries)}건 중 결제서 없는 답 ${num(rp.no_checkout)}건</span>` +
-    (probs.length ? `<ul>${probs.map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : '') + '</div></div>' : '<p class="none">아직 점검 전입니다. 코드가 10분마다 확인합니다.</p>';
+    (probs.length ? `<ul>${probs.map(x => `<li${/5만 넘는 송금/.test(x) ? ' class="warn"' : ''}>${esc(x)}</li>`).join('')}</ul>` : '') + '</div></div>' : '<p class="none">아직 점검 전입니다. 코드가 10분마다 확인합니다.</p>';
   $('rst').innerHTML = (ck.restock || []).length ? ck.restock.map(r => {
     const buy = /매입|buy|사/.test(r.verdict || '');
     return `<div class="rs"><div><b>${esc(r.item)}</b><span>24시간 ${num(r.asks_24h)}번 찾음${r.our_expired_24h ? `, 폐기 ${r.our_expired_24h}개` : ''}</span></div>` +
@@ -723,35 +809,73 @@ $('asksend').onclick = () => answerAsk($('askfree').value);
 $('asklater').onclick = () => { $('ask').hidden = true; };
 $('askbtn').onclick = showAsk;
 
+const stopped = l => l && l.mode !== 'auto' && +l.max_pay_per_call === 0 && +l.max_pay_per_day === 0;
+function untilEnd(s) {
+  const m = String(s || '').match(/^(\d{4}-\d{2}-\d{2})[ T](\d{2}:\d{2})/);
+  if (!m) return '';
+  const mins = Math.floor((new Date(`${m[1]}T${m[2]}:00+09:00`) - Date.now()) / 60000);
+  if (!(mins > 0)) return '';
+  const d = Math.floor(mins / 1440), h = Math.floor(mins % 1440 / 60);
+  return '종료까지 ' + (d ? `${d}일 ${h}시간` : h ? `${h}시간 ${mins % 60}분` : `${mins}분`);
+}
+const PCT = [['max_pay_per_day', '하루 매입'], ['max_pay_per_call', '회당 매입'], ['max_loss_per_day', '처분 손실/일']];
+let draftPct = {}, floorEdit = false;
+// Money ceilings come from the server (auto: a share of the wallet, recomputed every 10 minutes). The owner turns
+// auto on or off, nudges the shares, stops restocking at once, and keeps the token cap.
 function openSettings() {
-  const v = readLimits();
-  const auto = v.mode === 'auto', pct = v.auto_pct || {};
-  const autoRow = `<label class="slider" style="display:flex;gap:8px;align-items:flex-start"><input type="checkbox" id="lauto" ${auto ? 'checked' : ''}>` +
-    `<span>돈 한도를 지갑 잔액에 비례해 자동으로 (하루 매입 ${pct.max_pay_per_day ?? 4}% · 회당 ${pct.max_pay_per_call ?? 1}% · 처분 손실 ${pct.max_loss_per_day ?? 0.6}%)` +
-    `${v.auto_from_credits ? `<br><small>최근 잔액 ${num(v.auto_from_credits)} 기준, 10분마다 다시 계산. 에이전트는 이 상한 안에서 운영 한도를 정합니다.</small>` : ''}</span></label>`;
-  $('sliders').innerHTML = autoRow + SLIDERS.map(([k, label, min, max, step, unit]) =>
-    `<div class="slider"><label for="s-${k}">${label}<b id="v-${k}"></b></label>` +
-    `<input type="range" id="s-${k}" min="${min}" max="${max}" step="${step}" value="${Math.min(max, +v[k] || 0)}"></div>`).join('') +
+  const v = readLimits(), stop = stopped(v);
+  draftPct = Object.assign({max_pay_per_day: 13, max_pay_per_call: 10, max_loss_per_day: 0.6}, v.auto_pct);
+  floorEdit = false;
+  $('sliders').innerHTML = (stop ? '<div class="alert">매입이 정지되어 있습니다. 에이전트는 송금하지 않습니다.</div>' : '') +
+    `<h4>돈 상한</h4><div class="setcard">` +
+    `<label class="sw"><span><b>잔액 비례 자동</b><small>지갑 잔액의 일정 비율로 서버가 정합니다</small></span>` +
+    `<input type="checkbox" role="switch" id="lauto"${v.mode === 'auto' ? ' checked' : ''}><i aria-hidden="true"></i></label>` +
+    `<div class="ceil">${PCT.map(([k, l]) => `<div><b>${num(v[k])}</b><span>${l}</span></div>`).join('')}</div>` +
+    (v.mode === 'auto' && v.auto_from_credits ? `<p class="cap2">최근 잔액 ${num(v.auto_from_credits)} 기준, 10분마다 다시 계산</p>` : '') +
+    `<details class="adj"><summary>비율 조정</summary>${PCT.map(([k, l]) =>
+      `<div class="step2"><span>${l}</span><button type="button" data-k="${k}" data-d="-1" aria-label="${l} 0.1% 내리기">−</button>` +
+      `<b id="p-${k}"></b><button type="button" data-k="${k}" data-d="1" aria-label="${l} 0.1% 올리기">+</button></div>`).join('')}</details>` +
+    `<div class="floor" id="floor" title="길게 눌러 고치기"><span>잔액 하한<small>길게 눌러 고치기</small></span><b id="floorv">${num(v.min_balance)}</b></div></div>` +
+    `<button type="button" class="stopbtn${stop ? ' go' : ''}" id="lstop">${stop ? '매입 다시 시작' : '매입 즉시 정지'}</button>` +
+    `<div class="confirm" id="lconf" hidden><p>매입을 지금 멈출까요? 회당·하루 매입 한도를 0으로 고정합니다. 다시 시작할 때까지 에이전트는 송금하지 않습니다.</p>` +
+    `<div class="actions"><button type="button" id="lconfno">취소</button><button type="button" class="yes danger" id="lconfyes">매입 정지</button></div></div>` +
+    `<h4>토큰</h4><div class="slider"><label for="s-daily_tokens">하루 토큰 상한<b id="v-daily_tokens"></b></label>` +
+    `<input type="range" id="s-daily_tokens" min="0" max="100000000" step="1000000" value="${Math.min(1e8, +v.daily_tokens || 0)}"></div>` +
     (desk ? '' : '<p class="sub">현황 서버에 닿지 못해 기본값을 보여 줍니다. 저장도 되지 않을 수 있습니다.</p>');
-  SLIDERS.forEach(([k, , , , , unit]) => {
-    const show = () => { $('v-' + k).textContent = num($('s-' + k).value) + ' ' + unit; };
-    $('s-' + k).oninput = show; show();
-  });
-  const lock = () => SLIDERS.forEach(([k]) => { if (k !== 'daily_tokens') $('s-' + k).disabled = $('lauto').checked; });
-  $('lauto').onchange = lock; lock();
+  const showPct = () => PCT.forEach(([k]) => $('p-' + k).textContent = (+draftPct[k]).toFixed(1) + '%');
+  $('sliders').querySelectorAll('.step2 button').forEach(b => b.onclick = () => {
+    const k = b.dataset.k; draftPct[k] = Math.max(0, Math.min(20, Math.round((+draftPct[k] + 0.1 * b.dataset.d) * 10) / 10)); showPct() });
+  showPct();
+  const tok = () => $('v-daily_tokens').textContent = num($('s-daily_tokens').value) + ' 토큰';
+  $('s-daily_tokens').oninput = tok; tok();
+  let lp = 0;                                       // the wallet floor opens for editing only after a long press
+  const fl = $('floor');
+  fl.onpointerdown = () => { lp = setTimeout(() => { if (floorEdit) return; floorEdit = true; navigator.vibrate && navigator.vibrate(10);
+    $('floorv').outerHTML = `<input type="number" id="floorin" min="0" max="5000000" step="10000" value="${+v.min_balance || 0}" inputmode="numeric">`;
+    $('floorin').focus() }, 600) };
+  ['pointerup', 'pointerleave', 'pointercancel'].forEach(e => fl.addEventListener(e, () => clearTimeout(lp)));
+  fl.oncontextmenu = e => e.preventDefault();
+  $('lstop').onclick = () => stop ? setLimits({mode: 'auto'}) : ($('lconf').hidden = false, $('lconfyes').focus());
+  $('lconfno').onclick = () => { $('lconf').hidden = true };
+  $('lconfyes').onclick = () => setLimits({mode: 'fixed', max_pay_per_call: 0, max_pay_per_day: 0});
   $('lnote').value = v.note || ''; $('lerr').hidden = true;
   $('settings').hidden = false;
 }
-$('set').onclick = openSettings;
-$('lcancel').onclick = () => { $('settings').hidden = true; };
-$('lsave').onclick = async () => {
-  const body = {note: $('lnote').value.trim().slice(0, 500), mode: $('lauto').checked ? 'auto' : 'fixed'};
-  SLIDERS.forEach(([k]) => { if (!(body.mode === 'auto' && k !== 'daily_tokens')) body[k] = +$('s-' + k).value; });
+async function setLimits(body, close) {
   try {
     const v = await deskCall('limits', body);
     if (desk) desk.limits = v;
-    $('settings').hidden = true; drawDesk();
+    drawDesk(); loadDesk();
+    if (close) $('settings').hidden = true; else openSettings();
   } catch (e) { $('lerr').textContent = '저장하지 못했습니다: ' + e.message; $('lerr').hidden = false; }
+}
+$('set').onclick = openSettings;
+$('lcancel').onclick = () => { $('settings').hidden = true; };
+$('lsave').onclick = () => {
+  const body = {note: $('lnote').value.trim().slice(0, 500), mode: $('lauto').checked ? 'auto' : 'fixed',
+                auto_pct: draftPct, daily_tokens: +$('s-daily_tokens').value};
+  if ($('floorin')) body.min_balance = Math.max(0, Math.min(5000000, Math.round(+$('floorin').value || 0)));
+  setLimits(body, true);
 };
 
 // Chat history lives on the owner desk (/owner/chatlog): the kit forgets its chat on a restart and cards live only in
@@ -802,9 +926,20 @@ function split(items) {
 }
 let threadOpen = null, lastThread = null;
 const isMine = m => m.who === me || /^(owner|guest)-/.test(m.who);
+const AV = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M2 9.5 6.5 6H13l3 3.5-3 3.5H6.5z"/><path d="M9 12.5 13.5 9H20l3 3.5-3 3.5h-6.5z" opacity=".85"/></svg>';
+const COPY = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
 function bubbleFor(m) {
-  if (m.text === BUSY) return `<div class="busy">에이전트가 다른 일을 하느라 2분 안에 답하지 못했습니다. <button type="button" class="again">다시 보내기</button></div>`;
-  return isMine(m) ? `<div class="row me"><div class="bubble">${esc(m.text)}</div></div>` : `<div class="msg">${esc(m.text)}</div>`;
+  if (m.text === BUSY) return `<div class="mk busy"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>에이전트가 다른 일을 하느라 2분 안에 답하지 못했습니다. <button type="button" class="again">다시 보내기</button></div>`;
+  return isMine(m) ? `<div class="msgrow me"><div class="mcol"><div class="bub">${esc(m.text)}</div></div></div>`
+                   : `<div class="msgrow ag"><div class="mrow"><span class="av">${AV}</span><div class="mcol"><div class="bub">${esc(m.text)}</div></div></div></div>`;
+}
+// While the agent works on a reply: its last moves as a trace, the newest one running.
+function traceHtml() {
+  const mv = (view.moves || []).slice(0, 3).reverse();
+  return `<div class="msgrow ag"><div class="mrow"><span class="av">${AV}</span><div class="mcol"><div class="trace" aria-live="polite">` +
+    (mv.length ? mv.map((x, i) => { const [label, k] = act(x.action);
+      return `<div class="tr${i === mv.length - 1 ? ' run' : ''}"><i class="c-${k}"></i><b>${esc(label)}</b><span>${esc(x.thought)}</span></div>` }).join('')
+      : '<div class="tr run"><i class="c-th"></i><b>생각하는 중</b></div>') + '</div></div></div></div>';
 }
 function cardHtml(m, extra = '') {
   return `<article class="card${extra}"><div class="ch"><b>${esc(m.title)}</b><time>${hhmm(m.ts)}</time></div>` +
@@ -858,28 +993,29 @@ function draw() {
     return;
   }
   let html = '', lastTs = 0;
-  for (const m of items) {
-    if (m.ts - lastTs > 1800)                       // a time mark when the chat picks up again after half an hour
-      html += `<div class="when">${new Date(m.ts * 1000).toLocaleString('ko-KR', {month: 'long', day: 'numeric', weekday: 'short', hour: 'numeric', minute: '2-digit'})}</div>`;
+  const side = m => m.who === 'kit' ? 'kit' : m.text === BUSY ? 'busy' : isMine(m) ? 'me' : m.who === 'card' ? 'agent' : m.who;
+  const near = (a, b) => a && b && side(a) === side(b) && Math.abs(b.ts - a.ts) < 300;
+  items.forEach((m, i) => {
+    const sep = m.ts - lastTs > 1800;                // a separator when the chat picks up again after half an hour
+    if (sep) html += `<div class="mk sep">${new Date(m.ts * 1000).toLocaleString('ko-KR', {month: 'long', day: 'numeric', weekday: 'short', hour: 'numeric', minute: '2-digit'})}</div>`;
     lastTs = m.ts;
-    const k = esc(rootKey(m));
-    if (m.who === 'card') {
-      html += `<div class="item" data-root="${k}">${cardHtml(m)}${repliesLink(rootKey(m), threads)}</div>`;
-    } else if (m.who === 'kit') {
-      html += `<div class="sys">${esc(m.text)}</div>`;
-    } else if (isMine(m)) {
-      html += `<div class="item mine" data-text="${esc(m.text)}"><div class="row me"><div class="bubble">${esc(m.text)}</div></div></div>`;
-    } else if (m.text === BUSY) {
-      html += bubbleFor(m);
-    } else {
-      html += `<div class="item" data-root="${k}">` + (m.first ? `<div class="first"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a6 6 0 0 0-6 6v4l-2 3v1h16v-1l-2-3V8a6 6 0 0 0-6-6zm0 20a3 3 0 0 0 3-3H9a3 3 0 0 0 3 3z"/></svg>먼저 알림 ${hhmm(m.ts)}</div>` : '') +
-        `<div class="msg${m.who === 'agent' ? '' : ' other'}">${m.who !== 'agent' ? `<small>${esc(m.who)}</small>` : ''}${esc(m.text)}</div>${repliesLink(rootKey(m), threads)}</div>`;
-    }
-  }
-  for (const p of pending.filter(p => !p.thread)) html += `<div class="row me pending"><div class="bubble">${esc(p.text)}</div></div>`;
-  if (waiting > waitingThread) html += '<div class="typing"><i></i><i></i><i></i></div>';
+    const k = esc(rootKey(m)), cont = !sep && near(items[i - 1], m), last = !near(m, items[i + 1]) || (items[i + 1].ts - lastTs > 1800);
+    const foot = last ? `<div class="mfoot"><time>${hhmm(m.ts)}</time><button type="button" class="cp" aria-label="복사">${COPY}</button></div>` : '';
+    if (m.who === 'kit') { html += `<div class="mk">${esc(m.text)}</div>`; return }
+    if (m.text === BUSY) { html += bubbleFor(m); return }
+    if (isMine(m)) { html += `<div class="item mine msgrow me${cont ? ' cont' : ''}" data-text="${esc(m.text)}"><div class="mcol"><div class="bub">${esc(m.text)}</div>${foot}</div></div>`; return }
+    const other = m.who !== 'agent' && m.who !== 'card';
+    const body = m.who === 'card' ? cardHtml(m) : `<div class="bub">${esc(m.text)}</div>`;
+    html += `<div class="item msgrow ag${cont ? ' cont' : ''}" data-root="${k}">` + `<div class="mrow"><span class="av">${cont ? '' : AV}</span><div class="mcol">` +
+      (cont ? '' : `<div class="mname">${esc(other ? m.who : '호가')}</div>`) +
+      (m.first ? `<div class="mk first"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a6 6 0 0 0-6 6v4l-2 3v1h16v-1l-2-3V8a6 6 0 0 0-6-6zm0 20a3 3 0 0 0 3-3H9a3 3 0 0 0 3 3z"/></svg>먼저 알림</div>` : '') +
+      body + foot + repliesLink(rootKey(m), threads) + '</div></div></div>';
+  });
+  for (const p of pending.filter(p => !p.thread)) html += `<div class="msgrow me pending"><div class="mcol"><div class="bub">${esc(p.text)}</div><div class="mfoot">보내는 중</div></div></div>`;
+  if (waiting > waitingThread) html += traceHtml();
   $('log').innerHTML = html;
   $('log').querySelectorAll('.thlink').forEach(b => b.onclick = () => openThread(b.dataset.root));
+  $('log').querySelectorAll('.cp').forEach(b => b.onclick = () => { const it = b.closest('.item'); navigator.clipboard && navigator.clipboard.writeText(it.dataset.text || it.querySelector('.bub,.card').innerText); b.classList.add('done'); setTimeout(() => b.classList.remove('done'), 1200) });
   wireAgain($('log'), items);
   if (atEnd || pending.length) sc.scrollTop = sc.scrollHeight;
 }
@@ -951,7 +1087,8 @@ function drawActivity() {
 }
 function fillActivity() {
   const l = readLimits();
-  $('limitsview').innerHTML = [['매입 1회', l.max_pay_per_call, 'credits'], ['매입 하루', l.max_pay_per_day, 'credits'],
+  $('limitsview').innerHTML = `<p class="lmode${stopped(l) ? ' stop' : ''}">${stopped(l) ? '매입 정지 중' : l.mode === 'auto' ? `잔액 비례 자동${l.auto_from_credits ? ', 잔액 ' + num(l.auto_from_credits) + ' 기준' : ''}` : '고정 한도'}</p>` +
+    [['매입 1회', l.max_pay_per_call, 'credits'], ['매입 하루', l.max_pay_per_day, 'credits'],
     ['처분 손실 하루', l.max_loss_per_day, 'credits'], ['토큰 하루', l.daily_tokens / 1e6, 'M']].map(([k, v, u]) =>
     `<div><span>${k}</span><b>${num(v)}<small>${u}</small></b></div>`).join('') +
     `<button type="button" class="lnk" id="limedit">한도 바꾸기</button>` + (l.note ? `<p class="note">${esc(l.note)}</p>` : '');
@@ -981,15 +1118,16 @@ function beat(h) {
   const used = [...new Set(cols.flat())];
   return `<div class="bhead"><i class="${esc(loop.state)}"></i><b>${esc(loop.value || '')}</b>` +
     `<span>${loop.wake ? hhmm(loop.wake) + '에 깨어남' : (h.pulse || []).length + '걸음 / 1시간'}</span></div>` +
+    (!(h.pulse || []).length ? `<p class="none bempty">지난 1시간 동안 움직임이 없습니다. ${loop.wake ? hhmm(loop.wake) + '에 다시 깨어납니다.' : ''}</p>` :
     `<div class="bars" role="img" aria-label="지난 60분 동안 ${(h.pulse || []).length}걸음">` +
     cols.map(c => `<span>${c.slice(0, 8).map(k => `<i class="c-${k}"></i>`).join('')}</span>`).join('') + '</div>' +
     `<div class="baxis"><span>60분 전</span><span>지금</span></div>` +
-    `<div class="legend">${used.map(k => `<span><i class="c-${k}"></i>${CAT[k]}</span>`).join('')}</div>`;
+    `<div class="legend">${used.map(k => `<span><i class="c-${k}"></i>${CAT[k]}</span>`).join('')}</div>`);
 }
 function healthRow(r) {
   const bars = r.bars ? (() => { const max = Math.max(1, ...r.bars.map(b => b.n));
     return `<div class="cmp">${r.bars.map((b, i) => `<div class="${i ? '' : 'us'}"><span>${esc(b.shop)}</span><em style="--w:${Math.max(2, 100 * b.n / max)}%"></em><b>${num(b.n)}</b></div>`).join('')}</div>` })() : '';
-  return `<details class="hr ${esc(r.state)}"><summary><i></i><span>${esc(r.name)}</span><b>${esc(r.value)}</b></summary>` +
+  return `<details class="hr tile ${esc(r.state)}"><summary><span><i></i>${esc(r.name)}</span><b>${esc(r.value)}</b></summary>` +
     (r.meter != null ? `<div class="mt"><em style="--w:${Math.round(100 * r.meter)}%"></em></div>` : '') + bars +
     `<p>${esc(r.detail)}</p></details>`;
 }
@@ -999,11 +1137,13 @@ async function loadHarness() {
   $('hsub').textContent = hhmm(hdata.ts) + ' 기준, 열려 있는 동안 1분마다 갱신';
   $('hbeat').innerHTML = beat(hdata);
   const open = new Set([...document.querySelectorAll('#hhealth details[open]')].map(d => d.dataset.k));
+  $('hhealth').className = 'tiles';
   $('hhealth').innerHTML = hdata.health.map(r => healthRow(r).replace('<details', `<details data-k="${esc(r.key)}"${open.has(r.key) ? ' open' : ''}`)).join('');
   let prev = '';
-  $('hsteps').innerHTML = hdata.steps.map(x => { const [label, k] = act(x.action), t = hhmm(x.ts), show = t !== prev; prev = t;
-    return `<details class="step"><summary><time>${show ? t : ''}</time><i class="c-${k}"></i><b>${esc(label)}</b><span>${esc(x.thought)}</span></summary>` +
-      `<p>${esc(x.thought)}${x.why ? '<br>이유: ' + esc(x.why) : ''}<br><small>${esc(x.action)}</small></p></details>` }).join('');
+  $('hsteps').innerHTML = hdata.steps.map((x, i) => { const [label, k] = act(x.action), t = hhmm(x.ts), show = t !== prev; prev = t;
+    return `<details class="step${i >= 6 ? ' more' : ''}"><summary><time>${show ? t : ''}</time><i class="c-${k}"></i><b>${esc(label)}</b><span>${esc(x.thought)}</span></summary>` +
+      `<p>${esc(x.thought)}${x.why ? '<br>이유: ' + esc(x.why) : ''}<br><small>${esc(x.action)}</small></p></details>` }).join('') + moreBtn(hdata.steps.length - 6);
+  wireMore($('hsteps'));
   const top = Math.sqrt(Math.max(1, ...hdata.tools.map(t => t.uses || 0)));
   $('htools').innerHTML = hdata.tools.map(t => `<div class="tl"><span>${esc(t.name)}</span>` +
     `<em style="--w:${Math.max(3, 100 * Math.sqrt(t.uses || 0) / top)}%"></em><b>${num(t.uses)}</b>` +
@@ -1015,11 +1155,14 @@ function drawChanges() {
   $('hfilter').querySelectorAll('button').forEach(b => b.onclick = () => { hkind = b.dataset.k; drawChanges() });
   const rows = (hdata ? hdata.changes : []).filter(c => hkind === 'all' || c.kind === hkind);
   const line = (x, sign) => `<li class="${sign === '+' ? 'add' : 'del'}">${esc(x)}</li>`;
-  $('hchanges').innerHTML = rows.length ? rows.slice(0, 40).map(c => { const ls = (c.added || []).map(x => line(x, '+')).concat((c.removed || []).map(x => line(x, '-')));
-    return `<details class="chg k-${esc(c.kind)}"><summary><b>${esc(c.title || '')}</b><small>${esc(KINDS[c.kind] || c.kind)}, ${rel(c.ts)}</small>` +
-      `<span>${ls.length} 줄 바뀜</span></summary><ul>${ls.join('')}</ul></details>` }).join('')
+  $('hchanges').innerHTML = rows.length ? rows.slice(0, 40).map((c, i) => { const ls = (c.added || []).map(x => line(x, '+')).concat((c.removed || []).map(x => line(x, '-')));
+    return `<details class="chg k-${esc(c.kind)}${i >= 6 ? ' more' : ''}"><summary><b>${esc(c.title || '')}</b><small>${esc(KINDS[c.kind] || c.kind)}, ${rel(c.ts)}</small>` +
+      `<span>${ls.length} 줄 바뀜</span></summary><ul>${ls.join('')}</ul></details>` }).join('') + moreBtn(Math.min(40, rows.length) - 6)
     : '<p class="none">아직 없습니다. 메모리와 스킬은 현황 서버가 켜진 뒤의 변경부터 쌓입니다.</p>';
+  wireMore($('hchanges'));
 }
+const moreBtn = n => n > 0 ? `<button type="button" class="morebtn">${n}개 더 보기</button>` : '';
+function wireMore(root) { const b = root.querySelector('.morebtn'); if (b) b.onclick = () => { root.classList.add('all'); b.remove() } }
 $('hbtn').onclick = () => { $('harness').hidden = false; loadHarness(); clearInterval(htimer); htimer = setInterval(loadHarness, 60000) };
 $('act').onclick = () => { fillActivity(); $('activity').hidden = false; loadActivity() };
 

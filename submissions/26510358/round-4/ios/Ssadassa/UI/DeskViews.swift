@@ -9,10 +9,12 @@ struct DeskStrip: View {
         if let d = model.dash {
             Button { model.showDesk = true } label: {
                 VStack(alignment: .leading, spacing: 8) {
+                    if d.limits.isStopped { AlertRow(text: "매입 정지 중: 에이전트는 송금하지 않아요. 나 탭에서 다시 시작할 수 있어요.") }
                     ForEach(d.alerts) { a in AlertRow(text: a.text) }
                     if let f = d.funnel { FunnelLine(funnel: f, stages: d.stages) }
                     else { Text("FUNNEL 줄이 아직 없어요. 에이전트의 다음 실행 뒤에 보여요.").font(Theme.rounded(.caption)).foregroundStyle(Theme.mute) }
                     TokenMeter(tokens: d.tokens)
+                    RankLine(market: d.market, until: d.limits.untilEnd(now: model.now))
                 }
                 .padding(.horizontal, 18).padding(.vertical, 10)
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -64,6 +66,22 @@ struct FunnelLine: View {
     }
 }
 
+/// 순위 18 / 44, and the time left in the round on the right.
+struct RankLine: View {
+    let market: Dash.Market?
+    let until: String
+    var body: some View {
+        if market?.rank != nil || !until.isEmpty {
+            HStack {
+                if let r = market?.rank { Text("순위 **\(r)** / \(market?.of ?? 0)") }
+                Spacer()
+                if !until.isEmpty { Text(until) }
+            }
+            .font(Theme.rounded(.caption)).foregroundStyle(Theme.mute).monospacedDigit()
+        }
+    }
+}
+
 struct TokenMeter: View {
     let tokens: Dash.Tokens
     var body: some View {
@@ -89,9 +107,11 @@ struct DeskSheet: View {
                 if let d = model.dash {
                     Text(subtitle(d)).font(Theme.rounded(.footnote)).foregroundStyle(Theme.mute)
                     if let f = d.funnel { FunnelLine(funnel: f, stages: d.stages) }
+                    agentLimits(d)
                     experiments(d)
                     winners(d)
                     tokens(d)
+                    checks(d)
                 } else {
                     Text(model.deskError ?? "불러오는 중").font(Theme.rounded(.footnote)).foregroundStyle(Theme.mute)
                 }
@@ -183,6 +203,63 @@ struct DeskSheet: View {
                          ?? "오늘 정산 0건: 쓴 토큰이 아직 판매로 이어지지 않았어요.")
                         .font(Theme.rounded(.footnote)).foregroundStyle(Theme.ink)
                 }
+            }
+        }
+    }
+
+    /// The agent's operating limits against the owner's ceilings, as bars.
+    private func agentLimits(_ d: Dash) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            SectionTitle(text: "에이전트 운영 한도")
+            SoftCard(padding: 14) {
+                if let a = d.agentLimits {
+                    VStack(alignment: .leading, spacing: 10) {
+                        ForEach([("매입/일", "max_pay_per_day", d.limits.maxPayPerDay), ("매입/회", "max_pay_per_call", d.limits.maxPayPerCall),
+                                 ("처분 손실/일", "max_loss_per_day", d.limits.maxLossPerDay)], id: \.1) { label, key, ceil in
+                            let v = a.value(key) ?? 0
+                            VStack(alignment: .leading, spacing: 4) {
+                                HStack {
+                                    Text(label).font(Theme.rounded(.caption)).foregroundStyle(Theme.mute)
+                                    Spacer()
+                                    Text("**\(v.formatted())** / \(ceil.formatted())").font(Theme.rounded(.caption)).monospacedDigit()
+                                }
+                                GeometryReader { g in
+                                    ZStack(alignment: .leading) {
+                                        Capsule().fill(Theme.soft)
+                                        Capsule().fill(Theme.ink).frame(width: ceil > 0 ? g.size.width * min(1, Double(v) / Double(ceil)) : 0)
+                                    }
+                                }
+                                .frame(height: 8)
+                            }
+                            .accessibilityElement(children: .combine)
+                        }
+                        Text([a.reason.isEmpty ? nil : a.reason, a.ageMin.map { "\($0)분 전 설정" }].compactMap { $0 }.joined(separator: ", "))
+                            .font(Theme.rounded(.footnote)).foregroundStyle(Theme.mute)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                } else {
+                    empty("아직 정하지 않았습니다.").frame(maxWidth: .infinity, alignment: .leading)
+                }
+            }
+        }
+    }
+
+    /// ops/harness_check.py's problems; a transfer over 50k is shown in the warning colour.
+    private func checks(_ d: Dash) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            SectionTitle(text: "하네스 점검")
+            SoftCard(padding: 14) {
+                let ps = d.checks?.problems ?? []
+                VStack(alignment: .leading, spacing: 6) {
+                    if d.checks?.at == nil { empty("아직 점검 전입니다. 코드가 10분마다 확인합니다.") }
+                    else if ps.isEmpty { Label("문제 없음", systemImage: "checkmark.circle.fill").foregroundStyle(Theme.ok) }
+                    ForEach(ps, id: \.self) { p in
+                        Label(p, systemImage: "exclamationmark.triangle.fill")
+                            .foregroundStyle(p.contains("5만 넘는 송금") ? Theme.warn : Theme.fail)
+                    }
+                }
+                .font(Theme.rounded(.subheadline))
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
         }
     }

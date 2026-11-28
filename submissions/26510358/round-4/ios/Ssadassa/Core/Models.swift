@@ -83,18 +83,40 @@ public struct OwnerQuestion: Hashable, Identifiable, Sendable {
 /// The owner's limits the agent reads with app_owner_limits. The owner desk keeps them on the server
 /// (owner_limits.json), so the agent and the shim see a change without a restart; this app caches the last copy.
 public struct OwnerLimits: Codable, Hashable, Sendable {
+    /// Percent of the wallet the server uses for each money ceiling in auto mode (ops/owner_desk.py AUTO_PCT).
+    public struct AutoPct: Codable, Hashable, Sendable {
+        public var maxPayPerDay: Double = 13
+        public var maxPayPerCall: Double = 10
+        public var maxLossPerDay: Double = 0.6
+        public init() {}
+        public init(from d: Decoder) throws {
+            let c = try d.container(keyedBy: CodingKeys.self), base = AutoPct()
+            maxPayPerDay = try c.decodeIfPresent(Double.self, forKey: .maxPayPerDay) ?? base.maxPayPerDay
+            maxPayPerCall = try c.decodeIfPresent(Double.self, forKey: .maxPayPerCall) ?? base.maxPayPerCall
+            maxLossPerDay = try c.decodeIfPresent(Double.self, forKey: .maxLossPerDay) ?? base.maxLossPerDay
+        }
+    }
+
     public var maxLossPerDay: Int = 30_000        // below-floor sales (loss cut), credits per day
     public var maxPayPerCall: Int = 20_000        // restock, credits per transfer
     public var maxPayPerDay: Int = 200_000
     public var dailyTokens: Int = 15_000_000      // the shim stops model calls past this
     public var note: String = ""
     public var setAt: String = ""
+    /// "auto": the server sets the three money ceilings from the wallet every 10 minutes; "fixed": they stay as saved.
+    public var mode: String = "fixed"
+    public var autoPct = AutoPct()
+    public var autoFromCredits: Int?
+    public var minBalance: Int = 1_000_000
+    public var roundEndEstimate: String = ""
 
-    enum CodingKeys: String, CodingKey { case maxLossPerDay, maxPayPerCall, maxPayPerDay, dailyTokens, note, setAt }
+    enum CodingKeys: String, CodingKey {
+        case maxLossPerDay, maxPayPerCall, maxPayPerDay, dailyTokens, note, setAt, mode, autoPct, autoFromCredits, minBalance, roundEndEstimate
+    }
 
     public init() {}
 
-    /// Missing keys keep their defaults (copies saved before the loss and token limits existed).
+    /// Missing keys keep their defaults (copies saved before the loss and token limits existed); unknown keys are ignored.
     public init(from d: Decoder) throws {
         let c = try d.container(keyedBy: CodingKeys.self)
         let base = OwnerLimits()
@@ -104,6 +126,33 @@ public struct OwnerLimits: Codable, Hashable, Sendable {
         dailyTokens = try c.decodeIfPresent(Int.self, forKey: .dailyTokens) ?? base.dailyTokens
         note = try c.decodeIfPresent(String.self, forKey: .note) ?? ""
         setAt = try c.decodeIfPresent(String.self, forKey: .setAt) ?? ""
+        mode = try c.decodeIfPresent(String.self, forKey: .mode) ?? base.mode
+        autoPct = try c.decodeIfPresent(AutoPct.self, forKey: .autoPct) ?? base.autoPct
+        autoFromCredits = try c.decodeIfPresent(Int.self, forKey: .autoFromCredits)
+        minBalance = try c.decodeIfPresent(Int.self, forKey: .minBalance) ?? base.minBalance
+        roundEndEstimate = try c.decodeIfPresent(String.self, forKey: .roundEndEstimate) ?? ""
+    }
+
+    public var isAuto: Bool { mode == "auto" }
+    /// The owner's emergency stop: fixed mode with both restock limits at 0.
+    public var isStopped: Bool { mode == "fixed" && maxPayPerCall == 0 && maxPayPerDay == 0 }
+
+    /// The round's end from round_end_estimate ("YYYY-MM-DD HH:MM", KST), or nil.
+    public var roundEnd: Date? {
+        let f = DateFormatter()
+        f.locale = Locale(identifier: "en_US_POSIX"); f.timeZone = TimeZone(identifier: "Asia/Seoul")
+        for fmt in ["yyyy-MM-dd HH:mm", "yyyy-MM-dd'T'HH:mm", "yyyy-MM-dd"] {
+            f.dateFormat = fmt
+            if let d = f.date(from: String(roundEndEstimate.prefix(fmt.replacingOccurrences(of: "'", with: "").count))) { return d }
+        }
+        return nil
+    }
+
+    /// "종료까지 7일 3시간" (empty when unknown or past).
+    public func untilEnd(now: Date = Date()) -> String {
+        guard let end = roundEnd, end > now else { return "" }
+        let m = Int(end.timeIntervalSince(now) / 60), d = m / 1440, h = (m % 1440) / 60
+        return "종료까지 " + (d > 0 ? "\(d)일 \(h)시간" : h > 0 ? "\(h)시간 \(m % 60)분" : "\(m)분")
     }
 
     public var asJSON: JSONValue {
