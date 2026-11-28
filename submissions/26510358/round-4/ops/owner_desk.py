@@ -67,12 +67,48 @@ def read(p, default=""):
         return default
 
 
+AUTO_PCT = {"max_pay_per_day": 4.0, "max_pay_per_call": 1.0, "max_loss_per_day": 0.6}   # % of wallet credits
+CREDITS = re.compile(r"REVIEW \d{4}-\d\d-\d\d \d\d:\d\d credits=(\d+)")
+
+
+def credits_now():
+    """Wallet credits from the agent's latest REVIEW line (the desk holds no shop token)."""
+    found = CREDITS.findall(read("notes.md"))
+    return int(found[-1]) if found else None
+
+
 def limits():
+    """The owner's ceilings. mode "auto" (11-28): money ceilings follow the wallet, auto_pct % of the latest REVIEW
+    credits, so they shrink when the shop loses and grow when it earns; tokens stay as set."""
     try:
         saved = json.loads(read("owner_limits.json", "{}"))
     except ValueError:
         saved = {}
-    return {k: saved.get(k, v) for k, v in DEFAULT_LIMITS.items()}
+    out = {k: saved.get(k, v) for k, v in DEFAULT_LIMITS.items()}
+    out["mode"] = saved.get("mode", "fixed")
+    pct = dict(AUTO_PCT, **(saved.get("auto_pct") or {}))
+    out["auto_pct"] = pct
+    cr = credits_now()
+    if out["mode"] == "auto" and cr:
+        for k, p in pct.items():
+            lo, hi = BOUNDS[k]
+            out[k] = max(lo, min(hi, int(cr * float(p) / 100)))
+        out["auto_from_credits"] = cr
+    return out
+
+
+def materialize_limits():
+    """In auto mode write the computed ceilings into owner_limits.json, which pay_guard and the agent read."""
+    try:
+        saved = json.loads(read("owner_limits.json", "{}"))
+    except ValueError:
+        return
+    if saved.get("mode") != "auto":
+        return
+    cur = limits()
+    new = dict(saved, **{k: cur[k] for k in AUTO_PCT}, auto_from_credits=cur.get("auto_from_credits"))
+    if new != saved:
+        (R / "owner_limits.json").write_text(json.dumps(new, ensure_ascii=False, indent=1), encoding="utf-8")
 
 
 AGENT_KEYS = ("max_loss_per_day", "max_pay_per_call", "max_pay_per_day")
@@ -116,7 +152,18 @@ def clean_limits(body):
             out[k] = v
     if "note" in body:
         out["note"] = str(body["note"]).strip()[:500]
+    if body.get("mode") in ("auto", "fixed"):
+        out["mode"] = body["mode"]
+    if isinstance(body.get("auto_pct"), dict):
+        pct = {}
+        for k in AUTO_PCT:
+            v = float(body["auto_pct"].get(k, out["auto_pct"][k]))
+            if not 0 <= v <= 20:
+                raise ValueError(f"auto_pct.{k} must be 0..20")
+            pct[k] = v
+        out["auto_pct"] = pct
     out["set_at"] = time.strftime("%Y-%m-%d %H:%M")
+    out.pop("auto_from_credits", None)
     return out
 
 
@@ -649,6 +696,10 @@ def tick():
     while True:
         if time.time() - _mkt["at"] >= 300:
             refresh_market()
+        try:
+            materialize_limits()
+        except Exception as e:
+            print(f"[desk] limits: {type(e).__name__}: {e}", flush=True)
         if time.time() - _chk["at"] >= 600:                # code-run harness checks for the agent's REVIEW and the app
             _chk["at"] = time.time()
             try:
