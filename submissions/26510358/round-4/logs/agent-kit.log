@@ -7934,3 +7934,77 @@
 09:49:41 [mind] market_call | 고구마스틱 단품 견적을 확인합니다.
 09:49:54 [mind] memory | 공급창이 닫혔습니다. 검증되지 않은 손해 가능 묶음은 매입하지 않았고, 다음 창과 실험 미개시 상태를 기록합니다.
 09:49:56 [mind] sleeps 1040 s: 다음 공급창 10:04:39 직전 재고 확충과 실험 시작
+10:07:22 [mind] app_owner_limits | 공급창이 열려 있으므로 현재 한도와 시장 지표를 먼저 확인합니다.
+10:07:34 [mind] market_call | 현재 퍼널과 공급 상황을 확인합니다.
+10:07:38 [mind] card_writer | 매 실행 포럼과 카드 갱신을 수행합니다.
+10:07:41 [mind] recall | 공급창 안에 검증된 견적 호출을 찾습니다.
+10:08:00 [mind] market_call | 신규 품목과 판매 시세를 확인합니다.
+10:08:04 [mind] wholesale_card | 누락된 공급 API 호출을 확인합니다.
+10:08:08 [mind] market_call | 공급창과 신규 품목의 실시간 정보를 확인합니다.
+10:08:11 [mind] market_call | 쌈채소는 기존 판매가 확인된 신규 품목이므로 2개 견적을 봅니다.
+10:08:18 [maroo] pay_guard sent 11.173 tOKRW from the shop wallet: https://explorer-testnet.maroo.io/tx/0x8a81bb806243286b1ab79f5f4f0a7f801f89c6c61e46327c8028ab6e43d03261
+10:08:18 [mind] pay_guard | 쌈채소 B의 확인된 직전 중간가 6,280에서 두 개의 정산액이 원가를 넘고, 보관료와 송금 수수료를 포함해도 합계가 남습니다.
+10:08:22 [mind] market_call | 송금된 견적을 즉시 확정합니다.
+10:08:26 [mind] stock_and_price | 신규 재고를 실제 카탈로그에 반영합니다.
+10:08:31 [mind] card_writer | 신규 품목을 카드에 반영하고 퍼널 실험을 시작합니다.
+10:08:35 [mind] recall | 결제서 이후 정산이 0인 원인을 최근 고객 대화에서 확인합니다.
+10:08:38 [mind] recall | 신선 채소 문의에 보유 취나물을 대안으로만 내고 결제서를 발급하지 않은 실패가 있어 점검 결과를 확인합니다.
+10:08:42 [mind] market_call | 김치는 현재 1개뿐이고 24시간 요청 4건이므로 2개 견적의 등급별 원가를 확인합니다.
+10:08:49 [maroo] pay_guard sent 10.972 tOKRW from the shop wallet: https://explorer-testnet.maroo.io/tx/0x8af2457649573643f5330266336a2ae29a2c4cc5b5a4bfc670575ab0bf101931
+10:08:49 [mind] pay_guard | 김치 B 중간가 8,768, C는 B의 80% 이하 7,014로 두 등급 모두 원가와 수수료를 넘습니다.
+10:08:53 [mind] market_call | 김치 입고를 확정합니다.
+10:08:57 [mind] stock_and_price | 입고된 김치의 가격과 단위를 게시합니다.
+10:09:02 [mind] card_writer | 카드도 입고와 동기화합니다.
+10:09:18 [mind] memory | 신규 쌈채소와 김치 입고를 품목 폭 실험으로 기록하고, 최근 신선채소 문의의 결제서 미발급을 다음 검토 대상으로 남깁니다.
+10:09:23 [mind] sleeps 960 s: 10:23 정기 REVIEW 및 다음 공급창 준비
+10:25:26 [mind] recall | 정기 리뷰가 예정되어 있어 우선 하네스 문제와 보충 판정을 확인합니다.
+10:25:37 [mind] market_call | 점검 문제는 없으며, 최근 유입·결제 흐름과 경쟁점을 확인합니다.
+10:25:41 [mind] recall | 최근 1시간에는 문의 후 결제서 발급이 막혔으므로 실제 대화와 상위 가게를 확인합니다.
+10:25:44 [mind] recall | 고객 요약이 날짜 문자열을 받지 않아 초 단위 시각으로 다시 조회합니다.
+10:25:58 [mind] market_call | 요청 품목이 실재고에 있는지와 경쟁 상위 가게를 확인합니다.
+10:26:04 [mind] card_writer | 최근 포럼 게시가 없어 노출 수단을 즉시 갱신합니다.
+10:26:07 [mind] market_call | 문의된 상품이 실제로 없었는지 재고를 확인합니다.
+10:26:11 [mind] market_call | 상위 첫 가게에 현재 판매 품목과 가격을 직접 문의합니다.
+10:26:29 [mind] market_call | 기존 A2A 모드를 이용해 첫 상위 가게에 한 번만 문의합니다.
+10:26:33 [mind] market_call | 공급창과 매입 가능 품목을 확인하되 결제 전 주인 한도를 조회합니다.
+10:26:36 [mind] app_owner_limits | 공급창이 열려 있으므로 우선 매입 제한을 읽습니다.
+10:26:42 [mind] market_call | 견적 요청 응답이 오지 않아 같은 요청을 한 번 확인합니다. 아직 결제는 하지 않았습니다.
+10:26:45 [mind] market_call | 4개 중 원가가 시세 순수취액보다 높은 개체가 있어 그 견적은 포기하고 작은 견적을 확인합니다.
+10:26:51 [mind] recall | 고객 요청 상품이 재고에 있는지 카탈로그를 점검합니다.
+10:26:54 [mind] market_call | 원가에 맞는 소량 견적을 다시 조회합니다.
+10:27:07 [mind] memory | 두 견적 모두 일부 개체가 동등 등급 시세에서 원가를 회수하지 못해 매입하지 않습니다. 리뷰와 현 실험을 기록합니다.
+10:27:11 [mind] app_show_card | 리뷰 요약을 주인에게 카드로 전달합니다.
+10:27:13 [mind] sleeps 900 s: 다음 공급창과 포럼 갱신 시각에 재확인
+10:42:25 [mind] market_call | 공급창과 현재 판매 흐름을 확인하고 포럼을 갱신합니다.
+10:42:31 [mind] card_writer | 최근 1시간 유입·결제서·정산이 모두 발생했습니다. 매 실행 포럼 갱신을 확인합니다.
+10:42:36 [mind] market_call | 예정된 공급창의 매입 가능 품목을 확인합니다.
+10:42:40 [mind] app_owner_limits | 공급창이 서버 기준 13초 뒤 열립니다. 매입 전 현재 한도를 확인합니다.
+10:42:55 [mind] market_call | 고수요 신규 품목과 중간가를 확인해 원가에 맞는 상품만 매입합니다.
+10:42:59 [mind] market_call | 공급 목록에서 최근 문의가 있었던 스파게티·우유 등 신규 상품과 시세를 대조합니다.
+10:43:02 [mind] wholesale_card | 공급 목록 경로가 허용되지 않아 도매 카드의 계약을 확인합니다.
+10:43:05 [mind] market_call | 기존 실행의 첫 정산은 이미 10:25에 9건이므로 알림 대상이 아닙니다. 카탈로그에서 후보 SKU를 찾습니다.
+10:43:09 [mind] market_call | 재고에 없는 판매 중인 SKU를 골라 중복을 피합니다.
+10:43:12 [mind] recall | 수요와 원가가 검증된 신규 상품을 고르기 위해 최근 보충 판정을 확인합니다.
+10:43:16 [mind] market_call | 취나물은 매입 우선이나 지난 견적에서 손익 하한을 넘었습니다. 신규 라인도 시세와 견적의 개체별 원가를 확인합니다.
+10:43:23 [maroo] pay_guard sent 9.454 tOKRW from the shop wallet: https://explorer-testnet.maroo.io/tx/0x7322fbc777f0148399b3d881683757d226c75d2abff0c87cdfaf6ae04ea17e76
+10:43:23 [mind] pay_guard | 커피 B 중간가 5,441의 정산 순수취는 5,177로 개별 원가와 보관료 배분을 넘습니다. 한도 내 두 개를 매입합니다.
+10:43:26 [mind] market_call | 송금 영수증을 첨부해 공급을 확정합니다.
+10:43:30 [mind] stock_and_price | 확정된 새 재고를 시세 이하·원가 이상으로 게시합니다.
+10:43:34 [mind] market_call | 커피는 기존 C 재고가 있어 신규 품목은 아니었고, B 1개는 가격 묶음의 원가 하한 때문에 제외됐습니다. 다음 후보 견적을 확인합니다.
+10:43:39 [mind] pay_guard | 둥굴레차 신규 2개는 B·A 각각 동일 등급 중간가 순수취가 원가를 넘고, 최근 문의가 7건입니다.
+10:43:42 [mind] recall | 주소를 옮겨 적는 과정에서 한 글자가 빠져 RPC가 트랜잭션을 거부했습니다. 결제 기록을 확인한 뒤에만 재시도합니다.
+10:43:44 [mind] read_tool | 결제 상태가 불확실하므로 재송금하지 않고 pay_guard의 기록 및 불확실 처리 방식을 확인합니다.
+10:43:52 [maroo] pay_guard sent 5.588 tOKRW from the shop wallet: https://explorer-testnet.maroo.io/tx/0x57dc2ac59da8ff9375e33d187d142980b031ed768fbd53b96f5f55a1bd31c53e
+10:43:52 [mind] pay_guard | 오류는 주소 파싱 단계의 확정 거부라 송금이 방송되지 않았습니다. 견적의 주소를 그대로 사용합니다.
+10:43:55 [mind] market_call | 둥굴레차 공급을 확정합니다.
+10:43:58 [mind] market_call | 보충 판정의 취나물 4개를 견적하고 각각 등급별 하한과 시세를 대조합니다.
+10:44:05 [maroo] pay_guard sent 7.851 tOKRW from the shop wallet: https://explorer-testnet.maroo.io/tx/0x2880a024b0e9cfed2126c0293f213156086e7772c2ee634521b1c4a4cce144c3
+10:44:05 [mind] pay_guard | 취나물 B 중간가 2470, A 2754 기준 각 개체의 순수취가 원가를 넘습니다.
+10:44:08 [mind] market_call | 이미 결제한 취나물 견적을 확정해 재고 누락을 막습니다.
+10:44:12 [mind] stock_and_price | 새로 확정된 취나물과 둥굴레차를 카탈로그에 반영합니다.
+10:44:17 [mind] card_writer | 가격 변경 후 카드도 같은 실행에서 갱신합니다.
+10:46:21 [mind] card_writer | 포럼 게시와 현재 재고를 먼저 확인합니다.
+10:46:32 [mind] market_call | 최근 60분 유입·정산과 공급창을 확인합니다.
+10:46:35 [mind] market_call | FUNNEL은 92/4/3/1로 막힌 단계가 없습니다. 공급창과 매입 기회를 확인합니다.
+10:46:45 [mind] memory | 공급창은 11:02경이며 실험 판정은 11:07입니다. 현재 퍼널을 기록합니다.
+10:46:50 [mind] sleeps 947 s: 11:02 공급창에서 고수요 품목을 확인하고 매입합니다.
